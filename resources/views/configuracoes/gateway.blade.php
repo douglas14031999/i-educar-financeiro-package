@@ -12,33 +12,22 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="gateway-container">
         
-        <!-- Cabeçalho -->
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
-            <div>
-                <div class="flex items-center gap-2.5 text-brand-petroleum">
-                    <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
-                        <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                            <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                    </div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
-                        Integração com Gateway Asaas
-                    </h1>
-                </div>
-                <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
-                    Chaves de API, webhooks e parâmetros de automação de Boletos Bancários e Pix
-                </p>
-            </div>
-            <div class="flex items-center gap-2.5">
-                <a href="{{ route('financeiro.dashboard') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
+        @include('financeiro::partials.page-header', [
+            'title' => 'Integração com Gateway Asaas',
+            'subtitle' => 'Chaves de API, webhooks e parâmetros de automação de Boletos Bancários e Pix',
+            'breadcrumbs' => [
+                ['label' => 'Configurações'],
+                ['label' => 'Gateway Asaas']
+            ],
+            'actions' => '
+                <a href="' . route('financeiro.dashboard') . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Voltar ao Painel
                 </a>
-            </div>
-        </header>
+            '
+        ])
 
         <!-- Card de Configuração de Webhook -->
         <article class="bg-cyan-50/70 border border-cyan-200/90 p-5 space-y-3" data-purpose="webhook-card">

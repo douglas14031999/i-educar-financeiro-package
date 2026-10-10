@@ -12,32 +12,22 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="contas-pagar-create-container">
         
-        <!-- Cabeçalho -->
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
-            <div>
-                <div class="flex items-center gap-2.5 text-brand-petroleum">
-                    <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
-                        <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                    </div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
-                        Cadastrar Nova Conta a Pagar
-                    </h1>
-                </div>
-                <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
-                    Registro de despesas operacionais, fornecedores e obrigações escolares
-                </p>
-            </div>
-            <div class="flex items-center gap-2.5">
-                <a href="{{ route('financeiro.contas-pagar.index') }}" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
+        @include('financeiro::partials.page-header', [
+            'title' => 'Cadastrar Nova Conta a Pagar',
+            'subtitle' => 'Registro de despesas operacionais, fornecedores e obrigações escolares',
+            'breadcrumbs' => [
+                ['label' => 'Contas a Pagar', 'url' => route('financeiro.contas-pagar.index')],
+                ['label' => 'Novo']
+            ],
+            'actions' => '
+                <a href="' . route('financeiro.contas-pagar.index') . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Voltar para Despesas
                 </a>
-            </div>
-        </header>
+            '
+        ])
 
         <!-- Card de Formulário -->
         <div class="bg-white shadow-xs border border-slate-200 overflow-hidden">

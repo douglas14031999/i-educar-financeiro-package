@@ -25,8 +25,18 @@ class ContratoService
             $alunoId = (int) $dados['aluno_id'];
             $planoId = (int) $dados['plano_id'];
             $anoLetivo = (int) $dados['ano_letivo'];
-            $escolaId = (int) ($dados['escola_id'] ?? 1);
             $diaVencimento = (int) ($dados['dia_vencimento'] ?? 10);
+
+            // Obtém escola_id da matrícula acadêmica se não fornecido
+            $escolaId = !empty($dados['escola_id']) ? (int) $dados['escola_id'] : null;
+            if (!$escolaId && !empty($dados['matricula_id'])) {
+                $matriculaEscola = DB::table('pmieducar.matricula')
+                    ->where('cod_matricula', (int) $dados['matricula_id'])
+                    ->value('ref_ref_cod_escola');
+                $escolaId = $matriculaEscola ? (int) $matriculaEscola : 1;
+            } else {
+                $escolaId = $escolaId ?: 1;
+            }
 
             $plano = PlanoPagamento::with('itens')->findOrFail($planoId);
 

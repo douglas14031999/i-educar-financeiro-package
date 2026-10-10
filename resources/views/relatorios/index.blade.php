@@ -12,32 +12,21 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="relatorios-container">
         
-        <!-- Cabeçalho -->
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
-            <div>
-                <div class="flex items-center gap-2.5 text-brand-petroleum">
-                    <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
-                        <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                    </div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
-                        Central de Relatórios e Demonstrativos Fiscais
-                    </h1>
-                </div>
-                <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
-                    Relatórios gerenciais de inadimplência, fluxo de caixa, DRE escolar e declarações oficiais para pais e alunos
-                </p>
-            </div>
-            <div class="flex items-center gap-2.5">
-                <a href="{{ route('financeiro.dashboard') }}" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
+        @include('financeiro::partials.page-header', [
+            'title' => 'Central de Relatórios e Demonstrativos Fiscais',
+            'subtitle' => 'Relatórios gerenciais de inadimplência, fluxo de caixa, DRE escolar e declarações oficiais para pais e alunos',
+            'breadcrumbs' => [
+                ['label' => 'Relatórios']
+            ],
+            'actions' => '
+                <a href="' . route('financeiro.dashboard') . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Voltar ao Dashboard
                 </a>
-            </div>
-        </header>
+            '
+        ])
 
         <!-- Grade de Cards de Relatórios -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

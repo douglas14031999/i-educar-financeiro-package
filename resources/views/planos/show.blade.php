@@ -12,33 +12,17 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="planos-show-container">
         
-        <!-- Cabeçalho -->
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
-            <div>
-                <div class="flex items-center gap-2.5 text-brand-petroleum">
-                    <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
-                        <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
-                            {{ $plano->nome }}
-                        </h1>
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            Ano {{ $plano->ano_letivo }}
-                        </span>
-                    </div>
-                </div>
-                <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
-                    Escola #{{ $plano->escola_id }} &bull; {{ $plano->qtd_parcelas }} parcelas mensais &bull; Total R$ {{ number_format($plano->valor_total, 2, ',', '.') }}
-                </p>
-            </div>
-            <div class="flex items-center gap-2.5">
-                <form method="post" action="{{ route('financeiro.planos.destroy', $plano->id) }}" onsubmit="return confirm('Deseja realmente excluir este plano de cobrança?');" style="display: inline;">
-                    @csrf
-                    @method('DELETE')
+        @include('financeiro::partials.page-header', [
+            'title' => $plano->nome,
+            'subtitle' => 'Ano ' . $plano->ano_letivo . ' • Escola #' . $plano->escola_id . ' • ' . $plano->qtd_parcelas . ' parcelas mensais • Total R$ ' . number_format($plano->valor_total, 2, ',', '.'),
+            'breadcrumbs' => [
+                ['label' => 'Planos de Cobrança', 'url' => route('financeiro.planos.index')],
+                ['label' => $plano->nome]
+            ],
+            'actions' => '
+                <form method="post" action="' . route('financeiro.planos.destroy', $plano->id) . '" onsubmit="return confirm(\'Deseja realmente excluir este plano de cobrança?\');" style="display: inline;">
+                    ' . csrf_field() . '
+                    ' . method_field('DELETE') . '
                     <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-danger">
                         <svg class="w-4 h-4 text-red-600" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -46,14 +30,14 @@
                         Excluir Plano
                     </button>
                 </form>
-                <a href="{{ route('financeiro.planos.index') }}" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
+                <a href="' . route('financeiro.planos.index') . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Voltar
                 </a>
-            </div>
-        </header>
+            '
+        ])
 
         <!-- Especificações do Plano -->
         <div class="bg-white shadow-xs border border-slate-200 overflow-hidden">

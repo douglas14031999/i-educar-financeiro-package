@@ -12,58 +12,30 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="contrato-show-container">
         
-        <!-- Cabeçalho -->
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
-            <div>
-                <div class="flex items-center gap-2.5 text-brand-petroleum">
-                    <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
-                        <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
-                            Contrato {{ $contrato->numero_contrato }}
-                        </h1>
-                        @if($contrato->status === 'ativo')
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Ativo
-                            </span>
-                        @elseif($contrato->status === 'cancelado')
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
-                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                                Cancelado
-                            </span>
-                        @elseif($contrato->status === 'quitado')
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-100 text-teal-800 border border-teal-200">
-                                <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
-                                Quitado
-                            </span>
-                        @endif
-                    </div>
-                </div>
-                <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
-                    Matrícula #{{ $contrato->matricula_id }} &bull; Aluno #{{ $contrato->aluno_id }} &bull; Ano Letivo {{ $contrato->ano_letivo }}
-                </p>
-            </div>
-            <div class="flex items-center gap-2.5">
-                @if($contrato->status === 'ativo')
-                    <button type="button" onclick="document.getElementById('modal-cancelar').style.display='flex';" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-danger">
+        @include('financeiro::partials.page-header', [
+            'title' => 'Contrato ' . $contrato->numero_contrato,
+            'subtitle' => 'Matrícula #' . $contrato->matricula_id . ' • Aluno #' . $contrato->aluno_id . ' • Ano Letivo ' . $contrato->ano_letivo,
+            'breadcrumbs' => [
+                ['label' => 'Contratos', 'url' => route('financeiro.contratos.index')],
+                ['label' => 'Contrato #' . $contrato->numero_contrato]
+            ],
+            'actions' => '
+                ' . ($contrato->status === 'ativo' ? '
+                    <button type="button" onclick="document.getElementById(\'modal-cancelar\').style.display=\'flex\';" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-danger">
                         <svg class="w-4 h-4 text-red-600" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                         </svg>
                         Rescindir / Cancelar
                     </button>
-                @endif
-                <a href="{{ route('financeiro.contratos.index') }}" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
+                ' : '') . '
+                <a href="' . route('financeiro.contratos.index') . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Voltar
                 </a>
-            </div>
-        </header>
+            '
+        ])
 
         <!-- Informações Consolidadas do Contrato -->
         <div class="bg-white shadow-xs border border-slate-200 overflow-hidden">

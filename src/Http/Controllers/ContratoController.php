@@ -64,6 +64,7 @@ class ContratoController extends Controller
         $validated = $request->validate([
             'aluno_id' => 'required|integer',
             'matricula_id' => 'required|integer',
+            'escola_id' => 'nullable|integer',
             'ano_letivo' => 'required|integer',
             'plano_id' => 'required|integer',
             'responsavel_financeiro_id' => 'nullable|integer',

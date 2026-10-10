@@ -12,32 +12,21 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="planos-container">
         
-        <!-- Cabeçalho -->
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
-            <div>
-                <div class="flex items-center gap-2.5 text-brand-petroleum">
-                    <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
-                        <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                    </div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
-                        Modelos de Planos de Pagamento e Anuidades
-                    </h1>
-                </div>
-                <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
-                    Defina as regras de parcelamento, valores anuais e condições de cobrança por ano letivo
-                </p>
-            </div>
-            <div class="flex items-center gap-2.5">
-                <a href="{{ route('financeiro.planos.create') }}" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
+        @include('financeiro::partials.page-header', [
+            'title' => 'Modelos de Planos de Pagamento e Anuidades',
+            'subtitle' => 'Defina as regras de parcelamento, valores anuais e condições de cobrança por ano letivo',
+            'breadcrumbs' => [
+                ['label' => 'Planos de Cobrança']
+            ],
+            'actions' => '
+                <a href="' . route('financeiro.planos.create') . '" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
                     <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Novo Plano de Cobrança
                 </a>
-            </div>
-        </header>
+            '
+        ])
 
         <!-- Barra de Filtros -->
         <section class="bg-white shadow-xs border border-slate-200 p-4" data-purpose="filter-section">

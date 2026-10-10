@@ -46,7 +46,7 @@ class ContaPagarController extends Controller
     {
         $planosContas = PlanoConta::where('tipo', 'despesa')->orderBy('codigo')->get();
         $centrosCusto = CentroCusto::where('ativo', true)->orderBy('nome')->get();
-        $contasBancarias = ContaBancaria::where('ativo', true)->orderBy('nome_titular')->get();
+        $contasBancarias = ContaBancaria::where('ativo', true)->orderBy('nome')->get();
 
         return view('financeiro::contas-pagar.create', compact('planosContas', 'centrosCusto', 'contasBancarias'));
     }
@@ -88,7 +88,7 @@ class ContaPagarController extends Controller
         $despesa = Lancamento::findOrFail($id);
         $planosContas = PlanoConta::where('tipo', 'despesa')->orderBy('codigo')->get();
         $centrosCusto = CentroCusto::where('ativo', true)->orderBy('nome')->get();
-        $contasBancarias = ContaBancaria::where('ativo', true)->orderBy('nome_titular')->get();
+        $contasBancarias = ContaBancaria::where('ativo', true)->orderBy('nome')->get();
 
         return view('financeiro::contas-pagar.edit', compact('despesa', 'planosContas', 'centrosCusto', 'contasBancarias'));
     }

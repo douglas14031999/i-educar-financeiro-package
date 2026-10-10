@@ -19,40 +19,30 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="quitacao-container">
         
-        <!-- Cabeçalho -->
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
-            <div>
-                <div class="flex items-center gap-2.5 text-brand-petroleum">
-                    <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
-                        <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                    </div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
-                        Declaração de Quitação Anual de Débitos
-                    </h1>
-                </div>
-                <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
-                    Emissão da certidão anual de quitação integral com eficácia jurídica conforme a <strong>Lei Federal nº 12.007/2009</strong>
-                </p>
-            </div>
-            <div class="flex items-center gap-2.5 flex-wrap">
-                @if($responsavel && $quitadoIntegralmente)
+        @include('financeiro::partials.page-header', [
+            'title' => 'Declaração de Quitação Anual de Débitos',
+            'subtitle' => 'Emissão da certidão anual de quitação integral com eficácia jurídica conforme a Lei Federal nº 12.007/2009',
+            'breadcrumbs' => [
+                ['label' => 'Relatórios', 'url' => route('financeiro.relatorios.index')],
+                ['label' => 'Quitação Anual']
+            ],
+            'actions' => '
+                ' . ($responsavel && $quitadoIntegralmente ? '
                     <button type="button" onclick="window.print();" class="inline-flex items-center gap-1.5 px-4 py-2 btn-ieducar-action btn-ieducar-green">
                         <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                         </svg>
                         Imprimir Certidão Oficial
                     </button>
-                @endif
-                <a href="{{ route('financeiro.relatorios.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
+                ' : '') . '
+                <a href="' . route('financeiro.relatorios.index') . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Voltar aos Relatórios
                 </a>
-            </div>
-        </header>
+            '
+        ])
 
         <!-- Filtros de Seleção -->
         <section class="bg-white shadow-xs border border-slate-200 overflow-hidden financeiro-filter-card" data-purpose="filter-card">

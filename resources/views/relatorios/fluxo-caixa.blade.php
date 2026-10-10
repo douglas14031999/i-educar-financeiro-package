@@ -12,40 +12,36 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="fluxo-caixa-container">
         
-        <!-- Cabeçalho -->
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
-            <div>
-                <div class="flex items-center gap-2.5 text-brand-petroleum">
-                    <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
-                        <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                    </div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
-                        Fluxo de Caixa Realizado (Exercício {{ $ano }})
-                    </h1>
-                </div>
-                <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
-                    Entradas líquidas efetivamente liquidadas vs despesas quitadas consolidadas mês a mês
-                </p>
-            </div>
-            <div class="flex items-center gap-2.5">
-                <form method="get" action="{{ route('financeiro.relatorios.fluxo-caixa') }}" class="flex items-center gap-2">
+        @php
+            $anoOptions = '';
+            for ($y = date('Y') + 1; $y >= date('Y') - 4; $y--) {
+                $sel = ($ano == $y) ? 'selected' : '';
+                $anoOptions .= "<option value=\"{$y}\" {$sel}>{$y}</option>";
+            }
+        @endphp
+
+        @include('financeiro::partials.page-header', [
+            'title' => 'Fluxo de Caixa Realizado (Exercício ' . $ano . ')',
+            'subtitle' => 'Entradas líquidas efetivamente liquidadas vs despesas quitadas consolidadas mês a mês',
+            'breadcrumbs' => [
+                ['label' => 'Relatórios', 'url' => route('financeiro.relatorios.index')],
+                ['label' => 'Fluxo de Caixa']
+            ],
+            'actions' => '
+                <form method="get" action="' . route('financeiro.relatorios.fluxo-caixa') . '" class="flex items-center gap-2">
                     <label for="ano" class="text-xs font-semibold text-slate-600 uppercase tracking-wider">Ano:</label>
-                    <select name="ano" id="ano" onchange="this.form.submit();" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
-                        @for($y = date('Y') + 1; $y >= date('Y') - 4; $y--)
-                            <option value="{{ $y }}" {{ $ano == $y ? 'selected' : '' }}>{{ $y }}</option>
-                        @endfor
+                    <select name="ano" id="ano" onchange="this.form.submit();" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:border-[#47728f]">
+                        ' . $anoOptions . '
                     </select>
                 </form>
-                <a href="{{ route('financeiro.relatorios.index') }}" class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium border border-slate-300 shadow-2xs transition" style="text-decoration: none;">
+                <a href="' . route('financeiro.relatorios.index') . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Voltar aos Relatórios
                 </a>
-            </div>
-        </header>
+            '
+        ])
 
         <!-- Cards com Indicadores Globais do Ano -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

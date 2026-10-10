@@ -12,32 +12,21 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="titulos-container">
         
-        <!-- Cabeçalho -->
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
-            <div>
-                <div class="flex items-center gap-2.5 text-brand-petroleum">
-                    <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
-                        <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                    </div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
-                        Títulos e Mensalidades Escolares
-                    </h1>
-                </div>
-                <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
-                    Gerenciamento operacional de cobranças, vencimentos, liquidações e taxas escolares
-                </p>
-            </div>
-            <div class="flex items-center gap-2.5">
-                <a href="{{ route('financeiro.baixas.create') }}" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
+        @include('financeiro::partials.page-header', [
+            'title' => 'Títulos e Mensalidades Escolares',
+            'subtitle' => 'Gerenciamento operacional de cobranças, vencimentos, liquidações e taxas escolares',
+            'breadcrumbs' => [
+                ['label' => 'Títulos']
+            ],
+            'actions' => '
+                <a href="' . route('financeiro.baixas.create') . '" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
                     <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Baixar Título no Balcão
                 </a>
-            </div>
-        </header>
+            '
+        ])
 
         <!-- Barra de Filtros e Busca -->
         <section class="bg-white shadow-xs border border-slate-200 p-4" data-purpose="filter-section">

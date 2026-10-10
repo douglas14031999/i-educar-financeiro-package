@@ -12,50 +12,28 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="responsaveis-show-container">
         
-        <!-- Cabeçalho -->
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
-            <div>
-                <div class="flex items-center gap-2.5 text-brand-petroleum">
-                    <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
-                        <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
-                            {{ $responsavel->nome }}
-                        </h1>
-                        @if($responsavel->ativo ?? true)
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                Ativo
-                            </span>
-                        @else
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                                Inativo
-                            </span>
-                        @endif
-                    </div>
-                </div>
-                <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
-                    CPF: {{ $responsavel->cpf_cnpj_formatado }} &bull; E-mail: {{ $responsavel->email }}
-                </p>
-            </div>
-            <div class="flex items-center gap-2.5">
-                <a href="{{ route('financeiro.responsaveis.edit', $responsavel->id) }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 text-sm font-medium border border-amber-200 transition" style="text-decoration: none;">
-                    <svg class="w-4 h-4 text-amber-700" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        @include('financeiro::partials.page-header', [
+            'title' => $responsavel->nome,
+            'subtitle' => 'CPF: ' . $responsavel->cpf_cnpj_formatado . ' • E-mail: ' . ($responsavel->email ?: 'Não informado'),
+            'breadcrumbs' => [
+                ['label' => 'Responsáveis', 'url' => route('financeiro.responsaveis.index')],
+                ['label' => $responsavel->nome]
+            ],
+            'actions' => '
+                <a href="' . route('financeiro.responsaveis.edit', $responsavel->id) . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
+                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Editar Cadastro
                 </a>
-                <a href="{{ route('financeiro.responsaveis.index') }}" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
+                <a href="' . route('financeiro.responsaveis.index') . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Voltar
                 </a>
-            </div>
-        </header>
+            '
+        ])
 
         <!-- Ficha Cadastral em Cards Modernos -->
         <div class="bg-white shadow-xs border border-slate-200 overflow-hidden">

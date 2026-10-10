@@ -24,6 +24,11 @@ Route::group(['prefix' => $prefix, 'as' => 'financeiro.', 'middleware' => $middl
     Route::post('responsaveis/{id}/vincular-aluno', 'ResponsavelFinanceiroController@vincularAluno')->name('responsaveis.vincular-aluno');
     Route::delete('responsaveis/{id}/desvincular-aluno/{aluno_id}', 'ResponsavelFinanceiroController@desvincularAluno')->name('responsaveis.desvincular-aluno');
 
+    // 2.1 API Interna de Busca de Alunos e Vinculação de Responsáveis
+    Route::get('api/alunos/buscar', 'AlunoBuscaController@buscar')->name('api.alunos.buscar');
+    Route::get('api/alunos/{id}/detalhes', 'AlunoBuscaController@detalhes')->name('api.alunos.detalhes');
+    Route::post('api/responsaveis/vincular-ou-criar', 'AlunoBuscaController@vincularOuCriarResponsavel')->name('api.responsaveis.vincular-ou-criar');
+
     // 3. Planos de Cobrança e Tabela de Preços
     Route::resource('planos', 'PlanoPagamentoController');
 

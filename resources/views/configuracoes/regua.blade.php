@@ -12,26 +12,16 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="regua-container">
         
-        <!-- Cabeçalho -->
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
-            <div>
-                <div class="flex items-center gap-2.5 text-brand-petroleum">
-                    <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
-                        <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                    </div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
-                        Régua de Cobrança Automática
-                    </h1>
-                </div>
-                <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
-                    Automação preventiva e reativa de lembretes e avisos de vencimento por WhatsApp, E-mail e SMS
-                </p>
-            </div>
-            <div class="flex items-center gap-2.5">
-                <form method="post" action="{{ route('financeiro.configuracoes.regua.executar-manual') }}" onsubmit="return confirm('Deseja executar a varredura da régua de cobrança agora? Os títulos elegíveis serão notificados.');">
-                    @csrf
+        @include('financeiro::partials.page-header', [
+            'title' => 'Régua de Cobrança Automática',
+            'subtitle' => 'Automação preventiva e reativa de lembretes e avisos de vencimento por WhatsApp, E-mail e SMS',
+            'breadcrumbs' => [
+                ['label' => 'Configurações'],
+                ['label' => 'Régua de Cobrança']
+            ],
+            'actions' => '
+                <form method="post" action="' . route('financeiro.configuracoes.regua.executar-manual') . '" onsubmit="return confirm(\'Deseja executar a varredura da régua de cobrança agora? Os títulos elegíveis serão notificados.\');" style="display:inline;">
+                    ' . csrf_field() . '
                     <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green">
                         <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -40,14 +30,14 @@
                         Processar Régua Agora
                     </button>
                 </form>
-                <a href="{{ route('financeiro.dashboard') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
+                <a href="' . route('financeiro.dashboard') . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Voltar
                 </a>
-            </div>
-        </header>
+            '
+        ])
 
         <!-- Variáveis Dinâmicas Disponíveis -->
         <article class="bg-cyan-50/70 border border-cyan-200/90 p-4 space-y-2" data-purpose="tags-card">

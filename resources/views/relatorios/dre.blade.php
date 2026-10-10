@@ -18,30 +18,26 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="dre-container">
         
-        <!-- Cabeçalho -->
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
-            <div>
-                <div class="flex items-center gap-2.5 text-brand-petroleum">
-                    <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
-                        <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                    </div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
-                        Demonstração do Resultado do Exercício (DRE)
-                    </h1>
-                </div>
-                <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
-                    Exercício contábil de <strong>{{ $ano }}</strong>: faturamento bruto, deduções, custos operacionais e resultado líquido
-                </p>
-            </div>
-            <div class="flex items-center gap-2.5 flex-wrap">
-                <form method="get" action="{{ route('financeiro.relatorios.dre') }}" class="flex items-center gap-2">
+        @php
+            $anoOptions = '';
+            for ($y = date('Y') + 1; $y >= date('Y') - 4; $y--) {
+                $sel = ($ano == $y) ? 'selected' : '';
+                $anoOptions .= "<option value=\"{$y}\" {$sel}>{$y}</option>";
+            }
+        @endphp
+
+        @include('financeiro::partials.page-header', [
+            'title' => 'Demonstração do Resultado do Exercício (DRE)',
+            'subtitle' => 'Exercício contábil de ' . $ano . ': faturamento bruto, deduções, custos operacionais e resultado líquido',
+            'breadcrumbs' => [
+                ['label' => 'Relatórios', 'url' => route('financeiro.relatorios.index')],
+                ['label' => 'DRE']
+            ],
+            'actions' => '
+                <form method="get" action="' . route('financeiro.relatorios.dre') . '" class="flex items-center gap-2">
                     <label for="ano" class="text-xs font-semibold text-slate-600 uppercase">Exercício:</label>
-                    <select name="ano" id="ano" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum" onchange="this.form.submit();">
-                        @for($y = date('Y') + 1; $y >= date('Y') - 4; $y--)
-                            <option value="{{ $y }}" {{ $ano == $y ? 'selected' : '' }}>{{ $y }}</option>
-                        @endfor
+                    <select name="ano" id="ano" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-[#47728f]" onchange="this.form.submit();">
+                        ' . $anoOptions . '
                     </select>
                 </form>
                 <button type="button" onclick="window.print();" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline">
@@ -50,14 +46,14 @@
                     </svg>
                     Imprimir DRE
                 </button>
-                <a href="{{ route('financeiro.relatorios.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
+                <a href="' . route('financeiro.relatorios.index') . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Voltar aos Relatórios
                 </a>
-            </div>
-        </header>
+            '
+        ])
 
         <!-- Cards de Resumo Gerencial -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-purpose="kpi-cards">
