@@ -1,285 +1,504 @@
 # Guia de Estilo e Design System Oficial - Módulo Financeiro i-Educar
 
-Este documento estabelece as diretrizes visuais, tokens e componentes reutilizáveis para o desenvolvimento de todas as telas do **Módulo Financeiro**, garantindo 100% de conformidade com a identidade visual do **i-Educar**.
+Este documento estabelece o **padrão visual oficial e obrigatório** para o desenvolvimento e evolução de todas as telas do **Módulo Financeiro** do i-Educar. 
+
+O padrão baseia-se na interface do Painel Geral de Gestão Financeira (`modelo tela dash`), unindo estética limpa, moderna e corporativa (tons petróleo, esmeralda, ardósia) com total integração e isolamento em relação ao sistema i-Educar.
 
 ---
 
 ## 1. Princípios de Design
 
-1. **Essência do i-Educar**:
-   - A interface deve parecer nativa do ecossistema i-Educar / Portabilis, integrando-se organicamente aos menus, tipografia e convenções do sistema.
-   - **Proibido o uso de roxo/violeta** e layouts genéricos de SaaS modernos que destoem do padrão governamental/educacional.
-   - Layout fluido, limpo, de alta legibilidade para operadores de secretaria escolar e tesouraria.
+1. **Modernidade com Sobriedade Corporativa**:
+   - A interface utiliza a paleta corporativa Petróleo (`#1d4354`), Esmeralda (`#059669`), Ardósia (`#334155`) e fundo neutro (`#f4f7f9`).
+   - Tipografia moderna **Inter** com hierarquia visual clara, pesos equilibrados (400, 500, 600, 700) e legibilidade perfeita.
+   - **Proibido o uso de roxo/violeta** ou temas escuros saturados.
 
-2. **Consistência de Ações**:
-   - O botão de ação primária positiva (ex: cadastrar, nova baixa, salvar) sempre utiliza o verde institucional do i-Educar (`#0ac336` / `#09b031`).
-   - Ações de navegação, relatórios ou consulta utilizam o azul institucional (`#47728f`).
-   - Ações de cancelamento, retorno ou secundárias utilizam contorno neutro (`.btn-ieducar-outline`).
+2. **Ocupação Total da Área Útil (Full Width)**:
+   - As telas ocupam **100% da largura útil** (`w-full`), sem travas restritivas de `max-w` nem centralizações artificiais (`mx-auto`) que criem calhas vazias nas laterais em monitores modernos.
+   - Espaçamento interno padronizado e equilibrado: `p-4 md:p-6` com ritmo vertical uniforme (`space-y-6`).
+   - O contêiner da tela deve remover o padding legado da casca i-Educar via `@section('module-style', 'padding: 0;')`.
 
-3. **Hierarquia e Espaçamento**:
-   - Todo módulo é envelopado em `#financeiro-module` com padding de `15px 20px`.
-   - Cabeçalhos de página padronizados com ícone FontAwesome, título em `#1b4c6b` e subtítulo descritivo em `#64748b`.
+3. **Consistência de Ações e Cores Semânticas**:
+   - **Ação Primária / Positiva** (Nova Baixa, Novo Plano, Salvar): Verde Esmeralda (`bg-emerald-600` / hover `bg-emerald-700`).
+   - **Ação Secundária / Navegação Global** (Ver Mensalidades, Histórico): Ardósia Escuro (`bg-slate-700` / hover `bg-slate-800`).
+   - **Ação Neutra / Filtros / Linha de Tabela**: Branco com borda suave (`bg-white border border-slate-300 text-slate-700` / hover `bg-slate-50`).
+   - **Ação de Atenção / Renegociação / Edição**: Âmbar / Dourado (`amber-500` / `amber-600`).
+   - **Ação de Alerta / Inadimplência / Cancelamento**: Vermelho / Rosa Intenso (`rose-500` / `rose-600`).
 
----
-
-## 2. Tokens de Design (Paleta de Cores e Tipografia)
-
-| Token | Valor Hex | Aplicação |
-|---|---|---|
-| `--color-primary` | `#47728f` | Azul clássico i-Educar (cabeçalhos de caixa, botões de consulta, links principais) |
-| `--color-primary-dark` | `#1b4c6b` | Azul escuro (títulos H2, valores monetários principais, foco) |
-| `--color-border` | `#cddce6` | Bordas de caixas, inputs, separadores e contornos |
-| `--color-thead-bg` | `#ccdce6` | Fundo de cabeçalhos de coluna em tabelas |
-| `--color-row-odd` | `#f5f9fd` | Linhas ímpares em tabelas (zebrado oficial) |
-| `--color-row-even` | `#ffffff` | Linhas pares em tabelas |
-| `--color-row-hover` | `#eaf2f8` | Efeito hover em linhas clicáveis |
-| `--color-green` | `#0ac336` | Verde oficial i-Educar (botões de adição, confirmação e badges de pago) |
-| `--color-green-hover` | `#09b031` | Hover dos botões verdes |
-| `--color-red` | `#d9534f` | Vermelho de alerta (inadimplência, títulos vencidos, exclusão) |
-| `--color-amber` | `#f0ad4e` | Âmbar de atenção (títulos pendentes, avisos de régua) |
-| `--font-family` | `"Open Sans", Arial, sans-serif` | Tipografia padrão do sistema |
+4. **Isolamento de Estilos (Zero Leaks)**:
+   - Todo o CSS deve ser estritamente escopado (ex.: `.financeiro-dashboard-container` ou `.financeiro-container`).
+   - **Proibido o uso de compiladores CDN em tempo de execução** (`cdn.tailwindcss.com` é bloqueado pelo Prototype.js do i-Educar). Todo CSS deve ser estático e embutido via Blade `<style>`.
+   - Todo elemento `<svg>` deve conter **obrigatoriamente atributos explícitos `width` e `height`** (`width="24" height="24"`, `width="16" height="16"`, etc.) para evitar distorções no carregamento.
 
 ---
 
-## 3. Componentes Padronizados
+## 2. Tokens de Design (Cores e Tipografia)
 
-### 3.1. Cabeçalho de Tela (`.financeiro-header`)
+### 2.1. Paleta de Cores
 
-Utilizado no topo de todas as telas (listagens, dashboards, relatórios e formulários):
+| Nome / Token | Hex | Classe Tailwind / Uso | Aplicação |
+|---|---|---|---|
+| **Petróleo Principal** | `#1d4354` | `text-brand-petroleum` / `bg-brand-petroleum` | Títulos principais, ícones de módulo, links de destaque |
+| **Petróleo Escuro** | `#132d39` | `bg-brand-petroleum-dark` | Hover de links, contrastes profundos |
+| **Petróleo Claro** | `#2d637a` | `bg-brand-petroleum-light` | Focos e bordas ativas |
+| **Petróleo Fundo Suave** | `rgba(29,67,84,0.1)` | `bg-brand-petroleum/10` | Fundo de caixas de ícones no cabeçalho |
+| **Gradiente Destaque** | `from-[#214b5f] to-[#1a3d4e]` | `bg-gradient-to-r` | Cabeçalho principal de tabelas e painéis de destaque |
+| **Fundo de Tela** | `#f4f7f9` | `bg-[#f4f7f9]` | Fundo geral da página do módulo |
+| **Superfície Card** | `#ffffff` | `bg-white` | Fundo de cards, tabelas e caixas |
+| **Borda Neutra Suave** | `#e2e8f0` | `border-slate-200` | Bordas de cards, divisores de tabelas e inputs |
+| **Verde Esmeralda** | `#059669` | `bg-emerald-600` | Botão primário, indicador de quitação, valores recebidos |
+| **Verde Badge** | `bg-emerald-50` / `text-emerald-700` | `border-emerald-200` | Status Pago / Liquidado / Ativo |
+| **Azul Cyan** | `#0891b2` | `bg-cyan-600` / `text-cyan-600` | Previsões, parcelas vincendas, indicadores de fluxo |
+| **Rosa / Vermelho** | `#e11d48` | `bg-rose-500` / `text-rose-700` | Inadimplência, parcelas vencidas, alertas críticos |
+| **Rosa Badge** | `bg-rose-50` / `text-rose-700` | `border-rose-200` | Status Em Atraso / Cancelado |
+| **Âmbar / Atenção** | `#d97706` | `bg-amber-500` / `text-amber-700` | Taxas de inadimplência, pendências operacionais |
+| **Âmbar Badge** | `bg-amber-50` / `text-amber-700` | `border-amber-200/70` | Status Pendente / Aguardando |
+| **Texto Título** | `#0f172a` | `text-slate-900` | Títulos H1/H2, valores numéricos principais |
+| **Texto Secundário** | `#64748b` | `text-slate-500` | Descrições, subtítulos, legendas de gráficos |
 
-```html
-<div class="financeiro-header">
-    <div class="financeiro-header-title">
-        <h2>
-            <i class="fa fa-users" style="color: #47728f;"></i> Título da Funcionalidade
-        </h2>
-        <span class="financeiro-header-desc">
-            Breve descrição da finalidade e escopo desta funcionalidade na secretaria escolar
-        </span>
-    </div>
-    <div class="financeiro-header-actions">
-        <a href="{{ route('...') }}" class="btn-ieducar-action btn-ieducar-green">
-            <i class="fa fa-plus-circle"></i> Ação Primária
-        </a>
-        <a href="{{ route('...') }}" class="btn-ieducar-action btn-ieducar-blue">
-            <i class="fa fa-list"></i> Ação Secundária
-        </a>
-    </div>
+### 2.2. Tipografia
+
+- **Família da Fonte**: `'Inter', sans-serif`
+- **Importação**: `<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">`
+- **Hierarquia de Tamanhos**:
+  - H1 de Tela: `text-xl md:text-2xl font-bold tracking-tight text-slate-900`
+  - Subtítulo de Tela: `text-xs md:text-sm text-slate-500`
+  - Valores / Métricas: `text-2xl font-bold tracking-tight text-slate-900`
+  - Rótulos de Métricas: `text-[11px] font-bold tracking-wider uppercase text-slate-600`
+  - Cabeçalho de Tabela: `text-[11px] font-bold text-slate-600 uppercase tracking-wider`
+  - Célula de Tabela: `text-xs md:text-sm text-slate-700`
+  - Badges: `text-xs font-medium`
+
+---
+
+## 3. Componentes e Estrutura de Código
+
+### 3.1. Estrutura Base de uma Tela (Blade View)
+
+Todas as telas do módulo financeiro devem herdar de `financeiro::layouts.app`, remover o padding legado e incluir a casca `.financeiro-dashboard-container`:
+
+```blade
+@extends('financeiro::layouts.app')
+
+@section('title', 'Nome da Tela Financeira')
+@section('breadcrumb', 'Nome no Breadcrumb')
+@section('module-style', 'padding: 0;')
+
+@push('styles')
+    @include('financeiro::dashboard.styles')
+@endpush
+
+@section('financeiro-content')
+<div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
+    <main class="w-full p-4 md:p-6 space-y-6" data-purpose="screen-container">
+        
+        <!-- 1. Cabeçalho da Tela -->
+        ...
+
+        <!-- 2. Conteúdo Principal (Cards / Filtros / Tabela / Formulário) -->
+        ...
+
+    </main>
 </div>
+@endsection
 ```
 
 ---
 
-### 3.2. Botões Padronizados (`.btn-ieducar-action`)
+### 3.2. Cabeçalho de Tela com Ações
 
-Os botões utilizam raio sutil (`border-radius: 3px`), tipografia limpa, ícone alinhado e transição suave:
-
-```html
-<!-- Botão Verde Primário (Cadastrar, Baixar, Salvar) -->
-<button type="submit" class="btn-ieducar-action btn-ieducar-green">
-    <i class="fa fa-check"></i> Salvar Registro
-</button>
-
-<!-- Botão Azul Institucional (Visualizar, Consultar, Filtrar) -->
-<a href="#" class="btn-ieducar-action btn-ieducar-blue">
-    <i class="fa fa-search"></i> Consultar
-</a>
-
-<!-- Botão Outline Neutro (Voltar, Cancelar, Limpar Filtros) -->
-<a href="#" class="btn-ieducar-action btn-ieducar-outline">
-    <i class="fa fa-arrow-left"></i> Voltar
-</a>
-
-<!-- Botão Vermelho de Perigo (Cancelar Contrato, Estornar) -->
-<button type="button" class="btn-ieducar-action btn-ieducar-danger">
-    <i class="fa fa-trash"></i> Cancelar / Excluir
-</button>
-```
-
----
-
-### 3.3. Barra de Filtros e Busca (`.financeiro-filter-box`)
-
-Substitui caixas cruas de busca por um painel integrado, com inputs e selects uniformizados:
+O cabeçalho traz identificação do módulo, ícone representativo, título de alto contraste e os botões de ação de maior frequência:
 
 ```html
-<div class="financeiro-filter-box">
-    <form method="get" action="{{ route('...') }}" class="financeiro-filter-form">
-        <div class="filter-item">
-            <label class="filter-label">Buscar:</label>
-            <input type="text" name="busca" value="{{ $busca }}" placeholder="Buscar por Nome, CPF..." class="ieducar-input" style="min-width: 280px;">
+<header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
+    <div>
+        <div class="flex items-center gap-2.5 text-brand-petroleum">
+            <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
+                <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v4M12 14v4M16 14v4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                </svg>
+            </div>
+            <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
+                Título da Funcionalidade
+            </h1>
         </div>
-
-        <div class="filter-item">
-            <label class="filter-label">Status:</label>
-            <select name="status" class="ieducar-select">
-                <option value="">Todos</option>
-                <option value="ativo">Ativo</option>
-            </select>
-        </div>
-
-        <div class="filter-actions">
-            <button type="submit" class="btn-ieducar-action btn-ieducar-blue">
-                <i class="fa fa-filter"></i> Filtrar
-            </button>
-            @if(request()->anyFilled(['busca', 'status']))
-                <a href="{{ route('...') }}" class="btn-ieducar-action btn-ieducar-outline">
-                    Limpar
-                </a>
-            @endif
-        </div>
-    </form>
-</div>
-```
-
----
-
-### 3.4. Caixa de Tabela (`.financeiro-table-box`)
-
-Tabelas completas com cabeçalho azul escuro i-Educar, zebrado oficial e botões de ação compactos:
-
-```html
-<div class="financeiro-table-box">
-    <div class="financeiro-box-header">
-        <span>
-            <i class="fa fa-list"></i> Título da Listagem ({{ $registros->total() }})
-        </span>
-        <span class="box-header-info">Total de registros: {{ $registros->total() }}</span>
+        <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
+            Breve descrição operacional do escopo e objetivo desta tela
+        </p>
     </div>
-    <div class="financeiro-table-responsive">
-        <table class="financeiro-table">
+    
+    <!-- Ações no Topo -->
+    <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+        <!-- Ação Primária (Verde) -->
+        <a href="{{ route('...') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm hover:shadow transition duration-150" style="text-decoration: none;">
+            <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+            Nova Ação Principal
+        </a>
+        
+        <!-- Ação Secundária (Ardósia) -->
+        <a href="{{ route('...') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white text-sm font-medium shadow-sm transition duration-150" style="text-decoration: none;">
+            <svg aria-hidden="true" class="w-4 h-4 text-slate-300" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+            Listagem Geral
+        </a>
+    </div>
+</header>
+```
+
+---
+
+### 3.3. Cards de Indicadores / Métricas (KPI Grid)
+
+Grid de 4 colunas com barra superior de status de 4px (`h-1`), tipografia compacta e valor em destaque:
+
+```html
+<section aria-label="Indicadores Financeiros" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-purpose="kpi-grid">
+    <!-- Card Verde (Recebido / Sucesso) -->
+    <article class="bg-white shadow-xs border border-slate-200/90 relative overflow-hidden p-4 flex flex-col justify-between hover:border-slate-300 transition">
+        <div class="absolute top-0 inset-x-0 h-1 bg-emerald-500"></div>
+        <div class="flex items-center justify-between text-slate-500 mb-2">
+            <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">Receita Recebida</span>
+            <span class="p-1 bg-emerald-50 text-emerald-600">
+                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+            </span>
+        </div>
+        <div>
+            <div class="flex items-baseline gap-2">
+                <span class="text-2xl font-bold tracking-tight text-slate-900">R$ 48.750,00</span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">Liquidações via Asaas, Pix e Caixa</p>
+        </div>
+    </article>
+
+    <!-- Card Cyan (A Receber / Fluxo) -->
+    <article class="bg-white shadow-xs border border-slate-200/90 relative overflow-hidden p-4 flex flex-col justify-between hover:border-slate-300 transition">
+        <div class="absolute top-0 inset-x-0 h-1 bg-cyan-600"></div>
+        <div class="flex items-center justify-between text-slate-500 mb-2">
+            <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">A Receber no Mês</span>
+            <span class="p-1 bg-cyan-50 text-cyan-600">
+                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+            </span>
+        </div>
+        <div>
+            <div class="flex items-baseline gap-2">
+                <span class="text-2xl font-bold tracking-tight text-slate-900">R$ 15.200,00</span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">Parcelas vincendas neste período</p>
+        </div>
+    </article>
+
+    <!-- Card Rose (Em Atraso / Alerta) -->
+    <article class="bg-white shadow-xs border border-slate-200/90 relative overflow-hidden p-4 flex flex-col justify-between hover:border-slate-300 transition">
+        <div class="absolute top-0 inset-x-0 h-1 bg-rose-500"></div>
+        <div class="flex items-center justify-between text-slate-500 mb-2">
+            <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">Total em Atraso</span>
+            <span class="p-1 bg-rose-50 text-rose-600">
+                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+            </span>
+        </div>
+        <div>
+            <div class="flex items-baseline gap-2">
+                <span class="text-2xl font-bold tracking-tight text-slate-900">R$ 3.420,00</span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;"><strong class="font-medium text-slate-700">12</strong> parcelas aguardando acerto</p>
+        </div>
+    </article>
+
+    <!-- Card Âmbar (Taxa / Atenção) -->
+    <article class="bg-white shadow-xs border border-slate-200/90 relative overflow-hidden p-4 flex flex-col justify-between hover:border-slate-300 transition">
+        <div class="absolute top-0 inset-x-0 h-1 bg-amber-500"></div>
+        <div class="flex items-center justify-between text-slate-500 mb-2">
+            <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">Taxa de Inadimplência</span>
+            <span class="p-1 bg-amber-50 text-amber-600">
+                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+            </span>
+        </div>
+        <div>
+            <div class="flex items-baseline gap-2">
+                <span class="text-2xl font-bold tracking-tight text-slate-900">4,8%</span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">Em relação à receita faturada</p>
+        </div>
+    </article>
+</section>
+```
+
+---
+
+### 3.4. Tabela de Dados e Listagens
+
+Contêiner em fundo branco, cabeçalho gradiente petróleo com texto branco, barra de abas e ações rápidas, e linhas com hover suave:
+
+```html
+<section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="table-container">
+    <!-- Cabeçalho com Gradiente Petróleo -->
+    <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
+        <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+            <h2 class="text-sm font-semibold tracking-wide" style="margin: 0; color: white;">
+                Título da Tabela de Registros
+            </h2>
+        </div>
+        <a class="text-xs font-medium text-cyan-100 hover:text-white transition flex items-center gap-1" href="{{ route('...') }}" style="text-decoration: none;">
+            Histórico completo <span aria-hidden="true">»</span>
+        </a>
+    </div>
+    
+    <!-- Barra de Filtros Rápidos e Ações -->
+    <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div class="inline-flex p-0.5 bg-slate-200/80 text-xs font-medium text-slate-600">
+            <button class="px-3 py-1 bg-white text-slate-800 shadow-xs" type="button">Todos ({{ $registros->total() ?? 0 }})</button>
+            <button class="px-3 py-1 hover:text-slate-900 transition" type="button">Em Atraso</button>
+            <button class="px-3 py-1 hover:text-slate-900 transition" type="button">Liquidados</button>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('...') }}" class="text-xs font-medium inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition shadow-2xs" style="text-decoration: none;">
+                <svg class="w-3.5 h-3.5 text-emerald-600" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                </svg>
+                Nova Ação Rápida
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabela Responsiva -->
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs md:text-sm m-0 border-0" style="margin: 0;">
             <thead>
-                <tr>
-                    <th width="120" style="text-align: center;">Data</th>
-                    <th>Descrição</th>
-                    <th width="140" style="text-align: right;">Valor</th>
-                    <th width="110" style="text-align: center;">Status</th>
-                    <th width="130" style="text-align: center;">Ações</th>
+                <tr class="bg-slate-100/90 text-[11px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
+                    <th class="py-3 px-4" scope="col">Data / Vencimento</th>
+                    <th class="py-3 px-4" scope="col">Identificação</th>
+                    <th class="py-3 px-4" scope="col">Responsável</th>
+                    <th class="py-3 px-4 text-center" scope="col">Parcela</th>
+                    <th class="py-3 px-4 text-right" scope="col">Valor</th>
+                    <th class="py-3 px-4 text-center" scope="col">Status</th>
+                    <th class="py-3 px-4 text-center" scope="col">Ações</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-slate-200 text-slate-700">
                 @forelse($registros as $item)
-                    <tr>
-                        <td align="center">{{ $item->data }}</td>
-                        <td><strong>{{ $item->descricao }}</strong></td>
-                        <td align="right" class="col-valor">R$ {{ number_format($item->valor, 2, ',', '.') }}</td>
-                        <td align="center">
-                            <span class="badge-status badge-{{ $item->status }}">{{ ucfirst($item->status) }}</span>
+                    @php
+                        $isAtrasado = $item->status === 'vencido';
+                        $rowBg = $isAtrasado ? 'hover:bg-rose-50/40 bg-rose-50/20' : 'hover:bg-slate-50/80';
+                    @endphp
+                    <tr class="{{ $rowBg }} transition-colors">
+                        <td class="py-3 px-4 whitespace-nowrap font-medium {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
+                            {{ \Carbon\Carbon::parse($item->data)->format('d/m/Y') }}
                         </td>
-                        <td align="center">
-                            <div class="table-actions-group">
-                                <a href="{{ route('...', $item->id) }}" class="btn-table-action btn-action-blue" title="Ver Detalhes">
-                                    <i class="fa fa-eye"></i> Detalhes
-                                </a>
-                                <a href="{{ route('...', $item->id) }}" class="btn-table-action btn-action-amber" title="Editar">
-                                    <i class="fa fa-pencil"></i>
-                                </a>
-                            </div>
+                        <td class="py-3 px-4 font-semibold text-slate-900">{{ $item->descricao }}</td>
+                        <td class="py-3 px-4 text-slate-600">{{ $item->responsavel_nome ?? '-' }}</td>
+                        <td class="py-3 px-4 text-center whitespace-nowrap font-medium">{{ $item->parcela ?? '-' }}</td>
+                        <td class="py-3 px-4 text-right font-bold {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
+                            R$ {{ number_format($item->valor, 2, ',', '.') }}
+                        </td>
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                            <!-- Badges Pill -->
+                            @if($item->status === 'pago')
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Liquidado</span>
+                            @elseif($isAtrasado)
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">Em Atraso</span>
+                            @else
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/70">Pendente</span>
+                            @endif
+                        </td>
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                            <a href="{{ route('...', $item->id) }}" class="text-xs font-medium text-brand-petroleum hover:underline">
+                                Detalhes
+                            </a>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="financeiro-empty-state">
-                            <i class="fa fa-folder-open-o empty-icon"></i>
-                            <div class="empty-title">Nenhum registro encontrado.</div>
-                            <div class="empty-desc">Utilize os filtros acima ou cadastre um novo registro.</div>
+                        <td colspan="7" class="py-8 text-center text-slate-500">
+                            <svg class="w-10 h-10 mx-auto text-slate-300 mb-3" width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            </svg>
+                            Nenhum registro encontrado.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
-</div>
+
+    <!-- Rodapé da Tabela -->
+    <footer class="p-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+        <span>Mostrando {{ count($registros) }} registros carregados</span>
+    </footer>
+</section>
 ```
 
 ---
 
-### 3.5. Badges de Status (`.badge-status`)
+### 3.5. Badges de Status (Pill Badges)
 
-Tons suaves com contorno correspondente para rápida identificação visual:
+Os badges utilizam borda arredondada completa (`rounded-full`), fonte `text-xs font-medium`, fundo suave e contorno correspondente:
 
 ```html
-<span class="badge-status badge-pago">Pago / Ativo</span>
-<span class="badge-status badge-pendente">Pendente / Aberto</span>
-<span class="badge-status badge-vencido">Vencido</span>
-<span class="badge-status badge-cancelado">Cancelado</span>
-<span class="badge-status badge-parcial">Parcial</span>
+<!-- Liquidado / Pago / Ativo -->
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Liquidado</span>
+
+<!-- Pendente / Em Aberto -->
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/70">Pendente</span>
+
+<!-- Vencido / Em Atraso -->
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">Em Atraso</span>
+
+<!-- Cancelado / Inativo -->
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Cancelado</span>
 ```
 
 ---
 
-### 3.6. Ações Compactas na Tabela (`.btn-table-action`)
+### 3.6. Cards Inferiores (Automação, Configurações e Relatórios)
 
-Evitam o uso de botões gigantes desproporcionais dentro das células:
+Grid responsivo de 2 colunas com borda sutil, ícones temáticos em caixas coloridas e listas de links interativos:
 
 ```html
-<div class="table-actions-group">
-    <a href="#" class="btn-table-action btn-action-blue" title="Visualizar">
-        <i class="fa fa-eye"></i> Detalhes
-    </a>
-    <a href="#" class="btn-table-action btn-action-green" title="WhatsApp">
-        <i class="fa fa-whatsapp"></i>
-    </a>
-    <a href="#" class="btn-table-action btn-action-amber" title="Editar">
-        <i class="fa fa-pencil"></i>
-    </a>
-    <a href="#" class="btn-table-action btn-action-default" title="Recibo">
-        <i class="fa fa-print"></i>
-    </a>
-</div>
+<section class="grid grid-cols-1 md:grid-cols-2 gap-6" data-purpose="info-panels">
+    <!-- Card de Automação / Integração -->
+    <article class="bg-white border border-slate-200 shadow-xs p-5 flex flex-col justify-between">
+        <div>
+            <div class="flex items-center gap-2.5 text-brand-petroleum mb-3 pb-2 border-b border-slate-100">
+                <span class="p-1.5 bg-blue-50 text-blue-700">
+                    <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                </span>
+                <h3 class="font-bold text-slate-900 text-sm md:text-base" style="margin: 0;">Régua de Cobrança Automática</h3>
+            </div>
+            <p class="text-xs md:text-sm text-slate-600 leading-relaxed mb-4" style="margin-top: 0;">
+                Disparo diário de lembretes e notificações de vencimento com links diretos de Boleto e Pix para os responsáveis por E-mail e WhatsApp.
+            </p>
+            <div class="flex items-center gap-2 text-xs text-emerald-700 font-medium bg-emerald-50/80 px-3 py-2 mb-4 border border-emerald-100">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Integração ativa: Lembretes automáticos enviados às 08h00.
+            </div>
+        </div>
+        <div>
+            <a class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-petroleum hover:text-brand-petroleum-dark group transition" href="{{ route('financeiro.configuracoes.gateway') }}" style="text-decoration: none;">
+                <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                Configurações do Gateway Asaas e Chaves de Integração »
+            </a>
+        </div>
+    </article>
+
+    <!-- Card de Relatórios Gerenciais -->
+    <article class="bg-white border border-slate-200 shadow-xs p-5 flex flex-col justify-between">
+        <div>
+            <div class="flex items-center gap-2.5 text-brand-petroleum mb-3 pb-2 border-b border-slate-100">
+                <span class="p-1.5 bg-amber-50 text-amber-700">
+                    <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                </span>
+                <h3 class="font-bold text-slate-900 text-sm md:text-base" style="margin: 0;">Relatórios Gerenciais</h3>
+            </div>
+            <p class="text-xs text-slate-500 mb-3" style="margin-top: 0;">
+                Emissão de relatórios e certidões oficiais conforme legislação educacional:
+            </p>
+            <ul class="space-y-2 text-xs md:text-sm" style="list-style: none; padding-left: 0;">
+                <li>
+                    <a class="flex items-center gap-2 text-brand-petroleum hover:text-cyan-700 transition font-medium group" href="{{ route('financeiro.relatorios.inadimplencia') }}" style="text-decoration: none;">
+                        <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        Relatório de Inadimplência
+                    </a>
+                </li>
+                <li>
+                    <a class="flex items-center gap-2 text-brand-petroleum hover:text-cyan-700 transition font-medium group" href="{{ route('financeiro.relatorios.informe-irpf') }}" style="text-decoration: none;">
+                        <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        Demonstrativo de Pagamentos para IRPF
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </article>
+</section>
 ```
 
 ---
 
-### 3.7. Formulários Oficiais (`.tablecadastro` / `.formcadastro`)
+### 3.7. Formulários e Inputs Modernos
 
-Formulários de criação e edição mantêm as classes tradicionais do i-Educar (`tablecadastro`, `formdktd`, `formmdtd`, `formlttd`), mas refinados com os novos botões e campos limpos:
+Para telas de cadastro e edição (ex.: Novo Plano de Cobrança, Cadastro de Responsável, Baixa Manual), os formulários utilizam cartões brancos com cabeçalho limpo, labels com peso 500 e inputs padronizados:
 
 ```html
-<form id="formcadastro" method="post" action="{{ route('...') }}">
-    @csrf
-    <table class="tablecadastro" width="100%" border="0" cellpadding="2" cellspacing="0">
-        <tbody>
-            <tr>
-                <td class="formdktd" colspan="2" height="28">
-                    <b><i class="fa fa-edit"></i> Dados do Cadastro</b>
-                </td>
-            </tr>
-            <tr>
-                <td class="formmdtd" width="220" valign="top">
-                    <label class="form">Nome do Campo <span class="campo_obrigatorio">*</span></label>
-                </td>
-                <td class="formmdtd">
-                    <input type="text" name="campo" class="ieducar-input" required style="max-width: 450px;">
-                </td>
-            </tr>
-            <tr>
-                <td class="formlttd" colspan="2" style="padding: 16px;">
-                    <div style="display: flex; gap: 8px;">
-                        <button type="submit" class="btn-ieducar-action btn-ieducar-green">
-                            <i class="fa fa-check"></i> Salvar Registro
-                        </button>
-                        <a href="{{ route('...') }}" class="btn-ieducar-action btn-ieducar-outline">
-                            Cancelar
-                        </a>
-                    </div>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</form>
+<section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="form-container">
+    <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3.5 text-white">
+        <h2 class="text-sm font-semibold tracking-wide" style="margin: 0; color: white;">
+            Dados do Cadastro
+        </h2>
+    </div>
+
+    <form method="post" action="{{ route('...') }}" class="p-5 md:p-6 space-y-5">
+        @csrf
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Campo de Texto -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Nome / Descrição <span class="text-rose-500">*</span>
+                </label>
+                <input type="text" name="nome" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+            </div>
+
+            <!-- Campo Select -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Status <span class="text-rose-500">*</span>
+                </label>
+                <select name="status" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+                    <option value="ativo">Ativo</option>
+                    <option value="inativo">Inativo</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Botões de Ação do Formulário -->
+        <div class="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
+            <a href="{{ route('...') }}" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm font-medium transition shadow-2xs" style="text-decoration: none;">
+                Cancelar
+            </a>
+            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm transition">
+                <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                </svg>
+                Salvar Registro
+            </button>
+        </div>
+    </form>
+</section>
 ```
 
 ---
 
-## 4. Checklist para Novas Telas
+## 4. Diretrizes Técnicas de Implementação
 
-Ao criar ou editar qualquer tela do módulo:
-- [ ] O arquivo herda de `@extends('financeiro::layouts.app')`?
-- [ ] O topo possui `.financeiro-header` com título, ícone e botões `.btn-ieducar-action`?
-- [ ] Caso haja filtros, utilizou `.financeiro-filter-box` e `.ieducar-input` / `.ieducar-select`?
-- [ ] A listagem está dentro de `.financeiro-table-box` com cabeçalho azul e tabela `.financeiro-table`?
-- [ ] As linhas da tabela utilizam o zebrado i-Educar e hover suave?
-- [ ] Os botões na tabela utilizam `.btn-table-action` (e nunca `.btn` nativo sem estilo)?
-- [ ] Os status utilizam `.badge-status`?
-- [ ] O *Empty State* contém mensagem amigável com orientação?
+1. **Nunca usar Tailwind via CDN (`cdn.tailwindcss.com`)**:
+   - O Prototype.js que acompanha o i-Educar causa conflito de execução assíncrona, quebrando o CSS.
+   - Sempre compile o CSS usando o script do pacote `node build_dashboard_css.js` ou declare os estilos estáticos minificados em Blade.
+2. **Atributos explícitos em SVGs**:
+   - Sempre declare `width="N"` e `height="N"` junto com `class="w-N h-N"`. Isso impede que ícones se expandam caso o CSS sofra qualquer atraso de renderização.
+3. **Escopo do Módulo**:
+   - Utilize a classe base `.financeiro-dashboard-container` envolvendo toda a view.
+   - Declare `@section('module-style', 'padding: 0;')` para eliminar calhas e margens do container externo.
+
+---
+
+## 5. Checklist de Verificação para Telas
+
+Ao criar ou atualizar qualquer tela do módulo financeiro:
+
+- [ ] A tela herda de `@extends('financeiro::layouts.app')`?
+- [ ] Está definido `@section('module-style', 'padding: 0;')`?
+- [ ] O contêiner principal utiliza `w-full` (sem `max-w-[1440px]` nem `mx-auto`)?
+- [ ] O cabeçalho possui o ícone SVG com caixa `p-2 bg-brand-petroleum/10` e título `text-xl md:text-2xl font-bold`?
+- [ ] Ações primárias utilizam o botão verde esmeralda (`bg-emerald-600`)?
+- [ ] Ações secundárias utilizam o botão ardósia (`bg-slate-700`)?
+- [ ] Se houver tabela, o cabeçalho possui gradiente `from-[#214b5f] to-[#1a3d4e]` e as linhas têm hover suave?
+- [ ] Os badges de status utilizam o padrão pill `rounded-full text-xs font-medium px-2.5 py-0.5`?
+- [ ] Todos os elementos `<svg>` possuem atributos nativos `width` e `height`?
+- [ ] Os dados são alimentados dinamicamente através do Controller?
