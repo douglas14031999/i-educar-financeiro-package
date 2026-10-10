@@ -4,7 +4,7 @@ const fs = require('fs');
 const tailwindConfig = `
 module.exports = {
   content: [
-    './resources/views/dashboard/index.blade.php',
+    './resources/views/**/*.blade.php',
     './modelo tela dash/code.html',
   ],
   important: '.financeiro-dashboard-container',
