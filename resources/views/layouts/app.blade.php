@@ -42,6 +42,10 @@
 @endphp
 @extends(View::exists('layout.default') ? 'layout.default' : 'financeiro::layouts.standalone')
 
+@push('styles')
+    @include('financeiro::partials.styles')
+@endpush
+
 @section('content')
     <div id="financeiro-module" class="open-sans" style="padding: 15px 20px;">
         @include('financeiro::partials.alerts')
@@ -49,3 +53,4 @@
         @yield('financeiro-content')
     </div>
 @endsection
+
