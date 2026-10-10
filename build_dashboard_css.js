@@ -98,6 +98,50 @@ const extraStyles = `
     vertical-align: middle !important;
     flex-shrink: 0 !important;
 }
+
+/* Paginação Limpa e Moderna */
+.financeiro-dashboard-container .pagination {
+    display: inline-flex !important;
+    gap: 4px !important;
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-items: center !important;
+}
+.financeiro-dashboard-container .page-item .page-link,
+.financeiro-dashboard-container .pagination a,
+.financeiro-dashboard-container .pagination span {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 0 8px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    border-radius: 4px !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    color: #334155 !important;
+    text-decoration: none !important;
+    transition: all 0.15s ease !important;
+}
+.financeiro-dashboard-container .pagination .active span,
+.financeiro-dashboard-container .pagination .active .page-link,
+.financeiro-dashboard-container .pagination span[aria-current="page"] {
+    background-color: #1d4354 !important;
+    color: #ffffff !important;
+    border-color: #1d4354 !important;
+}
+.financeiro-dashboard-container .pagination a:hover {
+    background-color: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+}
+.financeiro-dashboard-container .pagination .disabled span,
+.financeiro-dashboard-container .pagination .disabled .page-link {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+}
 `;
 
 const finalCss = extraStyles.trim() + '\n' + css;
