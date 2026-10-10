@@ -93,11 +93,18 @@ class Titulo extends Model
 
     public function scopeVencidos($query)
     {
-        return $query->where('status', 'vencido')
-            ->orWhere(function ($q) {
-                $q->whereIn('status', ['aberto', 'parcial'])
-                  ->where('data_vencimento', '<', Carbon::today());
-            });
+        return $query->where(function ($queryScope) {
+            $queryScope->where('status', 'vencido')
+                ->orWhere(function ($q) {
+                    $q->whereIn('status', ['aberto', 'parcial'])
+                      ->where('data_vencimento', '<', Carbon::today()->toDateString());
+                });
+        });
+    }
+
+    public function isLiquidado(): bool
+    {
+        return $this->status === 'pago' || (float)$this->valor_saldo <= 0.01;
     }
 
     public function isVencido(): bool
@@ -150,5 +157,47 @@ class Titulo extends Model
     public function getValorAtualizadoAttribute(): float
     {
         return round($this->valor_saldo + $this->calcularMulta() + $this->calcularJuros(), 2);
+    }
+
+    /**
+     * Retorna o nome completo do aluno vinculado consultando a base do i-Educar
+     */
+    public function getAlunoNomeAttribute(): string
+    {
+        if (empty($this->aluno_id)) {
+            return '-';
+        }
+        try {
+            $nome = \DB::table('pmieducar.aluno')
+                ->join('cadastro.pessoa', 'cadastro.pessoa.idpes', '=', 'pmieducar.aluno.ref_idpes')
+                ->where('pmieducar.aluno.cod_aluno', $this->aluno_id)
+                ->value('cadastro.pessoa.nome');
+
+            return $nome ?: ('Aluno #' . $this->aluno_id);
+        } catch (\Throwable $e) {
+            return 'Aluno #' . $this->aluno_id;
+        }
+    }
+
+    /**
+     * Retorna o nome da turma ativa do aluno consultando a base do i-Educar
+     */
+    public function getTurmaNomeAttribute(): string
+    {
+        if (empty($this->aluno_id)) {
+            return '-';
+        }
+        try {
+            $turma = \DB::table('pmieducar.matricula')
+                ->join('pmieducar.matricula_turma', 'pmieducar.matricula_turma.ref_cod_matricula', '=', 'pmieducar.matricula.cod_matricula')
+                ->join('pmieducar.turma', 'pmieducar.turma.cod_turma', '=', 'pmieducar.matricula_turma.ref_cod_turma')
+                ->where('pmieducar.matricula.ref_cod_aluno', $this->aluno_id)
+                ->where('pmieducar.matricula.ativo', 1)
+                ->value('pmieducar.turma.nm_turma');
+
+            return $turma ?: '-';
+        } catch (\Throwable $e) {
+            return '-';
+        }
     }
 }

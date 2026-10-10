@@ -1,112 +1,242 @@
 @extends('financeiro::layouts.app')
 
-@section('title', 'DRE Escolar')
-@section('breadcrumb', 'Relatórios > DRE')
+@section('title', 'Demonstração do Resultado do Exercício - DRE')
+@section('breadcrumb', 'Relatórios > DRE Escolar')
+@section('module-style', 'padding: 0;')
+
+@push('styles')
+    @include('financeiro::dashboard.styles')
+    <style>
+        @media print {
+            #corpo > table.tablelistagem, #menu, .noprint, header, footer { display: none !important; }
+            .financeiro-dashboard-container { background: white !important; }
+        }
+    </style>
+@endpush
 
 @section('financeiro-content')
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <div>
-            <h2 style="color: #47728f; margin: 0; font-size: 18px; font-weight: 700;">
-                <i class="fa fa-balance-scale"></i> Demonstração do Resultado do Exercício - DRE ({{ $ano }})
-            </h2>
-            <span style="font-size: 12px; color: #666;">
-                Receitas brutas, bolsas/descontos concedidos, despesas operacionais e resultado líquido
-            </span>
-        </div>
-        <div>
-            <form method="get" action="{{ route('financeiro.relatorios.dre') }}" style="display: inline-flex; gap: 5px; align-items: center;">
-                <label style="font-size: 12px; margin: 0; font-weight: bold;">Ano:</label>
-                <select name="ano" class="form-input" onchange="this.form.submit();" style="width: 100px;">
-                    @for($y = date('Y') + 1; $y >= date('Y') - 4; $y--)
-                        <option value="{{ $y }}" {{ $ano == $y ? 'selected' : '' }}>{{ $y }}</option>
-                    @endfor
-                </select>
-            </form>
-            <a href="{{ route('financeiro.relatorios.index') }}" class="btn btn-sm" style="margin-left: 8px;">
-                <i class="fa fa-arrow-left"></i> Voltar
-            </a>
-        </div>
-    </div>
+<div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
+    <main class="w-full p-4 md:p-6 space-y-6" data-purpose="dre-container">
+        
+        <!-- Cabeçalho -->
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
+            <div>
+                <div class="flex items-center gap-2.5 text-brand-petroleum">
+                    <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
+                        <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
+                        Demonstração do Resultado do Exercício (DRE)
+                    </h1>
+                </div>
+                <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
+                    Exercício contábil de <strong>{{ $ano }}</strong>: faturamento bruto, deduções, custos operacionais e resultado líquido
+                </p>
+            </div>
+            <div class="flex items-center gap-2.5 flex-wrap">
+                <form method="get" action="{{ route('financeiro.relatorios.dre') }}" class="flex items-center gap-2">
+                    <label for="ano" class="text-xs font-semibold text-slate-600 uppercase">Exercício:</label>
+                    <select name="ano" id="ano" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum" onchange="this.form.submit();">
+                        @for($y = date('Y') + 1; $y >= date('Y') - 4; $y--)
+                            <option value="{{ $y }}" {{ $ano == $y ? 'selected' : '' }}>{{ $y }}</option>
+                        @endfor
+                    </select>
+                </form>
+                <button type="button" onclick="window.print();" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium border border-slate-300 shadow-2xs transition">
+                    <svg class="w-4 h-4 text-slate-600" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    Imprimir DRE
+                </button>
+                <a href="{{ route('financeiro.relatorios.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium shadow-sm transition" style="text-decoration: none;">
+                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    Voltar aos Relatórios
+                </a>
+            </div>
+        </header>
 
-    <!-- Estrutura Contábil da DRE -->
-    <table class="tablecadastro" width="100%" border="0" cellpadding="4" cellspacing="0" style="margin-bottom: 25px; border: 1px solid #ccdce6;">
-        <tbody>
-            <tr>
-                <td class="formdktd" colspan="2" height="26">
-                    <b><i class="fa fa-calculator"></i> Demonstração do Resultado Contábil</b>
-                </td>
-            </tr>
-            <!-- 1. Receita Bruta -->
-            <tr>
-                <td class="formmdtd" style="font-size: 14px; font-weight: bold; color: #333;">
-                    (+) 1. RECEITA BRUTA COM MENSALIDADES E MATRÍCULAS
-                </td>
-                <td class="formmdtd" style="text-align: right; font-size: 14px; font-weight: bold; width: 220px; color: #438944;">
-                    R$ {{ number_format($receitaBruta, 2, ',', '.') }}
-                </td>
-            </tr>
+        <!-- Cards de Resumo Gerencial -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-purpose="kpi-cards">
+            <article class="bg-white shadow-xs border border-slate-200 p-4 relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 inset-x-0 h-1 bg-emerald-500"></div>
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">Receita Bruta Faturada</span>
+                    <span class="p-1 bg-emerald-50 text-emerald-600">
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                    </span>
+                </div>
+                <div>
+                    <span class="text-xl font-bold text-slate-900">R$ {{ number_format($receitaBruta, 2, ',', '.') }}</span>
+                    <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">Mensalidades e matrículas {{ $ano }}</p>
+                </div>
+            </article>
 
-            <!-- 2. Deduções -->
-            <tr>
-                <td class="formlttd" style="font-size: 13px; color: #555; padding-left: 25px;">
-                    (-) 2. DEDUÇÕES DA RECEITA BRUTA (Bolsas de Estudo, Descontos Irmãos, Pontualidade)
-                </td>
-                <td class="formlttd" style="text-align: right; font-size: 13px; color: #d9534f;">
-                    (R$ {{ number_format($deducoes, 2, ',', '.') }})
-                </td>
-            </tr>
+            <article class="bg-white shadow-xs border border-slate-200 p-4 relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 inset-x-0 h-1 bg-amber-500"></div>
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">Deduções e Bolsas</span>
+                    <span class="p-1 bg-amber-50 text-amber-600">
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 12H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                    </span>
+                </div>
+                <div>
+                    <span class="text-xl font-bold text-slate-900">R$ {{ number_format($deducoes, 2, ',', '.') }}</span>
+                    <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">Descontos irmãos e bolsas</p>
+                </div>
+            </article>
 
-            <!-- 3. Receita Líquida -->
-            <tr style="background-color: #f5f9fd;">
-                <td class="formmdtd" style="font-size: 14px; font-weight: bold; color: #47728f;">
-                    (=) 3. RECEITA OPERACIONAL LÍQUIDA
-                </td>
-                <td class="formmdtd" style="text-align: right; font-size: 14px; font-weight: bold; color: #47728f;">
-                    R$ {{ number_format($receitaLiquida, 2, ',', '.') }}
-                </td>
-            </tr>
+            <article class="bg-white shadow-xs border border-slate-200 p-4 relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 inset-x-0 h-1 bg-rose-500"></div>
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">Despesas Operacionais</span>
+                    <span class="p-1 bg-rose-50 text-rose-600">
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 14l-7 7m0 0l-7-7m7 7V3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                    </span>
+                </div>
+                <div>
+                    <span class="text-xl font-bold text-slate-900">R$ {{ number_format($totalDespesasOperacionais, 2, ',', '.') }}</span>
+                    <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">Custos e contas liquidadas</p>
+                </div>
+            </article>
 
-            <!-- 4. Despesas Operacionais -->
-            <tr>
-                <td class="formdktd" colspan="2" height="22" style="background-color: #e5edf2; color: #47728f;">
-                    <b>(-) 4. DESPESAS OPERACIONAIS POR CATEGORIA</b>
-                </td>
-            </tr>
-            @forelse($despesasPorCategoria as $desp)
-                <tr>
-                    <td class="formlttd" style="font-size: 13px; padding-left: 25px;">
-                        • {{ $desp->planoConta->descricao ?? 'Outras Despesas Operacionais' }}
-                    </td>
-                    <td class="formlttd" style="text-align: right; font-size: 13px; color: #d9534f;">
-                        (R$ {{ number_format($desp->total, 2, ',', '.') }})
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td class="formlttd" colspan="2" style="padding-left: 25px; color: #888;">
-                        Nenhuma despesa paga registrada no exercício de {{ $ano }}.
-                    </td>
-                </tr>
-            @endforelse
+            <article class="bg-white shadow-xs border border-slate-200 p-4 relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 inset-x-0 h-1 {{ $resultadoLiquido >= 0 ? 'bg-emerald-600' : 'bg-rose-600' }}"></div>
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">Resultado Líquido</span>
+                    <span class="p-1 {{ $resultadoLiquido >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600' }}">
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            @if($resultadoLiquido >= 0)
+                                <path d="M5 10l7-7m0 0l7 7m-7-7v18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            @else
+                                <path d="M19 14l-7 7m0 0l-7-7m7 7V3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            @endif
+                        </svg>
+                    </span>
+                </div>
+                <div>
+                    <span class="text-xl font-bold {{ $resultadoLiquido >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
+                        R$ {{ number_format($resultadoLiquido, 2, ',', '.') }}
+                    </span>
+                    <p class="text-xs font-semibold {{ $resultadoLiquido >= 0 ? 'text-emerald-600' : 'text-rose-600' }} mt-1" style="margin: 4px 0 0 0;">
+                        {{ $resultadoLiquido >= 0 ? 'Superávit Operacional' : 'Déficit Operacional' }}
+                    </p>
+                </div>
+            </article>
+        </section>
 
-            <tr style="background-color: #f9f9f9;">
-                <td class="formmdtd" style="font-weight: bold; padding-left: 25px; color: #333;">
-                    TOTAL DAS DESPESAS OPERACIONAIS:
-                </td>
-                <td class="formmdtd" style="text-align: right; font-weight: bold; color: #d9534f;">
-                    (R$ {{ number_format($totalDespesasOperacionais, 2, ',', '.') }})
-                </td>
-            </tr>
+        <!-- Tabela Demonstrativa da DRE -->
+        <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="dre-table">
+            <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    <h2 class="text-sm font-semibold tracking-wide" style="margin: 0; color: white;">
+                        Estrutura Contábil Oficial da DRE Escolar
+                    </h2>
+                </div>
+                <span class="text-xs text-slate-300">
+                    Regime de Competência / Caixa Integrado
+                </span>
+            </div>
 
-            <!-- 5. Resultado Líquido Final -->
-            <tr style="background-color: {{ $resultadoLiquido >= 0 ? '#eaf4eb' : '#fdf2f2' }}; border-top: 2px solid #ccdce6;">
-                <td style="padding: 10px; font-size: 15px; font-weight: 700; color: {{ $resultadoLiquido >= 0 ? '#438944' : '#cc0000' }};">
-                    (=) 5. RESULTADO LÍQUIDO DO EXERCÍCIO ({{ $resultadoLiquido >= 0 ? 'SUPERÁVIT' : 'DÉFICIT' }})
-                </td>
-                <td style="padding: 10px; text-align: right; font-size: 16px; font-weight: 700; color: {{ $resultadoLiquido >= 0 ? '#438944' : '#cc0000' }};">
-                    R$ {{ number_format($resultadoLiquido, 2, ',', '.') }}
-                </td>
-            </tr>
-        </tbody>
-    </table>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs md:text-sm m-0 border-0" style="margin: 0;">
+                    <thead>
+                        <tr class="bg-slate-100 text-[11px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
+                            <th class="py-3 px-6" scope="col">Rubrica / Conta Contábil</th>
+                            <th class="py-3 px-6 text-right" scope="col">Valor (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <!-- 1. Receita Bruta -->
+                        <tr class="bg-slate-50/70 font-semibold text-slate-900">
+                            <td class="py-3.5 px-6">
+                                (+) 1. RECEITA BRUTA OPERACIONAL (Mensalidades e Matrículas)
+                            </td>
+                            <td class="py-3.5 px-6 text-right font-bold text-emerald-700">
+                                R$ {{ number_format($receitaBruta, 2, ',', '.') }}
+                            </td>
+                        </tr>
+
+                        <!-- 2. Deduções -->
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="py-3 px-6 pl-10 text-slate-600">
+                                (-) 2. DEDUÇÕES DA RECEITA BRUTA (Bolsas, Descontos Irmãos, Pontualidade)
+                            </td>
+                            <td class="py-3 px-6 text-right font-medium text-amber-700">
+                                (R$ {{ number_format($deducoes, 2, ',', '.') }})
+                            </td>
+                        </tr>
+
+                        <!-- 3. Receita Líquida -->
+                        <tr class="bg-cyan-50/50 font-bold text-brand-petroleum border-y border-cyan-200">
+                            <td class="py-3.5 px-6">
+                                (=) 3. RECEITA OPERACIONAL LÍQUIDA
+                            </td>
+                            <td class="py-3.5 px-6 text-right font-bold text-brand-petroleum text-base">
+                                R$ {{ number_format($receitaLiquida, 2, ',', '.') }}
+                            </td>
+                        </tr>
+
+                        <!-- 4. Despesas Operacionais Cabeçalho -->
+                        <tr class="bg-slate-100/90 font-bold text-slate-700">
+                            <td class="py-2.5 px-6" colspan="2">
+                                (-) 4. DESPESAS OPERACIONAIS POR CATEGORIA
+                            </td>
+                        </tr>
+
+                        @forelse($despesasPorCategoria as $desp)
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="py-2.5 px-6 pl-10 text-slate-600 flex items-center gap-2">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                    {{ $desp->planoConta->descricao ?? 'Outras Despesas Operacionais' }}
+                                </td>
+                                <td class="py-2.5 px-6 text-right font-medium text-rose-700">
+                                    (R$ {{ number_format($desp->total, 2, ',', '.') }})
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="2" class="py-3 px-6 pl-10 text-slate-400 italic">
+                                    Nenhuma despesa operacional liquidada registrada no exercício de {{ $ano }}.
+                                </td>
+                            </tr>
+                        @endforelse
+
+                        <!-- Subtotal Despesas -->
+                        <tr class="bg-rose-50/40 font-semibold text-rose-900">
+                            <td class="py-3 px-6 pl-10">
+                                TOTAL DAS DESPESAS OPERACIONAIS:
+                            </td>
+                            <td class="py-3 px-6 text-right font-bold text-rose-700">
+                                (R$ {{ number_format($totalDespesasOperacionais, 2, ',', '.') }})
+                            </td>
+                        </tr>
+
+                        <!-- 5. Resultado Líquido Final -->
+                        <tr class="{{ $resultadoLiquido >= 0 ? 'bg-emerald-50 text-emerald-900 border-t-2 border-emerald-500' : 'bg-rose-50 text-rose-900 border-t-2 border-rose-500' }}">
+                            <td class="py-4 px-6 text-base font-bold">
+                                (=) 5. RESULTADO LÍQUIDO DO EXERCÍCIO ({{ $resultadoLiquido >= 0 ? 'SUPERÁVIT' : 'DÉFICIT' }})
+                            </td>
+                            <td class="py-4 px-6 text-right text-lg font-extrabold {{ $resultadoLiquido >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
+                                R$ {{ number_format($resultadoLiquido, 2, ',', '.') }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <footer class="p-3.5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+                <span>Relatório gerado em {{ date('d/m/Y H:i') }} pelo Módulo Financeiro i-Educar</span>
+                <span>Auditado e em conformidade com as Normas Brasileiras de Contabilidade (NBC TG)</span>
+            </footer>
+        </section>
+
+    </main>
+</div>
 @endsection

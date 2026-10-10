@@ -27,44 +27,61 @@ class DashboardController extends Controller
 
         $titulosRecentes = [];
 
+        $inicioMes = Carbon::now()->startOfMonth()->toDateString();
+        $fimMes = Carbon::now()->endOfMonth()->toDateString();
+
+        // 1. Recebido no mês (liquidações do mês não estornadas)
         try {
-            $inicioMes = Carbon::now()->startOfMonth();
-            $fimMes = Carbon::now()->endOfMonth();
-
-            // 1. Recebido no mês
-            $recebidoMes = Pagamento::whereBetween('data_pagamento', [$inicioMes, $fimMes])
-                ->where('status', 'confirmado')
+            $kpis['recebido_mes'] = (float) Pagamento::whereBetween('data_pagamento', [$inicioMes, $fimMes])
+                ->where(function ($q) {
+                    $q->where('estornado', false)->orWhereNull('estornado');
+                })
                 ->sum('valor_pago');
+        } catch (\Throwable $e) {
+            \Log::warning('Dashboard: Erro ao calcular recebido_mes: ' . $e->getMessage());
+        }
 
-            // 2. A receber no mês
-            $aReceberMes = Titulo::whereBetween('data_vencimento', [$inicioMes, $fimMes])
+        // 2. A receber no mês (parcelas a vencer ou em aberto com vencimento neste mês)
+        try {
+            $kpis['a_receber_mes'] = (float) Titulo::whereBetween('data_vencimento', [$inicioMes, $fimMes])
                 ->whereIn('status', ['aberto', 'parcial'])
                 ->sum('valor_saldo');
+        } catch (\Throwable $e) {
+            \Log::warning('Dashboard: Erro ao calcular a_receber_mes: ' . $e->getMessage());
+        }
 
-            // 3. Inadimplência total
+        // 3. Inadimplência total (títulos vencidos acumulados)
+        try {
             $titulosVencidos = Titulo::vencidos()->get();
-            $totalInadimplente = $titulosVencidos->sum('valor_saldo');
-            $titulosVencidosCount = $titulosVencidos->count();
+            $kpis['total_inadimplente'] = (float) $titulosVencidos->sum('valor_saldo');
+            $kpis['titulos_vencidos_count'] = (int) $titulosVencidos->count();
+        } catch (\Throwable $e) {
+            \Log::warning('Dashboard: Erro ao calcular inadimplencia: ' . $e->getMessage());
+        }
 
-            // 4. Taxa de inadimplência
-            $totalFaturadoMes = Titulo::whereBetween('data_vencimento', [$inicioMes, $fimMes])->sum('valor_nominal');
-            $taxaInadimplencia = $totalFaturadoMes > 0 ? min(100, round(($totalInadimplente / $totalFaturadoMes) * 100, 1)) : 0.0;
+        // 4. Taxa de inadimplência (% do saldo vencido sobre o total faturado)
+        try {
+            $totalFaturado = Titulo::where('data_vencimento', '<=', $fimMes)
+                ->where('status', '!=', 'cancelado')
+                ->sum('valor_nominal');
 
-            $kpis = [
-                'recebido_mes' => (float) $recebidoMes,
-                'a_receber_mes' => (float) $aReceberMes,
-                'total_inadimplente' => (float) $totalInadimplente,
-                'titulos_vencidos_count' => (int) $titulosVencidosCount,
-                'taxa_inadimplencia' => (float) $taxaInadimplencia,
-            ];
+            if ($totalFaturado > 0) {
+                $kpis['taxa_inadimplencia'] = min(100.0, round(($kpis['total_inadimplente'] / $totalFaturado) * 100, 1));
+            } else {
+                $kpis['taxa_inadimplencia'] = 0.0;
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('Dashboard: Erro ao calcular taxa_inadimplencia: ' . $e->getMessage());
+        }
 
-            // 5. Títulos recentes
+        // 5. Títulos recentes com movimentação operacional
+        try {
             $titulosRecentes = Titulo::with(['responsavel'])
-                ->orderBy('data_vencimento', 'asc')
+                ->orderBy('data_vencimento', 'desc')
                 ->limit(10)
                 ->get();
         } catch (\Throwable $e) {
-            // Em caso de tabela recém-migrada ou banco vazio, mantém defaults
+            \Log::warning('Dashboard: Erro ao buscar titulosRecentes: ' . $e->getMessage());
         }
 
         return view('financeiro::dashboard.index', compact('kpis', 'titulosRecentes'));
