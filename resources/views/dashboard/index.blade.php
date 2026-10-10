@@ -37,7 +37,7 @@
                 R$ {{ number_format($kpis['recebido_mes'] ?? 0, 2, ',', '.') }}
             </div>
             <div class="kpi-card-footer">
-                Liquidações via Asaas, Pix e Secretaria
+                Liquidações via Asaas, Pix e Caixa
             </div>
         </div>
 
@@ -79,7 +79,7 @@
                 {{ number_format($kpis['taxa_inadimplencia'] ?? 0, 1, ',', '.') }}%
             </div>
             <div class="kpi-card-footer">
-                Calculada sobre a receita faturada
+                Em relação à receita faturada
             </div>
         </div>
     </div>
@@ -98,13 +98,13 @@
             <table class="financeiro-table">
                 <thead>
                     <tr>
-                        <th width="100" style="text-align: center;">Vencimento</th>
+                        <th width="110" style="text-align: center;">Vencimento</th>
                         <th>Aluno</th>
                         <th>Responsável Financeiro</th>
                         <th>Turma / Série</th>
                         <th width="80" style="text-align: center;">Parcela</th>
-                        <th width="120" style="text-align: right;">Valor Nominal</th>
-                        <th width="100" style="text-align: center;">Status</th>
+                        <th width="120" style="text-align: right;">Valor</th>
+                        <th width="110" style="text-align: center;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -119,13 +119,13 @@
                             <td>{{ $titulo->responsavel->nome ?? 'Não informado' }}</td>
                             <td>{{ $titulo->turma_nome ?? '-' }}</td>
                             <td align="center">{{ $titulo->numero_parcela }}/{{ $titulo->total_parcelas }}</td>
-                            <td align="right" style="font-weight: 700; color: #1e293b;">
-                                R$ {{ number_format($titulo->valor_nominal, 2, ',', '.') }}
+                            <td align="right" style="font-weight: 700; color: #1b4c6b;">
+                                R$ {{ number_format($titulo->valor_saldo ?? $titulo->valor_nominal, 2, ',', '.') }}
                             </td>
                             <td align="center">
                                 @if($titulo->status === 'pago')
                                     <span class="badge-status badge-pago">Pago</span>
-                                @elseif($titulo->status === 'vencido')
+                                @elseif($titulo->status === 'vencido' || $titulo->isVencido())
                                     <span class="badge-status badge-vencido">Vencido</span>
                                 @elseif($titulo->status === 'cancelado')
                                     <span class="badge-status badge-cancelado">Cancelado</span>
@@ -137,10 +137,18 @@
                     @empty
                         <tr>
                             <td colspan="7" class="financeiro-empty-state">
-                                <i class="fa fa-info-circle fa-2x" style="color: #47728f; margin-bottom: 6px;"></i>
-                                <div style="font-size: 13px; font-weight: 600; color: #334155;">Nenhuma mensalidade lançada para exibição no momento.</div>
-                                <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
-                                    Cadastre responsáveis financeiros e configure os planos de cobrança para emitir contratos e parcelas escolares.
+                                <i class="fa fa-folder-open-o" style="font-size: 32px; color: #8ba4b5; margin-bottom: 8px; display: inline-block;"></i>
+                                <div style="font-size: 14px; font-weight: 600; color: #47728f;">Não há informação para ser apresentada no momento.</div>
+                                <div style="font-size: 12.5px; color: #64748b; margin-top: 4px;">
+                                    Cadastre responsáveis financeiros e configure os planos de pagamento para gerar contratos e parcelas.
+                                </div>
+                                <div style="margin-top: 14px; display: flex; justify-content: center; gap: 10px;">
+                                    <a href="{{ route('financeiro.planos.create') }}" class="btn-ieducar-action btn-ieducar-outline">
+                                        <i class="fa fa-plus"></i> Novo Plano de Pagamento
+                                    </a>
+                                    <a href="{{ route('financeiro.responsaveis.create') }}" class="btn-ieducar-action btn-ieducar-outline">
+                                        <i class="fa fa-user-plus"></i> Cadastrar Responsável
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -155,15 +163,15 @@
         <!-- Régua de Cobrança e Gateway Asaas -->
         <div class="financeiro-sub-box">
             <div class="financeiro-sub-header">
-                <i class="fa fa-bell-o" style="color: #47728f;"></i> Régua de Cobrança Automática (Asaas)
+                <i class="fa fa-bell-o" style="color: #47728f;"></i> Régua de Cobrança Automática
             </div>
             <div class="financeiro-sub-content">
                 <p>
-                    O módulo monitora diariamente os vencimentos e dispara lembretes automáticos com links diretos de Boleto e Pix para os responsáveis por E-mail e WhatsApp.
+                    Disparo diário de lembretes e notificações de vencimento com links diretos de Boleto e Pix para os responsáveis por E-mail e WhatsApp.
                 </p>
-                <div style="margin-top: 12px;">
-                    <a href="{{ route('financeiro.configuracoes.gateway') }}" class="btn-ieducar-outline">
-                        <i class="fa fa-sliders"></i> Ajustar Gatilhos e Chaves de API &raquo;
+                <div style="margin-top: 14px;">
+                    <a href="{{ route('financeiro.configuracoes.gateway') }}" class="btn-ieducar-action btn-ieducar-outline">
+                        <i class="fa fa-cog"></i> Configurações do Gateway Asaas e Chaves de Integração &raquo;
                     </a>
                 </div>
             </div>
@@ -172,29 +180,29 @@
         <!-- Relatórios Oficiais e Certidões -->
         <div class="financeiro-sub-box">
             <div class="financeiro-sub-header">
-                <i class="fa fa-file-text-o" style="color: #47728f;"></i> Relatórios Oficiais e Demonstrativos
+                <i class="fa fa-file-text-o" style="color: #47728f;"></i> Relatórios Gerenciais
             </div>
             <div class="financeiro-sub-content">
                 <p>
-                    Emissão de documentos fiscais e comprovantes em conformidade com as exigências da legislação e da secretaria escolar:
+                    Emissão de relatórios e certidões oficiais:
                 </p>
                 <ul class="financeiro-links-list">
                     <li>
-                        <i class="fa fa-file-pdf-o text-red"></i>
+                        <i class="fa fa-circle" style="font-size: 6px; color: #47728f;"></i>
                         <a href="{{ route('financeiro.relatorios.inadimplencia') }}">
-                            Relatório de Inadimplência e Títulos em Atraso
+                            Relatório de Inadimplência
                         </a>
                     </li>
                     <li>
-                        <i class="fa fa-calculator text-blue"></i>
+                        <i class="fa fa-circle" style="font-size: 6px; color: #47728f;"></i>
                         <a href="{{ route('financeiro.relatorios.informe-irpf') }}">
-                            Demonstrativo Anual de Pagamentos para IRPF
+                            Demonstrativo de Pagamentos para IRPF
                         </a>
                     </li>
                     <li>
-                        <i class="fa fa-certificate text-green"></i>
+                        <i class="fa fa-circle" style="font-size: 6px; color: #47728f;"></i>
                         <a href="{{ route('financeiro.relatorios.quitacao-anual') }}">
-                            Declaração de Quitação Anual de Débitos (Lei Federal 12.007/2009)
+                            Declaração de Quitação Anual de Débitos (Lei 12.007/2009)
                         </a>
                     </li>
                 </ul>
@@ -203,11 +211,11 @@
     </div>
 </div>
 
-<!-- Estilos Dedicados no Padrão Oficial do i-Educar -->
+<!-- Estilos 100% Alinhados à Identidade Visual do i-Educar -->
 <style>
     .financeiro-dashboard-wrapper {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        color: #334155;
+        font-family: "Open Sans", Arial, sans-serif;
+        color: #47728f;
     }
 
     /* Cabeçalho */
@@ -215,20 +223,20 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 18px;
         padding-bottom: 12px;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid #cddce6;
     }
     .financeiro-header-title h2 {
         color: #1b4c6b;
         font-size: 18px;
         font-weight: 700;
         margin: 0;
-        letter-spacing: -0.2px;
+        font-family: "Open Sans", Arial, sans-serif;
     }
     .financeiro-header-desc {
         color: #64748b;
-        font-size: 12.5px;
+        font-size: 13px;
         margin-top: 3px;
         display: block;
     }
@@ -242,21 +250,23 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 7px 14px;
-        font-size: 12.5px;
+        padding: 7px 16px;
+        font-size: 13px;
         font-weight: 600;
-        border-radius: 4px;
+        border-radius: 3px;
         text-decoration: none !important;
-        transition: all 0.15s ease-in-out;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        cursor: pointer;
+        font-family: "Open Sans", Arial, sans-serif;
+        transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
     }
     .btn-ieducar-green {
-        background-color: #28a745;
+        background-color: #0ac336;
         color: #ffffff !important;
-        border: 1px solid #218838;
+        border: 1px solid #09b031;
     }
     .btn-ieducar-green:hover {
-        background-color: #218838;
+        background-color: #09b031;
+        color: #ffffff !important;
     }
     .btn-ieducar-blue {
         background-color: #47728f;
@@ -265,45 +275,38 @@
     }
     .btn-ieducar-blue:hover {
         background-color: #3b5f77;
+        color: #ffffff !important;
     }
     .btn-ieducar-outline {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 5px 12px;
-        font-size: 12px;
-        font-weight: 600;
-        color: #1b4c6b !important;
         background-color: #ffffff;
-        border: 1px solid #cbd5e1;
-        border-radius: 4px;
-        text-decoration: none !important;
-        transition: all 0.15s ease-in-out;
+        color: #47728f !important;
+        border: 1px solid #cddce6;
     }
     .btn-ieducar-outline:hover {
-        background-color: #f1f5f9;
-        border-color: #94a3b8;
+        background-color: #f5f9fd;
+        border-color: #47728f;
+        color: #1b4c6b !important;
     }
 
     /* Grid de KPIs */
     .financeiro-kpis-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-        margin-bottom: 22px;
+        gap: 14px;
+        margin-bottom: 20px;
     }
     .financeiro-kpi-card {
         background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 5px;
+        border: 1px solid #cddce6;
+        border-radius: 3px;
         padding: 14px 16px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         position: relative;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
-    .financeiro-kpi-card.kpi-green { border-top: 3px solid #10b981; }
-    .financeiro-kpi-card.kpi-blue  { border-top: 3px solid #0284c7; }
-    .financeiro-kpi-card.kpi-red   { border-top: 3px solid #ef4444; }
-    .financeiro-kpi-card.kpi-amber { border-top: 3px solid #f59e0b; }
+    .financeiro-kpi-card.kpi-green { border-top: 3px solid #0ac336; }
+    .financeiro-kpi-card.kpi-blue  { border-top: 3px solid #47728f; }
+    .financeiro-kpi-card.kpi-red   { border-top: 3px solid #d9534f; }
+    .financeiro-kpi-card.kpi-amber { border-top: 3px solid #f0ad4e; }
 
     .kpi-card-header {
         display: flex;
@@ -312,46 +315,46 @@
         margin-bottom: 6px;
     }
     .kpi-card-title {
-        font-size: 11.5px;
+        font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
-        color: #64748b;
+        color: #47728f;
         letter-spacing: 0.3px;
     }
     .kpi-icon {
         font-size: 14px;
-        color: #94a3b8;
+        color: #8ba4b5;
     }
     .kpi-card-value {
         font-size: 21px;
         font-weight: 700;
-        letter-spacing: -0.5px;
         margin-bottom: 4px;
+        color: #1b4c6b;
     }
     .kpi-card-footer {
-        font-size: 11.5px;
+        font-size: 12px;
         color: #64748b;
     }
 
-    .text-green { color: #059669; }
-    .text-blue  { color: #0284c7; }
-    .text-red   { color: #dc2626; }
-    .text-amber { color: #d97706; }
+    .text-green { color: #0ac336 !important; }
+    .text-blue  { color: #47728f !important; }
+    .text-red   { color: #d9534f !important; }
+    .text-amber { color: #f0ad4e !important; }
 
     /* Caixa da Tabela */
     .financeiro-table-box {
         background: #ffffff;
-        border: 1px solid #cbd5e1;
-        border-radius: 5px;
-        margin-bottom: 22px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        border: 1px solid #cddce6;
+        border-radius: 3px;
+        margin-bottom: 20px;
         overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
     .financeiro-box-header {
         background: #47728f;
         color: #ffffff;
-        padding: 10px 16px;
-        font-size: 13.5px;
+        padding: 9px 15px;
+        font-size: 14px;
         font-weight: 700;
         display: flex;
         justify-content: space-between;
@@ -374,86 +377,93 @@
     .financeiro-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 12.5px;
+        font-size: 13px;
     }
     .financeiro-table thead tr {
-        background-color: #f1f5f9;
-        border-bottom: 2px solid #cbd5e1;
+        background-color: #ccdce6;
     }
     .financeiro-table th {
         padding: 9px 12px;
-        font-size: 11.5px;
+        font-size: 12px;
         font-weight: 700;
-        color: #334155;
+        color: #47728f;
         text-transform: uppercase;
-        letter-spacing: 0.2px;
     }
     .financeiro-table td {
         padding: 10px 12px;
-        border-bottom: 1px solid #e2e8f0;
-        color: #1e293b;
+        border-bottom: 1px solid #eef4f8;
+        color: #47728f;
+    }
+    .financeiro-table tbody tr:nth-child(odd) {
+        background-color: #f5f9fd;
+    }
+    .financeiro-table tbody tr:nth-child(even) {
+        background-color: #ffffff;
     }
     .financeiro-table tbody tr:hover {
-        background-color: #f8fafc;
+        background-color: #eaf2f8;
     }
 
     .financeiro-empty-state {
         text-align: center;
         padding: 30px 15px !important;
+        background-color: #fafbfc;
     }
 
-    /* Badges de Status */
+    /* Badges de Status Padrão i-Educar */
     .badge-status {
         display: inline-block;
         padding: 3px 8px;
         font-size: 11px;
         font-weight: 700;
-        border-radius: 12px;
+        border-radius: 3px;
         text-transform: uppercase;
-        letter-spacing: 0.2px;
     }
     .badge-pago {
-        background-color: #dcfce7;
-        color: #15803d;
+        background-color: #e0f9d8;
+        color: #157100;
+        border: 1px solid #c0eec0;
     }
     .badge-pendente {
-        background-color: #fef9c3;
+        background-color: #fff7e2;
         color: #854d0e;
+        border: 1px solid #fde68a;
     }
     .badge-vencido {
-        background-color: #fee2e2;
+        background-color: #ffeeee;
         color: #991b1b;
+        border: 1px solid #fecaca;
     }
     .badge-cancelado {
         background-color: #f1f5f9;
         color: #64748b;
+        border: 1px solid #cbd5e1;
     }
 
     /* Grid Inferior */
     .financeiro-bottom-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 16px;
+        gap: 14px;
     }
     .financeiro-sub-box {
         background: #ffffff;
-        border: 1px solid #cbd5e1;
-        border-radius: 5px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        border: 1px solid #cddce6;
+        border-radius: 3px;
         overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
     .financeiro-sub-header {
-        background: #eef4f8;
-        border-bottom: 1px solid #cbd5e1;
-        padding: 9px 14px;
-        font-size: 13px;
+        background: #ccdce6;
+        padding: 9px 15px;
+        font-size: 13.5px;
         font-weight: 700;
-        color: #1b4c6b;
+        color: #47728f;
     }
     .financeiro-sub-content {
         padding: 14px 16px;
-        font-size: 12.5px;
-        color: #475569;
+        font-size: 13px;
+        color: #555555;
         line-height: 1.5;
     }
     .financeiro-sub-content p {
@@ -471,12 +481,12 @@
         gap: 8px;
     }
     .financeiro-links-list li a {
-        color: #0284c7;
+        color: #47728f;
         text-decoration: underline;
-        font-weight: 500;
+        font-weight: 600;
     }
     .financeiro-links-list li a:hover {
-        color: #0369a1;
+        color: #1b4c6b;
     }
 </style>
 @endsection
