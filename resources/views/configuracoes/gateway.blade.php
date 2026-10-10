@@ -55,7 +55,7 @@
             </p>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
                 <input type="text" readonly value="{{ $webhookUrl }}" class="flex-1 px-3 py-2 bg-white border border-cyan-300 font-mono text-xs md:text-sm text-slate-800 focus:outline-none" id="input-webhook-url">
-                <button type="button" onclick="copiarWebhook();" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-brand-petroleum hover:bg-[#153442] text-white text-xs md:text-sm font-semibold shadow-xs transition" id="btn-copiar-webhook">
+                <button type="button" onclick="copiarWebhook();" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-brand-petroleum hover:bg-[#355972] text-white text-xs md:text-sm font-semibold shadow-xs transition" id="btn-copiar-webhook">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
@@ -66,7 +66,7 @@
 
         <!-- Formulário de Parâmetros -->
         <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="form-card">
-            <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3 text-white flex items-center justify-between">
+            <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3 text-white flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>

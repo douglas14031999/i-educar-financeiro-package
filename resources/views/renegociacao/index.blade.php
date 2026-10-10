@@ -41,7 +41,7 @@
 
         <!-- Etapa 1: Selecionar Responsável Financeiro Devedor -->
         <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="etapa1-card">
-            <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3 text-white flex items-center justify-between">
+            <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3 text-white flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -89,7 +89,7 @@
 
                 <!-- Etapa 2: Definir Condições da Renegociação -->
                 <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="etapa2-card">
-                    <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3 text-white flex items-center justify-between">
+                    <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3 text-white flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -136,7 +136,7 @@
 
                 <!-- Etapa 3: Selecione os Títulos que Entrarão no Acordo -->
                 <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="etapa3-card">
-                    <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
+                    <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
                         <div class="flex items-center gap-2">
                             <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -251,7 +251,7 @@
 
         <!-- Acordos e Termos Recentes Firmados -->
         <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="historico-acordos">
-            <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
+            <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>

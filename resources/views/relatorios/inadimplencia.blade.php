@@ -90,7 +90,7 @@
 
         <!-- Consulta de Situação para Rematrícula (Art. 5º da Lei Federal nº 9.870/1999) -->
         <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="rematricula-card">
-            <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3 text-white flex items-center justify-between">
+            <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3 text-white flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -164,7 +164,7 @@
 
         <!-- Listagem dos Principais Títulos Vencidos por Faixa -->
         <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="titulos-inadimplentes-table">
-            <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
+            <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>

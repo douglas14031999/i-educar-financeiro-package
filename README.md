@@ -10,7 +10,7 @@ Pacote oficial e desacoplado desenvolvido para adicionar gestão financeira prof
 O pacote se integra de forma **Plug-and-Play** ao i-Educar:
 - **Zero Redundância Pedagógica**: Reutiliza 100% dos dados já cadastrados no i-Educar (Alunos, Matrículas, Turmas, Séries e Escolas).
 - **Isolamento de Banco**: Opera em schema PostgreSQL dedicado (`financeiro.*`), mantendo a integridade do banco do i-Educar.
-- **Design System Moderno & Full-Width**: 100% das telas remodeladas no padrão visual Petróleo (`#1d4354`) e Esmeralda (`#059669`), com tipografia Inter, layout fluido em tela cheia (sem margens artificiais ou recortes), badges de status em pílulas, ícones SVG otimizados e CSS estático escopado (sem dependência de CDN externa em tempo de execução, garantindo zero conflitos com o Prototype.js nativo do i-Educar).
+- **Design System Moderno & Full-Width**: 100% das telas remodeladas no padrão visual oficial Azul i-Educar (`#47728f`) e Esmeralda (`#059669`), com tipografia Inter, layout fluido em tela cheia (sem margens artificiais ou recortes), badges de status em pílulas, ícones SVG otimizados e CSS estático escopado (sem dependência de CDN externa em tempo de execução, garantindo zero conflitos com o Prototype.js nativo do i-Educar).
 
 ---
 

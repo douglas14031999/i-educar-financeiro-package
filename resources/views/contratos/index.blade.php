@@ -80,7 +80,7 @@
         <!-- Tabela de Listagem -->
         <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="table-container">
             <!-- Cabeçalho com Gradiente Petróleo -->
-            <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
+            <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -112,7 +112,7 @@
                         @forelse($contratos as $contrato)
                             <tr class="hover:bg-slate-50/80 transition duration-150">
                                 <td class="py-3.5 px-4 font-mono font-semibold text-brand-petroleum">
-                                    <a href="{{ route('financeiro.contratos.show', $contrato->id) }}" class="hover:underline flex items-center gap-1.5" style="color: #1d4354; text-decoration: none;">
+                                    <a href="{{ route('financeiro.contratos.show', $contrato->id) }}" class="hover:underline flex items-center gap-1.5" style="color: #47728f; text-decoration: none;">
                                         <svg class="w-3.5 h-3.5 text-slate-400" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                         </svg>

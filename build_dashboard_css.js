@@ -19,9 +19,11 @@ module.exports = {
       },
       colors: {
         brand: {
-          petroleum: '#1d4354',
-          'petroleum-dark': '#132d39',
-          'petroleum-light': '#2d637a',
+          petroleum: '#47728f',
+          'petroleum-dark': '#355972',
+          'petroleum-light': '#5d85a0',
+          ieducar: '#47728f',
+          'ieducar-dark': '#355972',
           green: '#10b981',
           'green-dark': '#059669',
           coral: '#ef4444',
@@ -129,9 +131,9 @@ const extraStyles = `
 .financeiro-dashboard-container .pagination .active span,
 .financeiro-dashboard-container .pagination .active .page-link,
 .financeiro-dashboard-container .pagination span[aria-current="page"] {
-    background-color: #1d4354 !important;
+    background-color: #47728f !important;
     color: #ffffff !important;
-    border-color: #1d4354 !important;
+    border-color: #47728f !important;
 }
 .financeiro-dashboard-container .pagination a:hover {
     background-color: #f1f5f9 !important;

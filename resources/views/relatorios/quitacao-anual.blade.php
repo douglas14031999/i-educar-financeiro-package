@@ -56,7 +56,7 @@
 
         <!-- Filtros de Seleção -->
         <section class="bg-white shadow-xs border border-slate-200 overflow-hidden financeiro-filter-card" data-purpose="filter-card">
-            <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3 text-white flex items-center justify-between">
+            <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3 text-white flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -94,7 +94,7 @@
                     </div>
 
                     <div class="md:col-span-3">
-                        <button type="submit" class="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-brand-petroleum hover:bg-[#153442] text-white text-sm font-semibold shadow-sm transition">
+                        <button type="submit" class="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-brand-petroleum hover:bg-[#355972] text-white text-sm font-semibold shadow-sm transition">
                             <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                             </svg>

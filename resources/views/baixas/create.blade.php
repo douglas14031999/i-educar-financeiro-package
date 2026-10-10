@@ -43,7 +43,7 @@
             <!-- Seletor de Título em Aberto -->
             <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="table-container">
                 <!-- Cabeçalho com Gradiente Petróleo -->
-                <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
+                <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
                     <div class="flex items-center gap-2">
                         <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -144,7 +144,7 @@
             <div class="space-y-6">
                 <!-- Card 1: Dados da Parcela Selecionada -->
                 <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="details-card">
-                    <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3.5 flex items-center justify-between text-white">
+                    <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3.5 flex items-center justify-between text-white">
                         <div class="flex items-center gap-2">
                             <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -198,7 +198,7 @@
 
                 <!-- Card 2: Formulário de Recebimento -->
                 <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="form-container">
-                    <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3.5 text-white">
+                    <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3.5 text-white">
                         <div class="flex items-center gap-2">
                             <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>

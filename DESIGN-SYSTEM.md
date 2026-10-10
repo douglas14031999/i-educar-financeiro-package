@@ -2,14 +2,14 @@
 
 Este documento estabelece o **padrão visual oficial e obrigatório** para o desenvolvimento e evolução de todas as telas do **Módulo Financeiro** do i-Educar. 
 
-O padrão baseia-se na interface do Painel Geral de Gestão Financeira (`modelo tela dash`), unindo estética limpa, moderna e corporativa (tons petróleo, esmeralda, ardósia) com total integração e isolamento em relação ao sistema i-Educar.
+O padrão baseia-se na interface do Painel Geral de Gestão Financeira (`modelo tela dash`), harmonizando a identidade visual nativa do i-Educar (tom oficial **Azul i-Educar `#47728f`**, esmeralda `#059669`, ardósia `#334155`) com total integração e isolamento em relação ao sistema i-Educar.
 
 ---
 
 ## 1. Princípios de Design
 
-1. **Modernidade com Sobriedade Corporativa**:
-   - A interface utiliza a paleta corporativa Petróleo (`#1d4354`), Esmeralda (`#059669`), Ardósia (`#334155`) e fundo neutro (`#f4f7f9`).
+1. **Fidelidade à Identidade Visual do i-Educar**:
+   - A interface adota como cor primária oficial o **Azul i-Educar (`#47728f`)** — a exata tonalidade utilizada na barra de navegação superior e elementos do i-Educar — acompanhada de sua variação escura de profundidade (`#355972`), Esmeralda (`#059669`), Ardósia (`#334155`) e fundo neutro (`#f4f7f9`).
    - Tipografia moderna **Inter** com hierarquia visual clara, pesos equilibrados (400, 500, 600, 700) e legibilidade perfeita.
    - **Proibido o uso de roxo/violeta** ou temas escuros saturados.
 
@@ -38,11 +38,11 @@ O padrão baseia-se na interface do Painel Geral de Gestão Financeira (`modelo 
 
 | Nome / Token | Hex | Classe Tailwind / Uso | Aplicação |
 |---|---|---|---|
-| **Petróleo Principal** | `#1d4354` | `text-brand-petroleum` / `bg-brand-petroleum` | Títulos principais, ícones de módulo, links de destaque |
-| **Petróleo Escuro** | `#132d39` | `bg-brand-petroleum-dark` | Hover de links, contrastes profundos |
-| **Petróleo Claro** | `#2d637a` | `bg-brand-petroleum-light` | Focos e bordas ativas |
-| **Petróleo Fundo Suave** | `rgba(29,67,84,0.1)` | `bg-brand-petroleum/10` | Fundo de caixas de ícones no cabeçalho |
-| **Gradiente Destaque** | `from-[#214b5f] to-[#1a3d4e]` | `bg-gradient-to-r` | Cabeçalho principal de tabelas e painéis de destaque |
+| **Azul i-Educar Principal** | `#47728f` | `text-brand-petroleum` / `bg-brand-petroleum` / `text-brand-ieducar` | Identidade oficial do i-Educar, títulos, ícones de módulo, links |
+| **Azul i-Educar Escuro** | `#355972` | `bg-brand-petroleum-dark` / `to-[#355972]` | Fim de gradientes, hover de links e botões, contrastes profundos |
+| **Azul i-Educar Claro** | `#5d85a0` | `bg-brand-petroleum-light` | Focos e bordas ativas |
+| **Azul i-Educar Fundo Suave** | `rgba(71,114,143,0.12)` | `bg-brand-petroleum/10` | Fundo de caixas de ícones no cabeçalho |
+| **Gradiente Destaque** | `from-[#47728f] to-[#355972]` | `bg-gradient-to-r` | Cabeçalho principal de tabelas e painéis (mesma tonalidade do topo i-Educar) |
 | **Fundo de Tela** | `#f4f7f9` | `bg-[#f4f7f9]` | Fundo geral da página do módulo |
 | **Superfície Card** | `#ffffff` | `bg-white` | Fundo de cards, tabelas e caixas |
 | **Borda Neutra Suave** | `#e2e8f0` | `border-slate-200` | Bordas de cards, divisores de tabelas e inputs |
@@ -234,8 +234,8 @@ Contêiner em fundo branco, cabeçalho gradiente petróleo com texto branco, bar
 
 ```html
 <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="table-container">
-    <!-- Cabeçalho com Gradiente Petróleo -->
-    <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
+    <!-- Cabeçalho com Gradiente Azul i-Educar -->
+    <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
         <div class="flex items-center gap-2">
             <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -423,11 +423,8 @@ Grid responsivo de 2 colunas com borda sutil, ícones temáticos em caixas color
 
 ### 3.7. Formulários e Inputs Modernos
 
-Para telas de cadastro e edição (ex.: Novo Plano de Cobrança, Cadastro de Responsável, Baixa Manual), os formulários utilizam cartões brancos com cabeçalho limpo, labels com peso 500 e inputs padronizados:
-
-```html
 <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="form-container">
-    <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3.5 text-white">
+    <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3.5 text-white">
         <h2 class="text-sm font-semibold tracking-wide" style="margin: 0; color: white;">
             Dados do Cadastro
         </h2>
@@ -471,7 +468,6 @@ Para telas de cadastro e edição (ex.: Novo Plano de Cobrança, Cadastro de Res
         </div>
     </form>
 </section>
-```
 
 ---
 
@@ -498,7 +494,7 @@ Ao criar ou atualizar qualquer tela do módulo financeiro:
 - [ ] O cabeçalho possui o ícone SVG com caixa `p-2 bg-brand-petroleum/10` e título `text-xl md:text-2xl font-bold`?
 - [ ] Ações primárias utilizam o botão verde esmeralda (`bg-emerald-600`)?
 - [ ] Ações secundárias utilizam o botão ardósia (`bg-slate-700`)?
-- [ ] Se houver tabela, o cabeçalho possui gradiente `from-[#214b5f] to-[#1a3d4e]` e as linhas têm hover suave?
+- [ ] Se houver tabela, o cabeçalho possui gradiente `from-[#47728f] to-[#355972]` e as linhas têm hover suave?
 - [ ] Os badges de status utilizam o padrão pill `rounded-full text-xs font-medium px-2.5 py-0.5`?
 - [ ] Todos os elementos `<svg>` possuem atributos nativos `width` e `height`?
 - [ ] Os dados são alimentados dinamicamente através do Controller?

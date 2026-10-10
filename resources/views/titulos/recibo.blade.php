@@ -27,14 +27,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #1d4354;
+            border-bottom: 2px solid #47728f;
             padding-bottom: 16px;
             margin-bottom: 24px;
         }
         .header-title {
             font-size: 18px;
             font-weight: 800;
-            color: #1d4354;
+            color: #47728f;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -116,7 +116,7 @@
             line-height: 1.5;
         }
         .btn-imprimir {
-            background-color: #1d4354;
+            background-color: #47728f;
             color: #ffffff;
             border: none;
             padding: 10px 20px;
@@ -127,7 +127,7 @@
             transition: background 0.15s;
         }
         .btn-imprimir:hover {
-            background-color: #153442;
+            background-color: #355972;
         }
         @media print {
             body { background: #fff; margin: 0; }

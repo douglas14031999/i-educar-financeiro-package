@@ -75,7 +75,7 @@
         <!-- Tabela de Listagem -->
         <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="table-container">
             <!-- Cabeçalho com Gradiente Petróleo -->
-            <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
+            <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -111,7 +111,7 @@
                                             {{ strtoupper(substr($resp->nome, 0, 1)) }}
                                         </div>
                                         <div>
-                                            <a href="{{ route('financeiro.responsaveis.show', $resp->id) }}" class="font-semibold text-brand-petroleum hover:underline" style="color: #1d4354; text-decoration: none;">
+                                            <a href="{{ route('financeiro.responsaveis.show', $resp->id) }}" class="font-semibold text-brand-petroleum hover:underline" style="color: #47728f; text-decoration: none;">
                                                 {{ $resp->nome }}
                                             </a>
                                             @if($resp->observacoes)

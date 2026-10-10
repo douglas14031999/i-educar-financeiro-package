@@ -19,3 +19,4 @@ Thumbs.db
 # Temporários e caches
 storage/
 *.tmp
+scratch/
