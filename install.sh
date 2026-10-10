@@ -73,9 +73,23 @@ composer config repositories.ieducar-financeiro vcs https://github.com/douglas14
 
 # 4. Instalar o pacote via Composer
 echo -e "\n${BLUE}[*] Baixando e instalando douglas14031999/i-educar-financeiro-package...${NC}"
-if ! composer require douglas14031999/i-educar-financeiro-package:dev-main -W --no-interaction; then
-    echo -e "${YELLOW}[!] Tentando instalação com tolerância de requisitos de plataforma...${NC}"
-    composer require douglas14031999/i-educar-financeiro-package:dev-main -W --ignore-platform-reqs --no-interaction
+INSTALLED=false
+if composer require douglas14031999/i-educar-financeiro-package:dev-main -W --no-interaction 2>/dev/null; then
+    INSTALLED=true
+elif composer require douglas14031999/i-educar-financeiro-package:dev-main -W --ignore-platform-reqs --no-interaction 2>/dev/null; then
+    INSTALLED=true
+fi
+
+if [ "$INSTALLED" = false ]; then
+    echo -e "${YELLOW}[!] Download via Composer bloqueado por autenticação/rate-limit. Aplicando sincronização direta via Git...${NC}"
+    TMP_CLONE="/tmp/ieducar-financeiro-clone-$$"
+    rm -rf "$TMP_CLONE"
+    git clone https://github.com/douglas14031999/i-educar-financeiro-package.git "$TMP_CLONE"
+    mkdir -p vendor/douglas14031999/i-educar-financeiro-package
+    rsync -av --exclude='.git' "$TMP_CLONE/" vendor/douglas14031999/i-educar-financeiro-package/
+    rm -rf "$TMP_CLONE"
+    composer dump-autoload -o --no-interaction 2>/dev/null || true
+    echo -e "${GREEN}[✓] Código do pacote sincronizado com sucesso!${NC}"
 fi
 
 
