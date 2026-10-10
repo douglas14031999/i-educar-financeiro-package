@@ -26,6 +26,19 @@
             $root = null;
         }
     }
+
+    if (!isset($breadcrumb)) {
+        $breadcrumb = null;
+        if (class_exists(\iEducar\Support\Navigation\Breadcrumb::class)) {
+            try {
+                $breadcrumb = app(\iEducar\Support\Navigation\Breadcrumb::class)->currentPage('Módulo Financeiro');
+            } catch (\Throwable $e) {}
+        }
+    }
+
+    if (!isset($title)) {
+        $title = 'Módulo Financeiro';
+    }
 @endphp
 @extends(View::exists('layout.default') ? 'layout.default' : 'financeiro::layouts.standalone')
 

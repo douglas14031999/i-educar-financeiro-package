@@ -69,13 +69,24 @@ class CompartilharMenuMiddleware
             }
         }
 
-        // 3. Compartilha as variáveis exigidas por layout.menu, layout.topmenu e layout.default
+        // 3. Breadcrumb nativo do i-Educar
+        $breadcrumb = null;
+        if (class_exists(\iEducar\Support\Navigation\Breadcrumb::class)) {
+            try {
+                $breadcrumb = app(\iEducar\Support\Navigation\Breadcrumb::class)
+                    ->currentPage('Módulo Financeiro');
+            } catch (\Throwable $e) {}
+        }
+
+        // 4. Compartilha todas as variáveis exigidas pelo layout nativo do i-Educar
         View::share([
             'menu'        => $menuList ?? collect(),
             'root'        => $rootId,
             'mainmenu'    => $rootId,
             'currentMenu' => $topmenu,
             'menuPaths'   => $ancestors,
+            'breadcrumb'  => $breadcrumb,
+            'title'       => 'Módulo Financeiro',
         ]);
 
         return $next($request);

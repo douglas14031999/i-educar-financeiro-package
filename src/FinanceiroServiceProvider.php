@@ -109,6 +109,22 @@ class FinanceiroServiceProvider extends ServiceProvider
                     }
                 }
             }
+
+            // Garantir breadcrumb
+            if (!isset($data['breadcrumb'])) {
+                $breadcrumb = null;
+                if (class_exists(\iEducar\Support\Navigation\Breadcrumb::class)) {
+                    try {
+                        $breadcrumb = app(\iEducar\Support\Navigation\Breadcrumb::class)->currentPage('Módulo Financeiro');
+                    } catch (\Throwable $e) {}
+                }
+                $view->with('breadcrumb', $breadcrumb);
+            }
+
+            // Garantir title
+            if (!isset($data['title'])) {
+                $view->with('title', 'Módulo Financeiro');
+            }
         });
     }
 
