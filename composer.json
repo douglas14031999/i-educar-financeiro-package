@@ -1,12 +1,12 @@
 {
-    "name": "portabilis/i-educar-financeiro-package",
+    "name": "douglas14031999/i-educar-financeiro-package",
     "description": "Módulo Financeiro Oficial para o i-Educar (Escolas Privadas e Comunitárias)",
     "type": "library",
     "license": "GPL-2.0-only",
     "authors": [
         {
-            "name": "Comunidade i-Educar",
-            "homepage": "https://github.com/portabilis/i-educar"
+            "name": "Douglas",
+            "homepage": "https://github.com/douglas14031999"
         }
     ],
     "require": {

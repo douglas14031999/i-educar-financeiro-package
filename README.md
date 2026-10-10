@@ -1,6 +1,6 @@
 # Módulo Financeiro para o i-Educar (Escolas Privadas e Comunitárias)
 
-[![Latest Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/portabilis/i-educar)
+[![Latest Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/douglas14031999/i-educar-financeiro-package)
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL%202.0-green.svg)](LICENSE)
 [![PHP Version](https://img.shields.io/badge/PHP-%3E%3D7.4%20%7C%208.x-purple.svg)](composer.json)
 [![Laravel Compatible](https://img.shields.io/badge/Laravel-8%20%7C%209%20%7C%2010%20%7C%2011-red.svg)](composer.json)
@@ -67,8 +67,9 @@ O pacote se integra de forma **Plug-and-Play** ao i-Educar:
 No terminal da raiz do seu i-Educar, execute:
 
 ```bash
-composer require portabilis/i-educar-financeiro-package
+composer require douglas14031999/i-educar-financeiro-package
 ```
+
 
 *(Caso esteja testando via repositório local, basta adicionar o `"repositories": [{"type": "path", "url": "../i-educar-financeiro-package"}]` no `composer.json` do seu i-Educar).*
 
