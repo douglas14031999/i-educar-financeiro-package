@@ -127,7 +127,7 @@
             transition: background 0.15s;
         }
         .btn-imprimir:hover {
-            background-color: #355972;
+            background-color: #47728f;
         }
         @media print {
             body { background: #fff; margin: 0; }

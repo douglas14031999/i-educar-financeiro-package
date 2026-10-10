@@ -41,7 +41,7 @@
 
         <!-- Card de Formulário -->
         <div class="bg-white shadow-xs border border-slate-200 overflow-hidden">
-            <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3.5 text-white flex items-center justify-between">
+            <div class="bg-[#47728f] px-5 py-3.5 text-white flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>

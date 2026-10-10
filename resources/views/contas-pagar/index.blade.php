@@ -85,7 +85,7 @@
 
         <!-- Tabela de Listagem -->
         <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="table-container">
-            <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
+            <div class="bg-[#47728f] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
@@ -193,7 +193,7 @@
                             @if($d->status === 'a_pagar')
                                 <div id="modal-liquidar-{{ $d->id }}" style="display: none;" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
                                     <div class="bg-white max-w-md w-full border border-slate-200 shadow-xl overflow-hidden animate-fade-in text-left">
-                                        <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3.5 text-white flex items-center justify-between">
+                                        <div class="bg-[#47728f] px-5 py-3.5 text-white flex items-center justify-between">
                                             <div class="flex items-center gap-2">
                                                 <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>

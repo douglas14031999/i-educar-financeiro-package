@@ -90,7 +90,7 @@
                 <article class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="regra-item">
                     <form method="post" action="{{ route('financeiro.configuracoes.regua.atualizar', $regra->id) }}">
                         @csrf
-                        <header class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <header class="bg-[#47728f] px-5 py-3 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div class="flex items-center gap-2.5">
                                 <span class="px-2 py-0.5 rounded text-[11px] font-bold border {{ $badgeBg }}">
                                     {{ $gatilhoTexto }}
@@ -135,7 +135,7 @@
                             </div>
 
                             <div class="flex justify-end pt-2 border-t border-slate-100">
-                                <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-petroleum hover:bg-[#355972] text-white text-xs md:text-sm font-semibold shadow-xs transition">
+                                <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-petroleum hover:opacity-95 text-white text-xs md:text-sm font-semibold shadow-xs transition">
                                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                     </svg>
@@ -150,7 +150,7 @@
 
         <!-- Histórico Recente de Disparos -->
         <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="history-table">
-            <div class="bg-gradient-to-r from-[#47728f] to-[#355972] px-5 py-3 text-white flex items-center justify-between">
+            <div class="bg-[#47728f] px-5 py-3 text-white flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>

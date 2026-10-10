@@ -20,10 +20,10 @@ module.exports = {
       colors: {
         brand: {
           petroleum: '#47728f',
-          'petroleum-dark': '#355972',
+          'petroleum-dark': '#3d627b',
           'petroleum-light': '#5d85a0',
           ieducar: '#47728f',
-          'ieducar-dark': '#355972',
+          'ieducar-dark': '#3d627b',
           green: '#10b981',
           'green-dark': '#059669',
           coral: '#ef4444',
