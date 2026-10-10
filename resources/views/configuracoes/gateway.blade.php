@@ -43,8 +43,8 @@
                     </td>
                     <td class="formmdtd">
                         <select name="environment" id="environment" class="form-input" style="max-width: 250px;">
-                            <option value="sandbox" {{ ($config['environment'] ?? 'sandbox') === 'sandbox' ? 'selected' : '' }}>Ambiente de Testes (Sandbox)</option>
-                            <option value="production" {{ ($config['environment'] ?? '') === 'production' ? 'selected' : '' }}>Produção (Cobranças Reais)</option>
+                            <option value="sandbox" {{ ($gatewayConfig['environment'] ?? 'sandbox') === 'sandbox' ? 'selected' : '' }}>Ambiente de Testes (Sandbox)</option>
+                            <option value="production" {{ ($gatewayConfig['environment'] ?? '') === 'production' ? 'selected' : '' }}>Produção (Cobranças Reais)</option>
                         </select>
                     </td>
                 </tr>
@@ -54,7 +54,7 @@
                         <label for="api_key" class="form">API Key (Token de Acesso) <span class="campo_obrigatorio">*</span></label>
                     </td>
                     <td class="formlttd">
-                        <input type="password" name="api_key" id="api_key" value="{{ old('api_key', $config['api_key'] ?? '') }}" required class="form-input" style="max-width: 550px;" placeholder="$aact_YTU5YTE0M2M6N2Z...">
+                        <input type="password" name="api_key" id="api_key" value="{{ old('api_key', $gatewayConfig['api_key'] ?? '') }}" required class="form-input" style="max-width: 550px;" placeholder="$aact_YTU5YTE0M2M6N2Z...">
                         <span style="font-size: 11px; color: #777; display: block; margin-top: 3px;">
                             Obtida no painel do Asaas em <em>Menu &raquo; Configurações da Conta &raquo; Integrações &raquo; Chaves de API</em>.
                         </span>
@@ -66,7 +66,7 @@
                         <label for="webhook_token" class="form">Token de Autenticação do Webhook</label>
                     </td>
                     <td class="formmdtd">
-                        <input type="text" name="webhook_token" id="webhook_token" value="{{ old('webhook_token', $config['webhook_token'] ?? '') }}" class="form-input" style="max-width: 350px;">
+                        <input type="text" name="webhook_token" id="webhook_token" value="{{ old('webhook_token', $gatewayConfig['webhook_token'] ?? '') }}" class="form-input" style="max-width: 350px;">
                         <span style="font-size: 11px; color: #777; display: block; margin-top: 3px;">
                             Token secreto opcional configurado no Asaas para assinatura das requisições webhook.
                         </span>

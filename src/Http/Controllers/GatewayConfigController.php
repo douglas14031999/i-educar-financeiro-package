@@ -13,10 +13,10 @@ class GatewayConfigController extends Controller
      */
     public function index()
     {
-        $config = config('financeiro.gateways.asaas', []);
+        $gatewayConfig = config('financeiro.gateways.asaas', []);
         $webhookUrl = url('/financeiro/webhooks/asaas');
 
-        return view('financeiro::configuracoes.gateway', compact('config', 'webhookUrl'));
+        return view('financeiro::configuracoes.gateway', compact('gatewayConfig', 'webhookUrl'));
     }
 
     /**
