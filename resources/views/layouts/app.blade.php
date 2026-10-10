@@ -47,7 +47,7 @@
 @endpush
 
 @section('content')
-    <div id="financeiro-module" class="open-sans" style="padding: 15px 20px;">
+    <div id="financeiro-module" class="open-sans" style="@yield('module-style', 'padding: 15px 20px;')">
         @include('financeiro::partials.alerts')
 
         @yield('financeiro-content')

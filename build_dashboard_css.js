@@ -48,15 +48,27 @@ let css = fs.readFileSync('temp_output.css', 'utf8');
 // Scope the base CSS variables strictly to .financeiro-dashboard-container
 css = css.replace(/\*,:after,:before\{/, '.financeiro-dashboard-container *,.financeiro-dashboard-container :after,.financeiro-dashboard-container :before{');
 
-// Add additional custom styles to match screen.png perfectly
+// Add additional custom styles to match screen.png and fill 100% available area
 const extraStyles = `
 /* Inter Font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Remove espaçamento excessivo do layout i-Educar ao redor do painel */
+#corpo {
+    padding: 0 !important;
+}
+#corpo > table.tablelistagem {
+    display: none !important;
+}
+#financeiro-module {
+    padding: 0 !important;
+}
 
 /* Dashboard Container Scoping */
 .financeiro-dashboard-container {
     font-family: 'Inter', sans-serif !important;
     background-color: #f4f7f9 !important;
+    width: 100% !important;
 }
 
 .financeiro-dashboard-container * {
@@ -90,5 +102,14 @@ const extraStyles = `
 
 const finalCss = extraStyles.trim() + '\n' + css;
 fs.writeFileSync('resources/views/dashboard/compiled_dashboard.css', finalCss);
-console.log('Final compiled CSS written to resources/views/dashboard/compiled_dashboard.css');
+fs.writeFileSync('resources/views/dashboard/styles.blade.php', '<style>\n' + finalCss + '\n</style>\n');
+
+// Clean temp files
+try {
+  fs.unlinkSync('temp_tailwind.config.js');
+  fs.unlinkSync('temp_input.css');
+  fs.unlinkSync('temp_output.css');
+} catch (e) {}
+
+console.log('Final compiled CSS written to compiled_dashboard.css and styles.blade.php');
 console.log('Total CSS size:', finalCss.length, 'bytes');

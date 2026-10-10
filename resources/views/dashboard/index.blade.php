@@ -2,6 +2,7 @@
 
 @section('title', 'Painel Geral Financeiro')
 @section('breadcrumb', 'Painel Geral')
+@section('module-style', 'padding: 0;')
 
 @push('styles')
     @include('financeiro::dashboard.styles')
@@ -9,7 +10,7 @@
 
 @section('financeiro-content')
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
-    <main class="w-full max-w-[1440px] mx-auto p-4 md:p-6 lg:p-8 space-y-6" data-purpose="dashboard-container">
+    <main class="w-full p-4 md:p-6 space-y-6" data-purpose="dashboard-container">
         <!-- Cabeçalho -->
         <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
             <div>
