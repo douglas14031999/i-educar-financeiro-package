@@ -1,0 +1,10 @@
+* text=auto eol=lf
+
+/tests export-ignore
+/.github export-ignore
+/.agent export-ignore
+/phpunit.xml export-ignore
+/.gitignore export-ignore
+/.gitattributes export-ignore
+/PRD.md export-ignore
+/TASKS.md export-ignore

@@ -1,0 +1,41 @@
+{
+    "name": "portabilis/i-educar-financeiro-package",
+    "description": "Módulo Financeiro Oficial para o i-Educar (Escolas Privadas e Comunitárias)",
+    "type": "library",
+    "license": "GPL-2.0-only",
+    "authors": [
+        {
+            "name": "Comunidade i-Educar",
+            "homepage": "https://github.com/portabilis/i-educar"
+        }
+    ],
+    "require": {
+        "php": ">=7.4.0|^8.0|^8.1|^8.2",
+        "illuminate/support": "^8.0|^9.0|^10.0|^11.0",
+        "illuminate/database": "^8.0|^9.0|^10.0|^11.0",
+        "illuminate/http": "^8.0|^9.0|^10.0|^11.0",
+        "illuminate/view": "^8.0|^9.0|^10.0|^11.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5|^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "iEducar\\Financeiro\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "iEducar\\Financeiro\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "iEducar\\Financeiro\\FinanceiroServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
