@@ -3,490 +3,302 @@
 @section('title', 'Painel Geral Financeiro')
 @section('breadcrumb', 'Painel Geral')
 
+@push('styles')
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      corePlugins: {
+        preflight: false, // Evita conflitar com reset css do i-educar
+      },
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              petroleum: '#1d4354',
+              'petroleum-dark': '#132d39',
+              'petroleum-light': '#2d637a',
+              green: '#10b981',
+              'green-dark': '#059669',
+              coral: '#ef4444',
+              amber: '#f59e0b',
+              surface: '#f8fafc',
+            }
+          }
+        }
+      }
+    }
+</script>
+<style>
+    .financeiro-dashboard-container * {
+        box-sizing: border-box;
+    }
+    .financeiro-dashboard-container, .financeiro-dashboard-container .rounded, .financeiro-dashboard-container .rounded-sm, .financeiro-dashboard-container .rounded-md, .financeiro-dashboard-container .rounded-lg, .financeiro-dashboard-container .rounded-xl, .financeiro-dashboard-container .rounded-2xl, .financeiro-dashboard-container .rounded-full, .financeiro-dashboard-container .rounded-xs { 
+        border-radius: 0px !important; 
+    }
+</style>
+@endpush
+
 @section('financeiro-content')
-<div class="financeiro-dashboard-wrapper">
-    <!-- Cabeçalho Oficial do Módulo -->
-    <div class="financeiro-header">
-        <div class="financeiro-header-title">
-            <h2>
-                <i class="fa fa-tachometer" style="color: #47728f;"></i> Painel Geral de Gestão Financeira
-            </h2>
-            <span class="financeiro-header-desc">
-                Indicadores operacionais, fluxo de recebimentos e controle de cobrança escolar
-            </span>
-        </div>
-        <div class="financeiro-header-actions">
-            <a href="{{ route('financeiro.baixas.create') }}" class="btn-ieducar-action btn-ieducar-green">
-                <i class="fa fa-plus-circle"></i> Nova Baixa de Balcão
-            </a>
-            <a href="{{ route('financeiro.titulos.index') }}" class="btn-ieducar-action btn-ieducar-blue">
-                <i class="fa fa-list"></i> Ver Todas as Mensalidades
-            </a>
-        </div>
-    </div>
-
-    <!-- 1. Cartões de Resumo Financeiro (KPIs no Padrão do i-Educar) -->
-    <div class="financeiro-kpis-grid">
-        <!-- Receita Recebida -->
-        <div class="financeiro-kpi-card kpi-green">
-            <div class="kpi-card-header">
-                <span class="kpi-card-title">Receita Recebida no Mês</span>
-                <i class="fa fa-check-circle-o kpi-icon"></i>
-            </div>
-            <div class="kpi-card-value text-green">
-                R$ {{ number_format($kpis['recebido_mes'] ?? 0, 2, ',', '.') }}
-            </div>
-            <div class="kpi-card-footer">
-                Liquidações via Asaas, Pix e Caixa
-            </div>
-        </div>
-
-        <!-- A Receber no Mês -->
-        <div class="financeiro-kpi-card kpi-blue">
-            <div class="kpi-card-header">
-                <span class="kpi-card-title">A Receber no Mês Atual</span>
-                <i class="fa fa-calendar-check-o kpi-icon"></i>
-            </div>
-            <div class="kpi-card-value text-blue">
-                R$ {{ number_format($kpis['a_receber_mes'] ?? 0, 2, ',', '.') }}
-            </div>
-            <div class="kpi-card-footer">
-                Parcelas vincendas neste período
-            </div>
-        </div>
-
-        <!-- Total em Atraso (Inadimplência) -->
-        <div class="financeiro-kpi-card kpi-red">
-            <div class="kpi-card-header">
-                <span class="kpi-card-title">Total em Atraso (Inadimplência)</span>
-                <i class="fa fa-exclamation-triangle kpi-icon"></i>
-            </div>
-            <div class="kpi-card-value text-red">
-                R$ {{ number_format($kpis['total_inadimplente'] ?? 0, 2, ',', '.') }}
-            </div>
-            <div class="kpi-card-footer">
-                <b>{{ $kpis['titulos_vencidos_count'] ?? 0 }}</b> parcelas aguardando acerto
-            </div>
-        </div>
-
-        <!-- Taxa de Inadimplência -->
-        <div class="financeiro-kpi-card kpi-amber">
-            <div class="kpi-card-header">
-                <span class="kpi-card-title">Taxa de Inadimplência</span>
-                <i class="fa fa-pie-chart kpi-icon"></i>
-            </div>
-            <div class="kpi-card-value text-amber">
-                {{ number_format($kpis['taxa_inadimplencia'] ?? 0, 1, ',', '.') }}%
-            </div>
-            <div class="kpi-card-footer">
-                Em relação à receita faturada
-            </div>
-        </div>
-    </div>
-
-    <!-- 2. Tabela de Últimas Movimentações (Estilo Nativo i-Educar) -->
-    <div class="financeiro-table-box">
-        <div class="financeiro-box-header">
-            <span>
-                <i class="fa fa-clock-o"></i> Próximos Vencimentos e Cobranças Recentes
-            </span>
-            <a href="{{ route('financeiro.titulos.index') }}" class="financeiro-header-link">
-                Histórico completo &raquo;
-            </a>
-        </div>
-        <div class="financeiro-table-responsive">
-            <table class="financeiro-table">
-                <thead>
-                    <tr>
-                        <th width="110" style="text-align: center;">Vencimento</th>
-                        <th>Aluno</th>
-                        <th>Responsável Financeiro</th>
-                        <th>Turma / Série</th>
-                        <th width="80" style="text-align: center;">Parcela</th>
-                        <th width="120" style="text-align: right;">Valor</th>
-                        <th width="110" style="text-align: center;">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($titulosRecentes ?? [] as $titulo)
-                        <tr>
-                            <td align="center">
-                                <strong>{{ \Carbon\Carbon::parse($titulo->data_vencimento)->format('d/m/Y') }}</strong>
-                            </td>
-                            <td>
-                                <b>{{ $titulo->aluno->nome ?? 'Aluno ' . $titulo->aluno_id }}</b>
-                            </td>
-                            <td>{{ $titulo->responsavel->nome ?? 'Não informado' }}</td>
-                            <td>{{ $titulo->turma_nome ?? '-' }}</td>
-                            <td align="center">{{ $titulo->numero_parcela }}/{{ $titulo->total_parcelas }}</td>
-                            <td align="right" style="font-weight: 700; color: #1b4c6b;">
-                                R$ {{ number_format($titulo->valor_saldo ?? $titulo->valor_nominal, 2, ',', '.') }}
-                            </td>
-                            <td align="center">
-                                @if($titulo->status === 'pago')
-                                    <span class="badge-status badge-pago">Pago</span>
-                                @elseif($titulo->status === 'vencido' || $titulo->isVencido())
-                                    <span class="badge-status badge-vencido">Vencido</span>
-                                @elseif($titulo->status === 'cancelado')
-                                    <span class="badge-status badge-cancelado">Cancelado</span>
-                                @else
-                                    <span class="badge-status badge-pendente">Pendente</span>
-                                @endif
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="financeiro-empty-state">
-                                <i class="fa fa-folder-open-o" style="font-size: 32px; color: #8ba4b5; margin-bottom: 8px; display: inline-block;"></i>
-                                <div style="font-size: 14px; font-weight: 600; color: #47728f;">Não há informação para ser apresentada no momento.</div>
-                                <div style="font-size: 12.5px; color: #64748b; margin-top: 4px;">
-                                    Cadastre responsáveis financeiros e configure os planos de pagamento para gerar contratos e parcelas.
-                                </div>
-                                <div style="margin-top: 14px; display: flex; justify-content: center; gap: 10px;">
-                                    <a href="{{ route('financeiro.planos.create') }}" class="btn-ieducar-action btn-ieducar-outline">
-                                        <i class="fa fa-plus"></i> Novo Plano de Pagamento
-                                    </a>
-                                    <a href="{{ route('financeiro.responsaveis.create') }}" class="btn-ieducar-action btn-ieducar-outline">
-                                        <i class="fa fa-user-plus"></i> Cadastrar Responsável
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- 3. Painel Inferior de Atalhos Rápidos e Conformidade Legal -->
-    <div class="financeiro-bottom-grid">
-        <!-- Régua de Cobrança e Gateway Asaas -->
-        <div class="financeiro-sub-box">
-            <div class="financeiro-sub-header">
-                <i class="fa fa-bell-o" style="color: #47728f;"></i> Régua de Cobrança Automática
-            </div>
-            <div class="financeiro-sub-content">
-                <p>
-                    Disparo diário de lembretes e notificações de vencimento com links diretos de Boleto e Pix para os responsáveis por E-mail e WhatsApp.
+<div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
+    <main class="w-full max-w-[1440px] mx-auto p-4 md:p-6 lg:p-8 space-y-6" data-purpose="dashboard-container">
+        <!-- Cabeçalho -->
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2" data-purpose="header-section">
+            <div>
+                <div class="flex items-center gap-2.5 text-brand-petroleum">
+                    <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v4M12 14v4M16 14v4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                    </div>
+                    <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
+                        Painel Geral de Gestão Financeira
+                    </h1>
+                </div>
+                <p class="text-xs md:text-sm text-slate-500 mt-1 pl-0.5" style="margin: 4px 0 0 0;">
+                    Indicadores operacionais, fluxo de recebimentos e controle de cobrança escolar
                 </p>
-                <div style="margin-top: 14px;">
-                    <a href="{{ route('financeiro.configuracoes.gateway') }}" class="btn-ieducar-action btn-ieducar-outline">
-                        <i class="fa fa-cog"></i> Configurações do Gateway Asaas e Chaves de Integração &raquo;
+            </div>
+            <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                <a href="{{ route('financeiro.baixas.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm hover:shadow transition duration-150" style="text-decoration: none;">
+                    <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    Nova Baixa de Balcão
+                </a>
+                <a href="{{ route('financeiro.titulos.index') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white text-sm font-medium shadow-sm transition duration-150" style="text-decoration: none;">
+                    <svg aria-hidden="true" class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    Ver Todas as Mensalidades
+                </a>
+            </div>
+        </header>
+
+        <!-- Indicadores Financeiros -->
+        <section aria-label="Indicadores Financeiros" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-purpose="kpi-grid">
+            <article class="bg-white shadow-xs border border-slate-200/90 relative overflow-hidden p-4 flex flex-col justify-between hover:border-slate-300 transition">
+                <div class="absolute top-0 inset-x-0 h-1 bg-emerald-500"></div>
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">Receita Recebida no Mês</span>
+                    <span class="p-1 bg-emerald-50 text-emerald-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                    </span>
+                </div>
+                <div>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-2xl font-bold tracking-tight text-slate-900">R$ {{ number_format($kpis['recebido_mes'] ?? 0, 2, ',', '.') }}</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">Liquidações via Asaas, Pix e Caixa</p>
+                </div>
+            </article>
+
+            <article class="bg-white shadow-xs border border-slate-200/90 relative overflow-hidden p-4 flex flex-col justify-between hover:border-slate-300 transition">
+                <div class="absolute top-0 inset-x-0 h-1 bg-cyan-600"></div>
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">A Receber no Mês Atual</span>
+                    <span class="p-1 bg-cyan-50 text-cyan-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                    </span>
+                </div>
+                <div>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-2xl font-bold tracking-tight text-slate-900">R$ {{ number_format($kpis['a_receber_mes'] ?? 0, 2, ',', '.') }}</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">Parcelas vincendas neste período</p>
+                </div>
+            </article>
+
+            <article class="bg-white shadow-xs border border-slate-200/90 relative overflow-hidden p-4 flex flex-col justify-between hover:border-slate-300 transition">
+                <div class="absolute top-0 inset-x-0 h-1 bg-rose-500"></div>
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">Total em Atraso</span>
+                    <span class="p-1 bg-rose-50 text-rose-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                    </span>
+                </div>
+                <div>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-2xl font-bold tracking-tight text-slate-900">R$ {{ number_format($kpis['total_inadimplente'] ?? 0, 2, ',', '.') }}</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;"><strong class="font-medium text-slate-700">{{ $kpis['titulos_vencidos_count'] ?? 0 }}</strong> parcelas aguardando acerto</p>
+                </div>
+            </article>
+
+            <article class="bg-white shadow-xs border border-slate-200/90 relative overflow-hidden p-4 flex flex-col justify-between hover:border-slate-300 transition">
+                <div class="absolute top-0 inset-x-0 h-1 bg-amber-500"></div>
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">Taxa de Inadimplência</span>
+                    <span class="p-1 bg-amber-50 text-amber-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                    </span>
+                </div>
+                <div>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-2xl font-bold tracking-tight text-slate-900">{{ number_format($kpis['taxa_inadimplencia'] ?? 0, 1, ',', '.') }}%</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">Em relação à receita faturada</p>
+                </div>
+            </article>
+        </section>
+
+        <!-- Tabela -->
+        <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="table-container">
+            <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                    <h2 class="text-sm font-semibold tracking-wide" style="margin: 0; color: white;">Próximos Vencimentos e Cobranças Recentes</h2>
+                </div>
+                <a class="text-xs font-medium text-cyan-100 hover:text-white transition flex items-center gap-1" href="{{ route('financeiro.titulos.index') }}" style="text-decoration: none;">
+                    Histórico completo <span aria-hidden="true">»</span>
+                </a>
+            </div>
+            
+            <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div class="inline-flex p-0.5 bg-slate-200/80 text-xs font-medium text-slate-600">
+                    <button class="px-3 py-1 bg-white text-slate-800 shadow-xs" type="button">Recentes</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('financeiro.planos.create') }}" class="text-xs font-medium inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition shadow-2xs" style="text-decoration: none;">
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        Novo Plano de Pagamento
+                    </a>
+                    <a href="{{ route('financeiro.responsaveis.create') }}" class="text-xs font-medium inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition shadow-2xs" style="text-decoration: none;">
+                        <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        Cadastrar Responsável
                     </a>
                 </div>
             </div>
-        </div>
 
-        <!-- Relatórios Oficiais e Certidões -->
-        <div class="financeiro-sub-box">
-            <div class="financeiro-sub-header">
-                <i class="fa fa-file-text-o" style="color: #47728f;"></i> Relatórios Gerenciais
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs md:text-sm m-0 border-0" style="margin: 0;">
+                    <thead>
+                        <tr class="bg-slate-100/90 text-[11px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
+                            <th class="py-3 px-4" scope="col">Vencimento</th>
+                            <th class="py-3 px-4" scope="col">Aluno</th>
+                            <th class="py-3 px-4" scope="col">Responsável Financeiro</th>
+                            <th class="py-3 px-4" scope="col">Turma / Série</th>
+                            <th class="py-3 px-4 text-center" scope="col">Parcela</th>
+                            <th class="py-3 px-4 text-right" scope="col">Valor</th>
+                            <th class="py-3 px-4 text-center" scope="col">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        @forelse($titulosRecentes ?? [] as $titulo)
+                            @php
+                                $isAtrasado = ($titulo->status === 'vencido' || $titulo->isVencido());
+                                $isPago = $titulo->status === 'pago';
+                                $bgClass = $isAtrasado ? 'hover:bg-rose-50/40 bg-rose-50/20' : 'hover:bg-slate-50/80';
+                            @endphp
+                            <tr class="{{ $bgClass }} transition-colors">
+                                <td class="py-3 px-4 whitespace-nowrap font-medium {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
+                                    {{ \Carbon\Carbon::parse($titulo->data_vencimento)->format('d/m/Y') }}
+                                    @if($isAtrasado)
+                                        <span class="block text-[10px] text-rose-500 font-semibold">{{ \Carbon\Carbon::parse($titulo->data_vencimento)->diffInDays() }} dias atrasado</span>
+                                    @elseif($isPago)
+                                        <span class="block text-[10px] text-slate-400">Liquidado</span>
+                                    @else
+                                        <span class="block text-[10px] text-slate-400">Em {{ \Carbon\Carbon::parse($titulo->data_vencimento)->diffInDays() }} dias</span>
+                                    @endif
+                                </td>
+                                <td class="py-3 px-4 font-semibold text-slate-900">{{ $titulo->aluno->nome ?? 'Aluno ' . $titulo->aluno_id }}</td>
+                                <td class="py-3 px-4 text-slate-600">{{ $titulo->responsavel->nome ?? 'Não informado' }}</td>
+                                <td class="py-3 px-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700">
+                                        {{ $titulo->turma_nome ?? '-' }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-center whitespace-nowrap font-medium">{{ $titulo->numero_parcela }}/{{ $titulo->total_parcelas }}</td>
+                                <td class="py-3 px-4 text-right font-bold {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">R$ {{ number_format($titulo->valor_saldo ?? $titulo->valor_nominal, 2, ',', '.') }}</td>
+                                <td class="py-3 px-4 text-center whitespace-nowrap">
+                                    @if($isPago)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Liquidado</span>
+                                    @elseif($isAtrasado)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">Em Atraso</span>
+                                    @elseif($titulo->status === 'cancelado')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Cancelado</span>
+                                    @else
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/70">Pendente</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="py-8 text-center text-slate-500">
+                                    <svg class="w-10 h-10 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                    Não há cobranças recentes geradas.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
-            <div class="financeiro-sub-content">
-                <p>
-                    Emissão de relatórios e certidões oficiais:
-                </p>
-                <ul class="financeiro-links-list">
-                    <li>
-                        <i class="fa fa-circle" style="font-size: 6px; color: #47728f;"></i>
-                        <a href="{{ route('financeiro.relatorios.inadimplencia') }}">
-                            Relatório de Inadimplência
-                        </a>
-                    </li>
-                    <li>
-                        <i class="fa fa-circle" style="font-size: 6px; color: #47728f;"></i>
-                        <a href="{{ route('financeiro.relatorios.informe-irpf') }}">
-                            Demonstrativo de Pagamentos para IRPF
-                        </a>
-                    </li>
-                    <li>
-                        <i class="fa fa-circle" style="font-size: 6px; color: #47728f;"></i>
-                        <a href="{{ route('financeiro.relatorios.quitacao-anual') }}">
-                            Declaração de Quitação Anual de Débitos (Lei 12.007/2009)
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
+            <footer class="p-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+                <span>Mostrando as cobranças mais recentes com movimentação operacional</span>
+            </footer>
+        </section>
+
+        <!-- Paineis Inferiores -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6" data-purpose="info-panels">
+            <article class="bg-white border border-slate-200 shadow-xs p-5 flex flex-col justify-between" data-purpose="automation-card">
+                <div>
+                    <div class="flex items-center gap-2.5 text-brand-petroleum mb-3 pb-2 border-b border-slate-100">
+                        <span class="p-1.5 bg-blue-50 text-blue-700">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        </span>
+                        <h3 class="font-bold text-slate-900 text-sm md:text-base" style="margin: 0;">Régua de Cobrança Automática</h3>
+                    </div>
+                    <p class="text-xs md:text-sm text-slate-600 leading-relaxed mb-4" style="margin-top: 0;">
+                        Disparo diário de lembretes e notificações de vencimento com links diretos de Boleto e Pix para os responsáveis por E-mail e WhatsApp.
+                    </p>
+                    <div class="flex items-center gap-2 text-xs text-emerald-700 font-medium bg-emerald-50/80 px-3 py-2 mb-4 border border-emerald-100">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Integração ativa: Lembretes automáticos enviados às 08h00.
+                    </div>
+                </div>
+                <div>
+                    <a class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-petroleum hover:text-brand-petroleum-dark group transition" href="{{ route('financeiro.configuracoes.gateway') }}" style="text-decoration: none;">
+                        <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        Configurações do Gateway Asaas e Chaves de Integração »
+                    </a>
+                </div>
+            </article>
+
+            <article class="bg-white border border-slate-200 shadow-xs p-5 flex flex-col justify-between" data-purpose="reports-card">
+                <div>
+                    <div class="flex items-center gap-2.5 text-brand-petroleum mb-3 pb-2 border-b border-slate-100">
+                        <span class="p-1.5 bg-amber-50 text-amber-700">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        </span>
+                        <h3 class="font-bold text-slate-900 text-sm md:text-base" style="margin: 0;">Relatórios Gerenciais</h3>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3" style="margin-top: 0;">
+                        Emissão de relatórios e certidões oficiais conforme legislação educacional:
+                    </p>
+                    <ul class="space-y-2 text-xs md:text-sm" style="list-style: none; padding-left: 0;">
+                        <li>
+                            <a class="flex items-center gap-2 text-brand-petroleum hover:text-cyan-700 transition font-medium group" href="{{ route('financeiro.relatorios.inadimplencia') }}" style="text-decoration: none;">
+                                <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                Relatório de Inadimplência
+                            </a>
+                        </li>
+                        <li>
+                            <a class="flex items-center gap-2 text-brand-petroleum hover:text-cyan-700 transition font-medium group" href="{{ route('financeiro.relatorios.informe-irpf') }}" style="text-decoration: none;">
+                                <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                Demonstrativo de Pagamentos para IRPF
+                            </a>
+                        </li>
+                        <li>
+                            <a class="flex items-center gap-2 text-brand-petroleum hover:text-cyan-700 transition font-medium group" href="{{ route('financeiro.relatorios.quitacao-anual') }}" style="text-decoration: none;">
+                                <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                Declaração de Quitação Anual de Débitos
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </article>
+        </section>
+    </main>
 </div>
-
-<!-- Estilos 100% Alinhados à Identidade Visual do i-Educar -->
-<style>
-    .financeiro-dashboard-wrapper {
-        font-family: "Open Sans", Arial, sans-serif;
-        color: #47728f;
-    }
-
-    /* Cabeçalho */
-    .financeiro-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 18px;
-        padding-bottom: 12px;
-        border-bottom: 1px solid #cddce6;
-    }
-    .financeiro-header-title h2 {
-        color: #1b4c6b;
-        font-size: 18px;
-        font-weight: 700;
-        margin: 0;
-        font-family: "Open Sans", Arial, sans-serif;
-    }
-    .financeiro-header-desc {
-        color: #64748b;
-        font-size: 13px;
-        margin-top: 3px;
-        display: block;
-    }
-    .financeiro-header-actions {
-        display: flex;
-        gap: 8px;
-    }
-
-    /* Botões Padrão i-Educar */
-    .btn-ieducar-action {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 7px 16px;
-        font-size: 13px;
-        font-weight: 600;
-        border-radius: 3px;
-        text-decoration: none !important;
-        cursor: pointer;
-        font-family: "Open Sans", Arial, sans-serif;
-        transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-    }
-    .btn-ieducar-green {
-        background-color: #0ac336;
-        color: #ffffff !important;
-        border: 1px solid #09b031;
-    }
-    .btn-ieducar-green:hover {
-        background-color: #09b031;
-        color: #ffffff !important;
-    }
-    .btn-ieducar-blue {
-        background-color: #47728f;
-        color: #ffffff !important;
-        border: 1px solid #3d627b;
-    }
-    .btn-ieducar-blue:hover {
-        background-color: #3b5f77;
-        color: #ffffff !important;
-    }
-    .btn-ieducar-outline {
-        background-color: #ffffff;
-        color: #47728f !important;
-        border: 1px solid #cddce6;
-    }
-    .btn-ieducar-outline:hover {
-        background-color: #f5f9fd;
-        border-color: #47728f;
-        color: #1b4c6b !important;
-    }
-
-    /* Grid de KPIs */
-    .financeiro-kpis-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 14px;
-        margin-bottom: 20px;
-    }
-    .financeiro-kpi-card {
-        background: #ffffff;
-        border: 1px solid #cddce6;
-        border-radius: 3px;
-        padding: 14px 16px;
-        position: relative;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-    }
-    .financeiro-kpi-card.kpi-green { border-top: 3px solid #0ac336; }
-    .financeiro-kpi-card.kpi-blue  { border-top: 3px solid #47728f; }
-    .financeiro-kpi-card.kpi-red   { border-top: 3px solid #d9534f; }
-    .financeiro-kpi-card.kpi-amber { border-top: 3px solid #f0ad4e; }
-
-    .kpi-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 6px;
-    }
-    .kpi-card-title {
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        color: #47728f;
-        letter-spacing: 0.3px;
-    }
-    .kpi-icon {
-        font-size: 14px;
-        color: #8ba4b5;
-    }
-    .kpi-card-value {
-        font-size: 21px;
-        font-weight: 700;
-        margin-bottom: 4px;
-        color: #1b4c6b;
-    }
-    .kpi-card-footer {
-        font-size: 12px;
-        color: #64748b;
-    }
-
-    .text-green { color: #0ac336 !important; }
-    .text-blue  { color: #47728f !important; }
-    .text-red   { color: #d9534f !important; }
-    .text-amber { color: #f0ad4e !important; }
-
-    /* Caixa da Tabela */
-    .financeiro-table-box {
-        background: #ffffff;
-        border: 1px solid #cddce6;
-        border-radius: 3px;
-        margin-bottom: 20px;
-        overflow: hidden;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-    }
-    .financeiro-box-header {
-        background: #47728f;
-        color: #ffffff;
-        padding: 9px 15px;
-        font-size: 14px;
-        font-weight: 700;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .financeiro-header-link {
-        color: #e0f2fe !important;
-        font-size: 12px;
-        font-weight: 500;
-        text-decoration: underline !important;
-    }
-    .financeiro-header-link:hover {
-        color: #ffffff !important;
-    }
-
-    .financeiro-table-responsive {
-        width: 100%;
-        overflow-x: auto;
-    }
-    .financeiro-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-    }
-    .financeiro-table thead tr {
-        background-color: #ccdce6;
-    }
-    .financeiro-table th {
-        padding: 9px 12px;
-        font-size: 12px;
-        font-weight: 700;
-        color: #47728f;
-        text-transform: uppercase;
-    }
-    .financeiro-table td {
-        padding: 10px 12px;
-        border-bottom: 1px solid #eef4f8;
-        color: #47728f;
-    }
-    .financeiro-table tbody tr:nth-child(odd) {
-        background-color: #f5f9fd;
-    }
-    .financeiro-table tbody tr:nth-child(even) {
-        background-color: #ffffff;
-    }
-    .financeiro-table tbody tr:hover {
-        background-color: #eaf2f8;
-    }
-
-    .financeiro-empty-state {
-        text-align: center;
-        padding: 30px 15px !important;
-        background-color: #fafbfc;
-    }
-
-    /* Badges de Status Padrão i-Educar */
-    .badge-status {
-        display: inline-block;
-        padding: 3px 8px;
-        font-size: 11px;
-        font-weight: 700;
-        border-radius: 3px;
-        text-transform: uppercase;
-    }
-    .badge-pago {
-        background-color: #e0f9d8;
-        color: #157100;
-        border: 1px solid #c0eec0;
-    }
-    .badge-pendente {
-        background-color: #fff7e2;
-        color: #854d0e;
-        border: 1px solid #fde68a;
-    }
-    .badge-vencido {
-        background-color: #ffeeee;
-        color: #991b1b;
-        border: 1px solid #fecaca;
-    }
-    .badge-cancelado {
-        background-color: #f1f5f9;
-        color: #64748b;
-        border: 1px solid #cbd5e1;
-    }
-
-    /* Grid Inferior */
-    .financeiro-bottom-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 14px;
-    }
-    .financeiro-sub-box {
-        background: #ffffff;
-        border: 1px solid #cddce6;
-        border-radius: 3px;
-        overflow: hidden;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-    }
-    .financeiro-sub-header {
-        background: #ccdce6;
-        padding: 9px 15px;
-        font-size: 13.5px;
-        font-weight: 700;
-        color: #47728f;
-    }
-    .financeiro-sub-content {
-        padding: 14px 16px;
-        font-size: 13px;
-        color: #555555;
-        line-height: 1.5;
-    }
-    .financeiro-sub-content p {
-        margin: 0;
-    }
-    .financeiro-links-list {
-        list-style: none;
-        padding: 0;
-        margin: 10px 0 0 0;
-    }
-    .financeiro-links-list li {
-        margin-bottom: 7px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .financeiro-links-list li a {
-        color: #47728f;
-        text-decoration: underline;
-        font-weight: 600;
-    }
-    .financeiro-links-list li a:hover {
-        color: #1b4c6b;
-    }
-</style>
 @endsection
