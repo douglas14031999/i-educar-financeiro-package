@@ -5,39 +5,108 @@
 
 @push('styles')
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script>
-    tailwind.config = {
-      corePlugins: {
-        preflight: false, // Evita conflitar com reset css do i-educar
-      },
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-          },
-          colors: {
-            brand: {
-              petroleum: '#1d4354',
-              'petroleum-dark': '#132d39',
-              'petroleum-light': '#2d637a',
-              green: '#10b981',
-              'green-dark': '#059669',
-              coral: '#ef4444',
-              amber: '#f59e0b',
-              surface: '#f8fafc',
+    window.tailwind = {
+      config: {
+        corePlugins: {
+          preflight: false, // Previne conflitos com o layout nativo do i-Educar
+        },
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              brand: {
+                petroleum: '#1d4354',
+                'petroleum-dark': '#132d39',
+                'petroleum-light': '#2d637a',
+                green: '#10b981',
+                'green-dark': '#059669',
+                coral: '#ef4444',
+                amber: '#f59e0b',
+                surface: '#f8fafc',
+              }
             }
           }
         }
       }
+    };
+</script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    if (window.tailwind && window.tailwind.config) {
+      tailwind.config = window.tailwind.config;
     }
 </script>
 <style>
+    /* Reset local e contenção de layout */
     .financeiro-dashboard-container * {
         box-sizing: border-box;
     }
-    .financeiro-dashboard-container, .financeiro-dashboard-container .rounded, .financeiro-dashboard-container .rounded-sm, .financeiro-dashboard-container .rounded-md, .financeiro-dashboard-container .rounded-lg, .financeiro-dashboard-container .rounded-xl, .financeiro-dashboard-container .rounded-2xl, .financeiro-dashboard-container .rounded-full, .financeiro-dashboard-container .rounded-xs { 
+    .financeiro-dashboard-container, 
+    .financeiro-dashboard-container .rounded, 
+    .financeiro-dashboard-container .rounded-sm, 
+    .financeiro-dashboard-container .rounded-md, 
+    .financeiro-dashboard-container .rounded-lg, 
+    .financeiro-dashboard-container .rounded-xl, 
+    .financeiro-dashboard-container .rounded-2xl, 
+    .financeiro-dashboard-container .rounded-full, 
+    .financeiro-dashboard-container .rounded-xs { 
         border-radius: 0px !important; 
+    }
+
+    /* Regras estritas para SVG no Dashboard Financeiro para evitar FOUC e overflow */
+    .financeiro-dashboard-container svg {
+        display: inline-block !important;
+        vertical-align: middle !important;
+        flex-shrink: 0 !important;
+    }
+    .financeiro-dashboard-container svg.w-6,
+    .financeiro-dashboard-container svg[class*="w-6"] {
+        width: 24px !important;
+        height: 24px !important;
+        max-width: 24px !important;
+        max-height: 24px !important;
+    }
+    .financeiro-dashboard-container svg.w-5,
+    .financeiro-dashboard-container svg[class*="w-5"] {
+        width: 20px !important;
+        height: 20px !important;
+        max-width: 20px !important;
+        max-height: 20px !important;
+    }
+    .financeiro-dashboard-container svg.w-4,
+    .financeiro-dashboard-container svg[class*="w-4"] {
+        width: 16px !important;
+        height: 16px !important;
+        max-width: 16px !important;
+        max-height: 16px !important;
+    }
+    .financeiro-dashboard-container svg.w-3\.5,
+    .financeiro-dashboard-container svg[class*="w-3.5"] {
+        width: 14px !important;
+        height: 14px !important;
+        max-width: 14px !important;
+        max-height: 14px !important;
+    }
+    .financeiro-dashboard-container svg.w-10,
+    .financeiro-dashboard-container svg[class*="w-10"] {
+        width: 40px !important;
+        height: 40px !important;
+        max-width: 40px !important;
+        max-height: 40px !important;
+    }
+
+    /* Preservar elementos nativos do i-Educar fora do container financeiro */
+    header svg,
+    .ieducar-header svg,
+    #topo svg,
+    #menu_lateral svg,
+    .breadcrumb svg,
+    .tablelistagem svg {
+        max-width: 24px;
+        max-height: 24px;
     }
 </style>
 @endpush
@@ -50,7 +119,7 @@
             <div>
                 <div class="flex items-center gap-2.5 text-brand-petroleum">
                     <div class="p-2 bg-brand-petroleum/10 text-brand-petroleum">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v4M12 14v4M16 14v4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v4M12 14v4M16 14v4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                     </div>
                     <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900" style="margin: 0;">
                         Painel Geral de Gestão Financeira
@@ -62,13 +131,13 @@
             </div>
             <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
                 <a href="{{ route('financeiro.baixas.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm hover:shadow transition duration-150" style="text-decoration: none;">
-                    <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Nova Baixa de Balcão
                 </a>
                 <a href="{{ route('financeiro.titulos.index') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white text-sm font-medium shadow-sm transition duration-150" style="text-decoration: none;">
-                    <svg aria-hidden="true" class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg aria-hidden="true" class="w-4 h-4 text-slate-300" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Ver Todas as Mensalidades
@@ -83,7 +152,7 @@
                 <div class="flex items-center justify-between text-slate-500 mb-2">
                     <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">Receita Recebida no Mês</span>
                     <span class="p-1 bg-emerald-50 text-emerald-600">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                     </span>
                 </div>
                 <div>
@@ -99,7 +168,7 @@
                 <div class="flex items-center justify-between text-slate-500 mb-2">
                     <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">A Receber no Mês Atual</span>
                     <span class="p-1 bg-cyan-50 text-cyan-600">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                     </span>
                 </div>
                 <div>
@@ -115,7 +184,7 @@
                 <div class="flex items-center justify-between text-slate-500 mb-2">
                     <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">Total em Atraso</span>
                     <span class="p-1 bg-rose-50 text-rose-600">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                     </span>
                 </div>
                 <div>
@@ -131,7 +200,7 @@
                 <div class="flex items-center justify-between text-slate-500 mb-2">
                     <span class="text-[11px] font-bold tracking-wider uppercase text-slate-600">Taxa de Inadimplência</span>
                     <span class="p-1 bg-amber-50 text-amber-600">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                     </span>
                 </div>
                 <div>
@@ -147,7 +216,7 @@
         <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="table-container">
             <div class="bg-gradient-to-r from-[#214b5f] to-[#1a3d4e] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
                 <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                    <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                     <h2 class="text-sm font-semibold tracking-wide" style="margin: 0; color: white;">Próximos Vencimentos e Cobranças Recentes</h2>
                 </div>
                 <a class="text-xs font-medium text-cyan-100 hover:text-white transition flex items-center gap-1" href="{{ route('financeiro.titulos.index') }}" style="text-decoration: none;">
@@ -161,11 +230,11 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <a href="{{ route('financeiro.planos.create') }}" class="text-xs font-medium inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition shadow-2xs" style="text-decoration: none;">
-                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        <svg class="w-3.5 h-3.5 text-emerald-600" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                         Novo Plano de Pagamento
                     </a>
                     <a href="{{ route('financeiro.responsaveis.create') }}" class="text-xs font-medium inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition shadow-2xs" style="text-decoration: none;">
-                        <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        <svg class="w-3.5 h-3.5 text-slate-600" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                         Cadastrar Responsável
                     </a>
                 </div>
@@ -226,7 +295,7 @@
                         @empty
                             <tr>
                                 <td colspan="7" class="py-8 text-center text-slate-500">
-                                    <svg class="w-10 h-10 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                    <svg class="w-10 h-10 mx-auto text-slate-300 mb-3" width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                                     Não há cobranças recentes geradas.
                                 </td>
                             </tr>
@@ -245,7 +314,7 @@
                 <div>
                     <div class="flex items-center gap-2.5 text-brand-petroleum mb-3 pb-2 border-b border-slate-100">
                         <span class="p-1.5 bg-blue-50 text-blue-700">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                            <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                         </span>
                         <h3 class="font-bold text-slate-900 text-sm md:text-base" style="margin: 0;">Régua de Cobrança Automática</h3>
                     </div>
@@ -259,7 +328,7 @@
                 </div>
                 <div>
                     <a class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-petroleum hover:text-brand-petroleum-dark group transition" href="{{ route('financeiro.configuracoes.gateway') }}" style="text-decoration: none;">
-                        <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                         Configurações do Gateway Asaas e Chaves de Integração »
                     </a>
                 </div>
@@ -269,7 +338,7 @@
                 <div>
                     <div class="flex items-center gap-2.5 text-brand-petroleum mb-3 pb-2 border-b border-slate-100">
                         <span class="p-1.5 bg-amber-50 text-amber-700">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                            <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                         </span>
                         <h3 class="font-bold text-slate-900 text-sm md:text-base" style="margin: 0;">Relatórios Gerenciais</h3>
                     </div>
@@ -279,19 +348,19 @@
                     <ul class="space-y-2 text-xs md:text-sm" style="list-style: none; padding-left: 0;">
                         <li>
                             <a class="flex items-center gap-2 text-brand-petroleum hover:text-cyan-700 transition font-medium group" href="{{ route('financeiro.relatorios.inadimplencia') }}" style="text-decoration: none;">
-                                <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                                 Relatório de Inadimplência
                             </a>
                         </li>
                         <li>
                             <a class="flex items-center gap-2 text-brand-petroleum hover:text-cyan-700 transition font-medium group" href="{{ route('financeiro.relatorios.informe-irpf') }}" style="text-decoration: none;">
-                                <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                                 Demonstrativo de Pagamentos para IRPF
                             </a>
                         </li>
                         <li>
                             <a class="flex items-center gap-2 text-brand-petroleum hover:text-cyan-700 transition font-medium group" href="{{ route('financeiro.relatorios.quitacao-anual') }}" style="text-decoration: none;">
-                                <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                <svg class="w-4 h-4 text-slate-400 group-hover:text-brand-petroleum" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                                 Declaração de Quitação Anual de Débitos
                             </a>
                         </li>
