@@ -17,7 +17,7 @@ class ResponsavelFinanceiroController extends Controller
     {
         $busca = $request->input('busca');
 
-        $query = ResponsavelFinanceiro::query();
+        $query = ResponsavelFinanceiro::withCount('alunoVinculos');
 
         if ($busca) {
             $limpo = preg_replace('/\D/', '', $busca);
