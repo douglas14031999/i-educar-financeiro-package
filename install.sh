@@ -89,7 +89,11 @@ php artisan migrate --force
 
 # 7. Executar seeder do Plano de Contas padrão escolar
 echo -e "\n${BLUE}[*] Populando Plano de Contas padrão para escolas privadas...${NC}"
-php artisan db:seed --class="iEducar\\Financeiro\\Database\\Seeders\\PlanoContasPadraoSeeder" --force || true
+SEEDER_FILE="vendor/douglas14031999/i-educar-financeiro-package/database/seeders/PlanoContasPadraoSeeder.php"
+if [ -f "$SEEDER_FILE" ]; then
+    php -r "require 'vendor/autoload.php'; require '$SEEDER_FILE'; (new iEducar\Financeiro\Database\Seeders\PlanoContasPadraoSeeder())->run();" 2>/dev/null || php artisan db:seed --class="iEducar\\Financeiro\\Database\\Seeders\\PlanoContasPadraoSeeder" --force 2>/dev/null || true
+    echo -e "${GREEN}[✓] Plano de Contas inicial configurado com sucesso!${NC}"
+fi
 
 # 8. Limpar e atualizar caches da aplicação
 echo -e "\n${BLUE}[*] Otimizando caches da aplicação...${NC}"
@@ -99,8 +103,9 @@ php artisan config:clear || true
 
 echo -e "\n${GREEN}${BOLD}================================================================================"
 echo "    INSTALAÇÃO CONCLUÍDA COM SUCESSO! 🎉                                       "
-echo "================================================================================${NC}"
+echo -e "================================================================================${NC}"
 echo -e "${CYAN}O Módulo Financeiro já está ativo no seu i-Educar!${NC}\n"
+
 echo -e "  📌 ${BOLD}Acesso ao Módulo:${NC} Abra seu navegador em ${BOLD}/financeiro${NC} ou use o menu lateral"
 echo -e "  ⚙️  ${BOLD}Gateway Asaas:${NC} Configure a chave de API em ${BOLD}Financeiro > Configurações do Gateway${NC}"
 echo -e "  ⏰ ${BOLD}Régua Automática:${NC} Configure no crontab do servidor:"

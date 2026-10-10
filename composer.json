@@ -21,7 +21,8 @@
     },
     "autoload": {
         "psr-4": {
-            "iEducar\\Financeiro\\": "src/"
+            "iEducar\\Financeiro\\": "src/",
+            "iEducar\\Financeiro\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "autoload-dev": {
