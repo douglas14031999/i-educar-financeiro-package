@@ -58,20 +58,42 @@ O pacote se integra de forma **Plug-and-Play** ao i-Educar:
 
 ## 🚀 Instalação Plug-and-Play
 
-### 1. Requisitos
-- i-Educar 2.10+ rodando com Laravel e PostgreSQL 10+.
-- PHP >= 7.4 ou PHP 8.x.
+### Opção 1: Instalação Automática em 1 Comando (Recomendado)
 
-### 2. Adicionar ao i-Educar
+Na pasta raiz da sua instalação do **i-Educar**, execute o comando abaixo:
 
-No terminal da raiz do seu i-Educar, execute:
+```bash
+curl -sSL https://raw.githubusercontent.com/douglas14031999/i-educar-financeiro-package/main/install.sh | bash
+```
 
+> **O que o script faz sozinho:**
+> - Detecta o ambiente do i-Educar;
+> - Configura o repositório VCS no `composer.json`;
+> - Baixa e instala o pacote via Composer;
+> - Publica as configurações (`config/financeiro.php`);
+> - Executa as migrations do schema `financeiro.*` e insere os menus no i-Educar;
+> - Roda o seeder do plano de contas padrão escolar;
+> - Limpa e otimiza os caches da aplicação.
+
+---
+
+### Opção 2: Instalação Manual via Composer
+
+1. Adicione o repositório no `composer.json` do seu i-Educar:
+```json
+"repositories": [
+    {
+        "type": "vcs",
+        "url": "https://github.com/douglas14031999/i-educar-financeiro-package.git"
+    }
+]
+```
+
+2. Execute o require:
 ```bash
 composer require douglas14031999/i-educar-financeiro-package
 ```
 
-
-*(Caso esteja testando via repositório local, basta adicionar o `"repositories": [{"type": "path", "url": "../i-educar-financeiro-package"}]` no `composer.json` do seu i-Educar).*
 
 ### 3. Rodar as Migrações do Banco de Dados
 
