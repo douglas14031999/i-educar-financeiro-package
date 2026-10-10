@@ -95,8 +95,13 @@ if [ -f "$SEEDER_FILE" ]; then
     echo -e "${GREEN}[✓] Plano de Contas inicial configurado com sucesso!${NC}"
 fi
 
-# 8. Limpar e atualizar caches da aplicação
+# 8. Sincronizar menus e permissões no i-Educar
+echo -e "\n${BLUE}[*] Sincronizando menus e permissões do Módulo Financeiro...${NC}"
+php artisan financeiro:sincronizar-menus || true
+
+# 9. Limpar e atualizar caches da aplicação
 echo -e "\n${BLUE}[*] Otimizando caches da aplicação...${NC}"
+php artisan cache:clear || true
 php artisan route:clear || true
 php artisan view:clear || true
 php artisan config:clear || true
@@ -107,7 +112,10 @@ echo -e "=======================================================================
 echo -e "${CYAN}O Módulo Financeiro já está ativo no seu i-Educar!${NC}\n"
 
 echo -e "  📌 ${BOLD}Acesso ao Módulo:${NC} Abra seu navegador em ${BOLD}/financeiro${NC} ou use o menu lateral"
+echo -e "  🔄 ${YELLOW}${BOLD}ATENÇÃO AO MENU:${NC} Se você já está logado no i-Educar no navegador,"
+echo -e "     ${BOLD}FAÇA LOGOUT (SAIR) E LOGIN NOVAMENTE${NC} para que o i-Educar recarregue o menu lateral!"
 echo -e "  ⚙️  ${BOLD}Gateway Asaas:${NC} Configure a chave de API em ${BOLD}Financeiro > Configurações do Gateway${NC}"
 echo -e "  ⏰ ${BOLD}Régua Automática:${NC} Configure no crontab do servidor:"
 echo -e "     ${YELLOW}0 8 * * * cd $TARGET_DIR && php artisan financeiro:processar-regua >> /dev/null 2>&1${NC}\n"
 echo -e "${GREEN}Pronto para gerenciar as finanças da sua escola!${NC}\n"
+

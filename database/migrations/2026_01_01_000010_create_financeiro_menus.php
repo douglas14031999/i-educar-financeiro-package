@@ -28,27 +28,27 @@ class CreateFinanceiroMenus extends Migration
             $rootMenu = DB::table('menus')->where('old', ProcessosFinanceiro::MENU_FINANCEIRO_RAIZ)->first();
 
             $rootId = null;
+            $rootPayload = [
+                'title'       => 'Financeiro',
+                'description' => 'Módulo Financeiro Escolar',
+                'link'        => '/financeiro',
+                'order'       => 9,
+                'process'     => ProcessosFinanceiro::MENU_FINANCEIRO_RAIZ,
+                'icon'        => 'fa-usd',
+                'type'        => 1,
+                'active'      => true,
+            ];
+
             if ($rootMenu) {
                 $rootId = $rootMenu->id;
-                DB::table('menus')->where('id', $rootId)->update([
-                    'title' => 'Financeiro',
-                    'description' => 'Módulo Financeiro Escolar',
-                    'link' => '/financeiro',
-                    'order' => 10,
-                    'process' => ProcessosFinanceiro::MENU_FINANCEIRO_RAIZ,
-                ]);
+                DB::table('menus')->where('id', $rootId)->update($rootPayload);
             } else {
-                $rootId = DB::table('menus')->insertGetId([
-                    'old' => ProcessosFinanceiro::MENU_FINANCEIRO_RAIZ,
-                    'parent_id' => null,
-                    'title' => 'Financeiro',
-                    'description' => 'Módulo Financeiro Escolar',
-                    'link' => '/financeiro',
-                    'order' => 10,
-                    'process' => ProcessosFinanceiro::MENU_FINANCEIRO_RAIZ,
+                $rootId = DB::table('menus')->insertGetId(array_merge($rootPayload, [
+                    'old'        => ProcessosFinanceiro::MENU_FINANCEIRO_RAIZ,
+                    'parent_id'  => null,
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]);
+                ]));
             }
 
             // 2. Submenus do Módulo Financeiro
@@ -138,60 +138,73 @@ class CreateFinanceiroMenus extends Migration
             $menuIdsCriados = [$rootId];
 
             foreach ($submenus as $sub) {
+                $subData = [
+                    'parent_id'   => $rootId,
+                    'parent_old'  => ProcessosFinanceiro::MENU_FINANCEIRO_RAIZ,
+                    'title'       => $sub['title'],
+                    'description' => $sub['description'],
+                    'link'        => $sub['link'],
+                    'order'       => $sub['order'],
+                    'process'     => $sub['process'],
+                    'old'         => $sub['old'],
+                    'type'        => 2,
+                    'active'      => true,
+                ];
+
                 $existente = DB::table('menus')->where('old', $sub['old'])->first();
                 if ($existente) {
-                    DB::table('menus')->where('id', $existente->id)->update([
-                        'parent_id' => $rootId,
-                        'parent_old' => ProcessosFinanceiro::MENU_FINANCEIRO_RAIZ,
-                        'title' => $sub['title'],
-                        'description' => $sub['description'],
-                        'link' => $sub['link'],
-                        'order' => $sub['order'],
-                        'process' => $sub['process'],
-                    ]);
+                    DB::table('menus')->where('id', $existente->id)->update($subData);
                     $menuIdsCriados[] = $existente->id;
                 } else {
-                    $newId = DB::table('menus')->insertGetId([
-                        'old' => $sub['old'],
-                        'parent_id' => $rootId,
-                        'parent_old' => ProcessosFinanceiro::MENU_FINANCEIRO_RAIZ,
-                        'title' => $sub['title'],
-                        'description' => $sub['description'],
-                        'link' => $sub['link'],
-                        'order' => $sub['order'],
-                        'process' => $sub['process'],
+                    $newId = DB::table('menus')->insertGetId(array_merge($subData, [
                         'created_at' => now(),
                         'updated_at' => now(),
-                    ]);
+                    ]));
                     $menuIdsCriados[] = $newId;
                 }
             }
 
-            // 3. Atribuição de Permissões aos Tipos de Usuário (Admin, Direção, Tesouraria)
-            $tipoUsuarioTables = ['menu_tipo_usuario', 'pmieducar.menu_tipo_usuario'];
+            // 3. Atribuição de Permissões aos Tipos de Usuário
+            $tiposUsuario = collect();
+            try {
+                if (Schema::hasTable('menu_tipo_usuario')) {
+                    $tiposUsuario = $tiposUsuario->merge(DB::table('menu_tipo_usuario')->pluck('tipo_usuario_id')->unique());
+                }
+            } catch (\Throwable $e) {}
+
+            try {
+                $tiposUsuario = $tiposUsuario->merge(DB::table('pmieducar.tipo_usuario')->pluck('cod_tipo_usuario'));
+            } catch (\Throwable $e) {}
+
+            try {
+                if (Schema::hasTable('tipo_usuario')) {
+                    $tiposUsuario = $tiposUsuario->merge(DB::table('tipo_usuario')->pluck('id'));
+                }
+            } catch (\Throwable $e) {}
+
+            $tiposUsuario = $tiposUsuario->filter()->unique()->values();
+
+            $tipoUsuarioTables = ['menu_tipo_usuario', 'public.menu_tipo_usuario', 'pmieducar.menu_tipo_usuario'];
             foreach ($tipoUsuarioTables as $tabela) {
-                if (Schema::hasTable($tabela)) {
-                    $tipos = DB::table('pmieducar.tipo_usuario')->pluck('cod_tipo_usuario');
-                    if ($tipos->isEmpty() && Schema::hasTable('tipo_usuario')) {
-                        $tipos = DB::table('tipo_usuario')->pluck('id');
-                    }
+                try {
+                    if (Schema::hasTable($tabela)) {
+                        foreach ($tiposUsuario as $tipoId) {
+                            foreach ($menuIdsCriados as $menuId) {
+                                $existePermissao = DB::table($tabela)
+                                    ->where('menu_id', $menuId)
+                                    ->where('tipo_usuario_id', $tipoId)
+                                    ->exists();
 
-                    foreach ($tipos as $tipoId) {
-                        foreach ($menuIdsCriados as $menuId) {
-                            $existePermissao = DB::table($tabela)
-                                ->where('menu_id', $menuId)
-                                ->where('tipo_usuario_id', $tipoId)
-                                ->exists();
-
-                            if (!$existePermissao) {
-                                DB::table($tabela)->insert([
-                                    'menu_id' => $menuId,
-                                    'tipo_usuario_id' => $tipoId,
-                                ]);
+                                if (!$existePermissao) {
+                                    DB::table($tabela)->insert([
+                                        'menu_id'         => $menuId,
+                                        'tipo_usuario_id' => $tipoId,
+                                    ]);
+                                }
                             }
                         }
                     }
-                }
+                } catch (\Throwable $e) {}
             }
         } catch (\Throwable $e) {
             // Em ambientes sem as tabelas do i-Educar migradas ainda, não bloqueia o setup

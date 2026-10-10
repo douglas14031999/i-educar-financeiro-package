@@ -43,6 +43,7 @@ class FinanceiroServiceProvider extends ServiceProvider
             $this->commands([
                 Commands\ProcessarReguaCobrancaCommand::class,
                 Commands\SincronizarCobrancasAsaasCommand::class,
+                Commands\SincronizarMenusCommand::class,
             ]);
         }
 
