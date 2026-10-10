@@ -65,13 +65,19 @@ fi
 COMPOSER_BIN=$(command -v composer)
 echo -e "  - Composer Detectado: ${CYAN}$COMPOSER_BIN${NC}"
 
+export COMPOSER_ALLOW_SUPERUSER=1
+
 # 3. Adicionar repositório VCS ao composer.json
 echo -e "\n${BLUE}[*] Configurando repositório do Módulo Financeiro no Composer...${NC}"
 composer config repositories.ieducar-financeiro vcs https://github.com/douglas14031999/i-educar-financeiro-package.git
 
 # 4. Instalar o pacote via Composer
 echo -e "\n${BLUE}[*] Baixando e instalando douglas14031999/i-educar-financeiro-package...${NC}"
-composer require douglas14031999/i-educar-financeiro-package:dev-main --no-interaction
+if ! composer require douglas14031999/i-educar-financeiro-package:dev-main -W --no-interaction; then
+    echo -e "${YELLOW}[!] Tentando instalação com tolerância de requisitos de plataforma...${NC}"
+    composer require douglas14031999/i-educar-financeiro-package:dev-main -W --ignore-platform-reqs --no-interaction
+fi
+
 
 # 5. Publicar arquivos de configuração
 echo -e "\n${BLUE}[*] Publicando arquivos de configuração (config/financeiro.php)...${NC}"
