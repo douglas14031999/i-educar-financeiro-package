@@ -30,7 +30,7 @@
                 </p>
             </div>
             <div class="flex items-center gap-2.5">
-                <a href="{{ route('financeiro.planos.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm hover:shadow transition duration-150" style="text-decoration: none;">
+                <a href="{{ route('financeiro.planos.create') }}" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
                     <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
@@ -50,14 +50,14 @@
                 </div>
 
                 <div class="flex items-center gap-2 pt-1 sm:pt-0">
-                    <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white text-sm font-medium shadow-sm transition duration-150">
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 btn-ieducar-action btn-ieducar-blue">
                         <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                         </svg>
                         Filtrar
                     </button>
                     @if(request('ano_letivo') && request('ano_letivo') != date('Y'))
-                        <a href="{{ route('financeiro.planos.index') }}" class="px-3 py-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm font-medium transition shadow-2xs" style="text-decoration: none;">
+                        <a href="{{ route('financeiro.planos.index') }}" class="px-3 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
                             Limpar
                         </a>
                     @endif
@@ -141,7 +141,7 @@
                                             Crie um plano para vincular às matrículas dos alunos e emitir as mensalidades.
                                         </p>
                                         <div class="mt-4">
-                                            <a href="{{ route('financeiro.planos.create') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-xs transition" style="text-decoration: none;">
+                                            <a href="{{ route('financeiro.planos.create') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
                                                 <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                                 </svg>

@@ -30,7 +30,7 @@
                 </p>
             </div>
             <div class="flex items-center gap-2.5">
-                <a href="{{ route('financeiro.titulos.index') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white text-sm font-medium shadow-sm transition duration-150" style="text-decoration: none;">
+                <a href="{{ route('financeiro.titulos.index') }}" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
                     <svg aria-hidden="true" class="w-4 h-4 text-slate-300" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
@@ -112,7 +112,7 @@
                                         @endif
                                     </td>
                                     <td class="py-3 px-4 text-center whitespace-nowrap">
-                                        <a href="{{ route('financeiro.baixas.create', ['titulo_id' => $t->id]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-semibold shadow-xs hover:shadow transition duration-150" style="text-decoration: none;">
+                                        <a href="{{ route('financeiro.baixas.create', ['titulo_id' => $t->id]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
                                             <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                             </svg>
@@ -274,7 +274,7 @@
                             <a href="{{ route('financeiro.baixas.create') }}" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm font-medium transition shadow-2xs" style="text-decoration: none;">
                                 Cancelar
                             </a>
-                            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm transition">
+                            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2 btn-ieducar-action btn-ieducar-green">
                                 <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                 </svg>

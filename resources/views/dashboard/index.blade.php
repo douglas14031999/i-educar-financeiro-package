@@ -27,13 +27,13 @@
                 </p>
             </div>
             <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-                <a href="{{ route('financeiro.baixas.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm hover:shadow transition duration-150" style="text-decoration: none;">
+                <a href="{{ route('financeiro.baixas.create') }}" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
                     <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Nova Baixa de Balcão
                 </a>
-                <a href="{{ route('financeiro.titulos.index') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white text-sm font-medium shadow-sm transition duration-150" style="text-decoration: none;">
+                <a href="{{ route('financeiro.titulos.index') }}" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
                     <svg aria-hidden="true" class="w-4 h-4 text-slate-300" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>

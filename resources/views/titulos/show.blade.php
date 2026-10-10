@@ -33,7 +33,7 @@
             </div>
             <div class="flex items-center gap-2.5 flex-wrap">
                 @if(in_array($titulo->status, ['aberto', 'parcial', 'vencido']))
-                    <a href="{{ route('financeiro.baixas.create', ['titulo_id' => $titulo->id]) }}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm transition" style="text-decoration: none;">
+                    <a href="{{ route('financeiro.baixas.create', ['titulo_id' => $titulo->id]) }}" class="inline-flex items-center gap-1.5 px-4 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
                         <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                         </svg>
@@ -41,14 +41,14 @@
                     </a>
                 @endif
                 @if($titulo->status === 'pago')
-                    <a href="{{ route('financeiro.titulos.recibo-pdf', $titulo->id) }}" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium shadow-sm transition" style="text-decoration: none;">
+                    <a href="{{ route('financeiro.titulos.recibo-pdf', $titulo->id) }}" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
                         <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                         </svg>
                         Imprimir Recibo
                     </a>
                 @endif
-                <a href="{{ route('financeiro.titulos.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium border border-slate-300 shadow-2xs transition" style="text-decoration: none;">
+                <a href="{{ route('financeiro.titulos.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
@@ -220,7 +220,7 @@
                                         Fatura Online / Cartão &raquo;
                                     </a>
                                 @endif
-                                <a href="{{ route('financeiro.titulos.notificar-whatsapp', $titulo->id) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition" style="text-decoration: none;">
+                                <a href="{{ route('financeiro.titulos.notificar-whatsapp', $titulo->id) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
                                     Enviar WhatsApp
                                 </a>
                             </div>
@@ -253,7 +253,7 @@
                                         <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Código Pix Copia e Cola:</label>
                                         <div class="flex gap-2">
                                             <input type="text" readonly value="{{ $titulo->cobrancaGateway->pix_copia_cola }}" id="input-pix" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 font-mono text-xs text-slate-800 focus:outline-none">
-                                            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('input-pix').value); alert('Código Pix copiado!');" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold whitespace-nowrap">
+                                            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('input-pix').value); alert('Código Pix copiado!');" class="px-3 py-1.5 btn-ieducar-action btn-ieducar-green whitespace-nowrap">
                                                 Copiar Pix
                                             </button>
                                         </div>
@@ -271,7 +271,7 @@
                         @if(!$titulo->isLiquidado())
                             <form method="post" action="{{ route('financeiro.titulos.emitir-asaas', $titulo->id) }}">
                                 @csrf
-                                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-semibold shadow-sm transition">
+                                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green">
                                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                                     Emitir Cobrança no Asaas Agora (Boleto & Pix)
                                 </button>
@@ -345,7 +345,7 @@
                                         <form method="post" action="{{ route('financeiro.baixas.estornar', $pag->id) }}" onsubmit="return confirm('Deseja realmente estornar este recebimento? O saldo do título será recalculado.');">
                                             @csrf
                                             <input type="hidden" name="motivo_estorno" value="Estorno administrativo presencial">
-                                            <button type="submit" class="px-2.5 py-1 text-xs font-semibold text-rose-700 hover:text-white hover:bg-rose-600 border border-rose-300 rounded transition">
+                                            <button type="submit" class="px-2.5 py-1 btn-ieducar-action btn-ieducar-danger">
                                                 Estornar
                                             </button>
                                         </form>

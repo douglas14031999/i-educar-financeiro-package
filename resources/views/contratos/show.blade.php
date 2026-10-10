@@ -49,14 +49,14 @@
             </div>
             <div class="flex items-center gap-2.5">
                 @if($contrato->status === 'ativo')
-                    <button type="button" onclick="document.getElementById('modal-cancelar').style.display='flex';" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium border border-red-200 transition">
+                    <button type="button" onclick="document.getElementById('modal-cancelar').style.display='flex';" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-danger">
                         <svg class="w-4 h-4 text-red-600" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                         </svg>
                         Rescindir / Cancelar
                     </button>
                 @endif
-                <a href="{{ route('financeiro.contratos.index') }}" class="inline-flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium border border-slate-300 shadow-2xs transition" style="text-decoration: none;">
+                <a href="{{ route('financeiro.contratos.index') }}" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
@@ -219,7 +219,7 @@
                                 <td class="py-3.5 px-4 text-center">
                                     <div class="flex items-center justify-center gap-1.5">
                                         @if($titulo->status === 'aberto' || $titulo->status === 'parcial' || $titulo->status === 'vencido')
-                                            <a href="{{ route('financeiro.baixas.create', ['titulo_id' => $titulo->id]) }}" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-semibold transition" title="Baixa no Balcão" style="text-decoration: none;">
+                                            <a href="{{ route('financeiro.baixas.create', ['titulo_id' => $titulo->id]) }}" class="inline-flex items-center gap-1 px-2.5 py-1.5 btn-ieducar-action btn-ieducar-green" title="Baixa no Balcão" style="text-decoration: none;">
                                                 <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                                 </svg>
@@ -280,10 +280,10 @@
                         <textarea name="motivo" required rows="3" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition" placeholder="Ex: Transferência de escola solicitada pela família..."></textarea>
                     </div>
                     <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                        <button type="button" onclick="document.getElementById('modal-cancelar').style.display='none';" class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium border border-slate-300 transition">
+                        <button type="button" onclick="document.getElementById('modal-cancelar').style.display='none';" class="px-4 py-2 btn-ieducar-action btn-ieducar-outline">
                             Voltar
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold shadow-xs transition">
+                        <button type="submit" class="px-4 py-2 btn-ieducar-action btn-ieducar-danger">
                             Confirmar Cancelamento
                         </button>
                     </div>

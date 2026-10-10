@@ -144,6 +144,66 @@ const extraStyles = `
     opacity: 0.5 !important;
     cursor: not-allowed !important;
 }
+
+/* ============================================================
+   BOTÕES PADRÃO I-EDUCAR (dentro do container do dashboard)
+   ============================================================ */
+.financeiro-dashboard-container .btn-ieducar-action {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 7px 16px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border-radius: 3px !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    font-family: "Open Sans", Arial, sans-serif !important;
+    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out !important;
+    border: 1px solid transparent !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+    line-height: 1.4 !important;
+    box-sizing: border-box !important;
+    vertical-align: middle !important;
+}
+.financeiro-dashboard-container .btn-ieducar-green {
+    background-color: #0ac336 !important;
+    color: #ffffff !important;
+    border-color: #09b031 !important;
+}
+.financeiro-dashboard-container .btn-ieducar-green:hover {
+    background-color: #09b031 !important;
+    color: #ffffff !important;
+}
+.financeiro-dashboard-container .btn-ieducar-blue {
+    background-color: #47728f !important;
+    color: #ffffff !important;
+    border-color: #3d627b !important;
+}
+.financeiro-dashboard-container .btn-ieducar-blue:hover {
+    background-color: #3b5f77 !important;
+    color: #ffffff !important;
+}
+.financeiro-dashboard-container .btn-ieducar-outline {
+    background-color: #ffffff !important;
+    color: #47728f !important;
+    border-color: #cddce6 !important;
+}
+.financeiro-dashboard-container .btn-ieducar-outline:hover {
+    background-color: #f5f9fd !important;
+    border-color: #47728f !important;
+    color: #1b4c6b !important;
+}
+.financeiro-dashboard-container .btn-ieducar-danger {
+    background-color: #d9534f !important;
+    color: #ffffff !important;
+    border-color: #d43f3a !important;
+}
+.financeiro-dashboard-container .btn-ieducar-danger:hover {
+    background-color: #c9302c !important;
+    color: #ffffff !important;
+}
 `;
 
 const finalCss = extraStyles.trim() + '\n' + css;

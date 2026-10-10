@@ -31,7 +31,7 @@
                 </p>
             </div>
             <div class="flex items-center gap-2.5">
-                <a href="{{ route('financeiro.dashboard') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white text-sm font-medium shadow-sm transition" style="text-decoration: none;">
+                <a href="{{ route('financeiro.dashboard') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
@@ -55,7 +55,7 @@
             </p>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
                 <input type="text" readonly value="{{ $webhookUrl }}" class="flex-1 px-3 py-2 bg-white border border-cyan-300 font-mono text-xs md:text-sm text-slate-800 focus:outline-none" id="input-webhook-url">
-                <button type="button" onclick="copiarWebhook();" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-brand-petroleum hover:opacity-95 text-white text-xs md:text-sm font-semibold shadow-xs transition" id="btn-copiar-webhook">
+                <button type="button" onclick="copiarWebhook();" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 btn-ieducar-action btn-ieducar-blue" id="btn-copiar-webhook">
                     <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
@@ -125,14 +125,14 @@
 
                 <!-- Botões de Ação -->
                 <div class="pt-4 border-t border-slate-200 flex flex-wrap items-center gap-3">
-                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm transition">
+                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-green">
                         <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                         </svg>
                         Salvar Parâmetros
                     </button>
 
-                    <button type="button" onclick="testarAsaas();" class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white text-sm font-medium shadow-sm transition" id="btn-testar-conexao">
+                    <button type="button" onclick="testarAsaas();" class="inline-flex items-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-blue" id="btn-testar-conexao">
                         <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                         </svg>

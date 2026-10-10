@@ -18,12 +18,12 @@ O padrão baseia-se na interface do Painel Geral de Gestão Financeira (`modelo 
    - Espaçamento interno padronizado e equilibrado: `p-4 md:p-6` com ritmo vertical uniforme (`space-y-6`).
    - O contêiner da tela deve remover o padding legado da casca i-Educar via `@section('module-style', 'padding: 0;')`.
 
-3. **Consistência de Ações e Cores Semânticas**:
-   - **Ação Primária / Positiva** (Nova Baixa, Novo Plano, Salvar): Verde Esmeralda (`bg-emerald-600` / hover `bg-emerald-700`).
-   - **Ação Secundária / Navegação Global** (Ver Mensalidades, Histórico): Ardósia Escuro (`bg-slate-700` / hover `bg-slate-800`).
-   - **Ação Neutra / Filtros / Linha de Tabela**: Branco com borda suave (`bg-white border border-slate-300 text-slate-700` / hover `bg-slate-50`).
-   - **Ação de Atenção / Renegociação / Edição**: Âmbar / Dourado (`amber-500` / `amber-600`).
-   - **Ação de Alerta / Inadimplência / Cancelamento**: Vermelho / Rosa Intenso (`rose-500` / `rose-600`).
+3. **Sistema de Botões Oficial i-Educar** (via classes CSS em `partials/styles.blade.php`):
+   - **Ação Primária / Positiva** (Nova Baixa, Novo Plano, Salvar): `.btn-ieducar-action .btn-ieducar-green` → Verde i-Educar `#0ac336` (hover `#09b031`, border `#09b031`, texto branco, `border-radius: 3px`).
+   - **Ação Secundária / Navegação / Filtrar** (Ver Mensalidades, Buscar, Acessar): `.btn-ieducar-action .btn-ieducar-blue` → Azul i-Educar `#47728f` (hover `#3b5f77`, border `#3d627b`, texto branco, `border-radius: 3px`).
+   - **Ação Neutra / Voltar / Cancelar / Limpar Filtro**: `.btn-ieducar-action .btn-ieducar-outline` → Fundo branco, borda `#cddce6`, texto `#47728f` (hover: fundo `#f5f9fd`, borda `#47728f`, texto `#1b4c6b`).
+   - **Ação de Perigo / Excluir / Estornar / Cancelar Contrato**: `.btn-ieducar-action .btn-ieducar-danger` → Vermelho `#d9534f` (hover `#c9302c`, border `#d43f3a`, texto branco).
+   - **⚠️ Proibido**: `bg-emerald-600`, `bg-slate-700`, `bg-slate-800` em botões. Use exclusivamente as classes `.btn-ieducar-*`.
 
 4. **Isolamento de Estilos (Zero Leaks)**:
    - Todo o CSS deve ser estritamente escopado (ex.: `.financeiro-dashboard-container` ou `.financeiro-container`).
@@ -44,7 +44,7 @@ O padrão baseia-se na interface do Painel Geral de Gestão Financeira (`modelo 
 | **Fundo de Tela** | `#f4f7f9` | `bg-[#f4f7f9]` | Fundo geral da página do módulo |
 | **Superfície Card** | `#ffffff` | `bg-white` | Fundo de cards, tabelas e caixas |
 | **Borda Neutra Suave** | `#e2e8f0` | `border-slate-200` | Bordas de cards, divisores de tabelas e inputs |
-| **Verde Esmeralda** | `#059669` | `bg-emerald-600` | Botão primário, indicador de quitação, valores recebidos |
+| **Verde i-Educar (Botão Primário)** | `#0ac336` | `.btn-ieducar-green` (hover `#09b031`) | Botão Salvar, Criar, Baixar, Ação positiva principal |
 | **Verde Badge** | `bg-emerald-50` / `text-emerald-700` | `border-emerald-200` | Status Pago / Liquidado / Ativo |
 | **Azul Cyan** | `#0891b2` | `bg-cyan-600` / `text-cyan-600` | Previsões, parcelas vincendas, indicadores de fluxo |
 | **Rosa / Vermelho** | `#e11d48` | `bg-rose-500` / `text-rose-700` | Inadimplência, parcelas vencidas, alertas críticos |
@@ -127,20 +127,25 @@ O cabeçalho traz identificação do módulo, ícone representativo, título de 
     
     <!-- Ações no Topo -->
     <div class="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-        <!-- Ação Primária (Verde) -->
-        <a href="{{ route('...') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold shadow-sm hover:shadow transition duration-150" style="text-decoration: none;">
+        <!-- Ação Primária: Verde i-Educar (salvar, criar, baixar) -->
+        <a href="{{ route('...') }}" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
             <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
             </svg>
             Nova Ação Principal
         </a>
         
-        <!-- Ação Secundária (Ardósia) -->
-        <a href="{{ route('...') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white text-sm font-medium shadow-sm transition duration-150" style="text-decoration: none;">
-            <svg aria-hidden="true" class="w-4 h-4 text-slate-300" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Ação Secundária: Azul i-Educar (navegar, ver listagem, buscar) -->
+        <a href="{{ route('...') }}" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
+            <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
             </svg>
             Listagem Geral
+        </a>
+
+        <!-- Ação Neutra: Outline (voltar, cancelar, limpar filtro) -->
+        <a href="{{ route('...') }}" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
+            Voltar
         </a>
     </div>
 </header>
