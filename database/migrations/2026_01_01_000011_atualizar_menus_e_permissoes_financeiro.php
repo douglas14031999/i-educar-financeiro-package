@@ -205,18 +205,26 @@ class AtualizarMenusEPermissoesFinanceiro extends Migration
             foreach ($tabelasPermissoes as $tabela) {
                 try {
                     if (Schema::hasTable($tabela)) {
+                        $colsPerm = Schema::getColumnListing($tabela);
+                        $colTipoUser = in_array('ref_cod_tipo_usuario', $colsPerm) ? 'ref_cod_tipo_usuario' : 'tipo_usuario_id';
+
                         foreach ($tiposUsuario as $tipoId) {
                             foreach ($menuIds as $mId) {
                                 $existe = DB::table($tabela)
                                     ->where('menu_id', $mId)
-                                    ->where('tipo_usuario_id', $tipoId)
+                                    ->where($colTipoUser, $tipoId)
                                     ->exists();
 
                                 if (!$existe) {
-                                    DB::table($tabela)->insert([
-                                        'menu_id'         => $mId,
-                                        'tipo_usuario_id' => $tipoId,
-                                    ]);
+                                    $permData = [
+                                        'menu_id'    => $mId,
+                                        $colTipoUser => $tipoId,
+                                    ];
+                                    if (in_array('cadastra', $colsPerm))  $permData['cadastra']  = 1;
+                                    if (in_array('visualiza', $colsPerm)) $permData['visualiza'] = 1;
+                                    if (in_array('exclui', $colsPerm))    $permData['exclui']    = 1;
+
+                                    DB::table($tabela)->insert($permData);
                                 }
                             }
                         }

@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Route;
 */
 
 $prefix = config('financeiro.route_prefix', 'financeiro');
-$middleware = config('financeiro.middleware', ['web', 'auth']);
+$configuredMiddleware = config('financeiro.middleware', ['web', 'auth']);
+$middleware = array_merge((array)$configuredMiddleware, [\iEducar\Financeiro\Http\Middleware\CompartilharMenuMiddleware::class]);
 
 Route::group(['prefix' => $prefix, 'as' => 'financeiro.', 'middleware' => $middleware, 'namespace' => 'iEducar\Financeiro\Http\Controllers'], function () {
 

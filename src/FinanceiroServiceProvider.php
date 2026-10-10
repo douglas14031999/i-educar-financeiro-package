@@ -48,14 +48,48 @@ class FinanceiroServiceProvider extends ServiceProvider
         }
 
         // 6. View Composer para integração visual nativa com layout/menus do i-Educar 2.10
-        View::composer(['layout.topmenu', 'layout.menu'], function ($view) {
+        View::composer(['layout.menu', 'layout.topmenu', 'layout.default', 'financeiro::layouts.app'], function ($view) {
             $data = $view->getData();
+
+            // Garantir que $menu esteja sempre definido
+            if (!isset($data['menu']) || empty($data['menu'])) {
+                $user = auth()->user();
+                $menuList = collect();
+
+                if ($user && class_exists(\App\Services\MenuCacheService::class)) {
+                    try {
+                        $menuList = app(\App\Services\MenuCacheService::class)->getMenuByUser($user);
+                    } catch (\Throwable $e) {}
+                }
+
+                if (empty($menuList) || (is_object($menuList) && method_exists($menuList, 'isEmpty') && $menuList->isEmpty())) {
+                    if ($user && class_exists(\App\Menu::class)) {
+                        try {
+                            $menuList = \App\Menu::user($user);
+                        } catch (\Throwable $e) {}
+                    }
+                }
+
+                if (empty($menuList) || (is_object($menuList) && method_exists($menuList, 'isEmpty') && $menuList->isEmpty())) {
+                    if (class_exists(\App\Menu::class)) {
+                        try {
+                            $menuList = \App\Menu::roots();
+                        } catch (\Throwable $e) {}
+                    }
+                }
+
+                $view->with('menu', $menuList ?? collect());
+            }
+
+            // Garantir root, mainmenu, currentMenu e menuPaths
             if (empty($data['mainmenu']) || empty($data['root'])) {
                 $path = '/' . ltrim(request()->path(), '/');
-                if (!empty($path) && strpos($path, '/financeiro') === 0) {
+                if (empty($path) || strpos($path, '/financeiro') === 0 || strpos($path, 'financeiro') === 0) {
                     if (class_exists(\App\Menu::class)) {
                         $topmenu = \App\Menu::query()->where('link', $path)->first()
-                            ?: \App\Menu::query()->where('link', 'like', "{$path}%")->first();
+                            ?: \App\Menu::query()->where('link', 'like', "{$path}%")->first()
+                            ?: \App\Menu::query()->where('process', \iEducar\Financeiro\Constants\ProcessosFinanceiro::MENU_FINANCEIRO_RAIZ)->first()
+                            ?: \App\Menu::query()->where('title', 'Financeiro')->whereNull('parent_id')->first();
 
                         if ($topmenu) {
                             $ancestors = method_exists(\App\Menu::class, 'getMenuAncestors')
@@ -66,10 +100,10 @@ class FinanceiroServiceProvider extends ServiceProvider
                                 : $topmenu->getKey();
 
                             $view->with([
-                                'mainmenu' => $rootId,
+                                'mainmenu'    => $rootId,
                                 'currentMenu' => $topmenu,
-                                'menuPaths' => $ancestors,
-                                'root' => $rootId,
+                                'menuPaths'   => $ancestors,
+                                'root'        => $rootId,
                             ]);
                         }
                     }
