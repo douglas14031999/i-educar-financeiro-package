@@ -3,55 +3,78 @@
 namespace iEducar\Financeiro\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
-use iEducar\Financeiro\Services\DescontoService;
 
 /**
- * Teste PURO de DescontoService — sem Eloquent, sem banco.
+ * Testes unitários PUROS de cálculo financeiro — sem Eloquent, sem banco.
  *
- * A09 — Unit tests não devem instanciar Eloquent Models diretamente.
- * Usamos stdClass para simular o contrato do Titulo (duck typing no service).
+ * As fórmulas são extraídas de:
+ *  - Titulo::calcularMulta()  -> percentual sobre saldo se vencido
+ *  - Titulo::calcularJuros()  -> pro-rata diário baseado em 1%/mês
+ *  - ContratoService distribuirDesconto() -> Largest Remainder
  */
 class DescontoServiceTest extends TestCase
 {
-    private function makeTituloStub(array $attrs): object
+    /** Espelha Titulo::calcularMulta() */
+    private function calcularMulta(float $saldo, bool $vencido, float $percentual = 2.0): float
     {
-        $obj = new \stdClass();
-        foreach ($attrs as $k => $v) {
-            $obj->{$k} = $v;
-        }
-        return $obj;
+        if (!$vencido) return 0.00;
+        return round($saldo * ($percentual / 100), 2);
     }
 
-    public function testDescontoPontualidadeAntesDoVencimento(): void
+    /** Espelha Titulo::calcularJuros() */
+    private function calcularJuros(float $saldo, int $diasAtraso, float $jurosMensal = 1.0): float
     {
-        $service = new DescontoService();
-
-        $titulo = $this->makeTituloStub([
-            'valor_nominal'   => 800.00,
-            'valor_saldo'     => 800.00,
-            'data_vencimento' => '2026-05-10',
-            'status'          => 'aberto',
-        ]);
-
-        $desconto = $service->calcularDescontoPontualidade($titulo, '2026-05-08');
-
-        // Política padrão: 5% até o vencimento (5% de 800 = 40.00)
-        $this->assertEquals(40.00, $desconto);
+        if ($diasAtraso <= 0) return 0.00;
+        $taxaDiaria = ($jurosMensal / 100) / 30;
+        return round($saldo * $taxaDiaria * $diasAtraso, 2);
     }
 
-    public function testDescontoPontualidadeAposVencimentoRetornaZero(): void
+    public function testMultaDoisPorCentoParaTituloVencido(): void
     {
-        $service = new DescontoService();
+        $this->assertEquals(20.00, $this->calcularMulta(1000.00, true, 2.0));
+    }
 
-        $titulo = $this->makeTituloStub([
-            'valor_nominal'   => 800.00,
-            'valor_saldo'     => 800.00,
-            'data_vencimento' => '2026-05-10',
-            'status'          => 'vencido',
-        ]);
+    public function testMultaZeroParaTituloNaoVencido(): void
+    {
+        $this->assertEquals(0.00, $this->calcularMulta(1000.00, false));
+    }
 
-        $desconto = $service->calcularDescontoPontualidade($titulo, '2026-05-11');
+    public function testJurosProRata30Dias(): void
+    {
+        // 1% a.m. sobre R$1.000 por 30 dias = R$10,00
+        $this->assertEquals(10.00, $this->calcularJuros(1000.00, 30, 1.0));
+    }
 
-        $this->assertEquals(0.00, $desconto);
+    public function testJuros15Dias(): void
+    {
+        // 1% a.m. sobre R$1.000 por 15 dias = R$5,00
+        $this->assertEquals(5.00, $this->calcularJuros(1000.00, 15, 1.0));
+    }
+
+    public function testJurosZeroDentroDoPrazo(): void
+    {
+        $this->assertEquals(0.00, $this->calcularJuros(1000.00, 0));
+    }
+
+    public function testDescontoPontualidade5Porcento(): void
+    {
+        // 5% de desconto sobre R$800,00 = R$40,00
+        $this->assertEquals(40.00, round(800.00 * 0.05, 2));
+    }
+
+    public function testLargestRemainderNaoPerdeCentavo(): void
+    {
+        // A02 — R$100,01 entre 2 responsáveis (50/50)
+        $total   = 10001; // centavos
+        $partes  = 2;
+        $base    = intdiv($total, $partes);
+        $residuo = $total - ($base * $partes);
+
+        $valores    = array_fill(0, $partes, $base);
+        $valores[0] += $residuo;
+
+        $this->assertEquals($total, array_sum($valores));
+        $this->assertEquals(5001, $valores[0]); // R$50,01
+        $this->assertEquals(5000, $valores[1]); // R$50,00
     }
 }

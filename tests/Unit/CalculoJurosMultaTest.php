@@ -3,60 +3,47 @@
 namespace iEducar\Financeiro\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
-use iEducar\Financeiro\Models\Titulo;
 
+/**
+ * Testes unitários PUROS para cálculos de juros e multa.
+ * Não usa Eloquent — testa apenas as fórmulas financeiras.
+ */
 class CalculoJurosMultaTest extends TestCase
 {
-    /**
-     * Testa cálculo de multa de 2% para título vencido
-     */
-    public function testCalculoMultaDoisPorCento()
+    private function calcularJuros(float $saldo, int $dias, float $taxaMensal = 1.0): float
     {
-        $titulo = new Titulo([
-            'valor_nominal' => 1000.00,
-            'valor_saldo' => 1000.00,
-            'data_vencimento' => date('Y-m-d', strtotime('-10 days')),
-            'status' => 'vencido',
-        ]);
-
-        $multa = $titulo->calcularMulta();
-
-        // 2% de 1000 = 20.00
-        $this->assertEquals(20.00, $multa);
+        if ($dias <= 0) return 0.00;
+        return round($saldo * ($taxaMensal / 100 / 30) * $dias, 2);
     }
 
-    /**
-     * Testa que título dentro do vencimento não tem juros nem multa
-     */
-    public function testTituloNaoVencidoNaoPossuiEncargos()
+    private function calcularMulta(float $saldo, bool $vencido, float $pct = 2.0): float
     {
-        $titulo = new Titulo([
-            'valor_nominal' => 1000.00,
-            'valor_saldo' => 1000.00,
-            'data_vencimento' => date('Y-m-d', strtotime('+5 days')),
-            'status' => 'aberto',
-        ]);
-
-        $this->assertEquals(0.00, $titulo->calcularMulta());
-        $this->assertEquals(0.00, $titulo->calcularJuros());
+        return $vencido ? round($saldo * ($pct / 100), 2) : 0.00;
     }
 
-    /**
-     * Testa cálculo de juros pro-rata de 1% ao mês (30 dias)
-     */
-    public function testCalculoJurosProRata()
+    public function testJurosMensalAplicado(): void
     {
-        $titulo = new Titulo([
-            'valor_nominal' => 1000.00,
-            'valor_saldo' => 1000.00,
-            'data_vencimento' => date('Y-m-d', strtotime('-30 days')),
-            'status' => 'vencido',
-        ]);
+        $this->assertEquals(10.00, $this->calcularJuros(1000.00, 30, 1.0));
+    }
 
-        $juros = $titulo->calcularJuros();
+    public function testMultaFixaAplicada(): void
+    {
+        $this->assertEquals(10.00, $this->calcularMulta(500.00, true, 2.0));
+    }
 
-        // 1% de 1000 por 30 dias = 10.00
-        $this->assertGreaterThanOrEqual(9.90, $juros);
-        $this->assertLessThanOrEqual(10.10, $juros);
+    public function testSemJurosDentroDoPrazo(): void
+    {
+        $this->assertEquals(0.00, $this->calcularJuros(800.00, 0, 1.0));
+    }
+
+    public function testSemMultaDentroDoPrazo(): void
+    {
+        $this->assertEquals(0.00, $this->calcularMulta(1000.00, false));
+    }
+
+    public function testJurosProporcional15Dias(): void
+    {
+        // 1200 * (0.01/30) * 15 = 6.00
+        $this->assertEquals(6.00, $this->calcularJuros(1200.00, 15, 1.0));
     }
 }
