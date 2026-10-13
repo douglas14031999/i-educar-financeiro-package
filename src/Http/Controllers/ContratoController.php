@@ -175,3 +175,4 @@ class ContratoController extends Controller
         return redirect()->route('financeiro.contratos.show', $contrato->id)
             ->with('success', "{$gerados} título(s) gerado(s) com sucesso para o contrato {$contrato->numero_contrato}.");
     }
+}
