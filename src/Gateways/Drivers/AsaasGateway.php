@@ -94,7 +94,11 @@ class AsaasGateway implements GatewayInterface
             throw new Exception('O título não possui responsável financeiro associado.');
         }
 
-        $cpfLimpo = preg_replace('/\D/', '', $resp->cpf_cnpj);
+        $cpfLimpo = preg_replace('/\D/', '', (string) $resp->cpf_cnpj);
+
+        if (empty($cpfLimpo)) {
+            throw new Exception('O responsável financeiro não possui CPF/CNPJ cadastrado.');
+        }
 
         // Busca cliente existente pelo CPF
         $buscaResponse = $this->client()->get("{$this->baseUrl}/customers", [
@@ -108,27 +112,42 @@ class AsaasGateway implements GatewayInterface
             }
         }
 
-        // Se não existir, cadastra novo cliente no Asaas
-        $criaResponse = $this->client()->post("{$this->baseUrl}/customers", [
-            'name' => $resp->nome,
-            'cpfCnpj' => $cpfLimpo,
-            'email' => $resp->email,
-            'mobilePhone' => preg_replace('/\D/', '', $resp->telefone_celular),
-            'address' => $resp->logradouro,
-            'addressNumber' => $resp->numero,
-            'complement' => $resp->complemento,
-            'province' => $resp->bairro,
-            'postalCode' => preg_replace('/\D/', '', $resp->cep),
-            'externalReference' => (string) $resp->id,
+        // Monta payload — só inclui campos opcionais quando não-vazios
+        $phone      = preg_replace('/\D/', '', (string) ($resp->telefone_celular ?? $resp->telefone ?? ''));
+        $postalCode = preg_replace('/\D/', '', (string) ($resp->cep ?? ''));
+
+        $payload = array_filter([
+            'name'                 => $resp->nome,
+            'cpfCnpj'              => $cpfLimpo,
+            'email'                => $resp->email ?: null,
+            'mobilePhone'          => $phone ?: null,
+            'address'              => $resp->logradouro ?: null,
+            'addressNumber'        => $resp->numero ?: null,
+            'complement'           => $resp->complemento ?: null,
+            'province'             => $resp->bairro ?: null,
+            'postalCode'           => $postalCode ?: null,
+            'externalReference'    => (string) $resp->id,
             'notificationDisabled' => false,
-        ]);
+        ], fn($v) => $v !== null && $v !== '');
+
+        $criaResponse = $this->client()->post("{$this->baseUrl}/customers", $payload);
 
         if ($criaResponse->successful() && !empty($criaResponse->json('id'))) {
             return $criaResponse->json('id');
         }
 
-        $erro = $criaResponse->json('errors.0.description') ?? $criaResponse->body();
-        throw new Exception("Falha ao cadastrar cliente no Asaas: {$erro}");
+        $erroDesc = $criaResponse->json('errors.0.description')
+            ?? $criaResponse->json('errors.0.code')
+            ?? $criaResponse->body();
+
+        Log::error('AsaasGateway::obterOuCriarCliente falhou', [
+            'status'    => $criaResponse->status(),
+            'response'  => $criaResponse->body(),
+            'payload'   => $payload,
+            'responsavel_id' => $resp->id,
+        ]);
+
+        throw new Exception("Falha ao cadastrar cliente no Asaas (HTTP {$criaResponse->status()}): {$erroDesc}");
     }
 
     /**
