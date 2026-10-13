@@ -267,90 +267,162 @@
     </main>
 </div>
 
-{{-- MODAL RÁPIDO DE COMPLEMENTO DE DADOS DO RESPONSÁVEL (Opção A) --}}
-<div id="modal_complemento_responsavel" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-    {{-- FIX: max-h + overflow-y-auto para viewport pequeno não cortar o cabeçalho --}}
-    <div class="bg-white border border-slate-200 shadow-xl max-w-xl w-full flex flex-col animate-in fade-in zoom-in-95 duration-150" style="max-height: 92vh;">
-        {{-- Cabeçalho do Modal --}}
-        <div class="bg-[#47728f] px-5 py-3.5 text-white flex items-center justify-between">
-            <h3 class="text-sm font-semibold tracking-wide" style="margin: 0; color: white;">
+
+{{-- MODAL CADASTRO RÁPIDO DE RESPONSÁVEL — CSS Vanilla (sem Tailwind) --}}
+<div id="modal_complemento_responsavel"
+     style="display:none; position:fixed; inset:0; z-index:9999;
+            background:rgba(15,23,42,0.55); backdrop-filter:blur(2px);
+            align-items:center; justify-content:center; padding:16px;">
+
+    <div style="background:#fff; border:1px solid #cddce6; box-shadow:0 8px 32px rgba(0,0,0,0.18);
+                max-width:560px; width:100%; max-height:92vh;
+                display:flex; flex-direction:column; border-radius:4px;">
+
+        {{-- Cabeçalho azul --}}
+        <div style="background-color:#47728f; padding:12px 18px; display:flex;
+                    align-items:center; justify-content:space-between; flex-shrink:0;">
+            <h3 style="margin:0; font-size:14px; font-weight:700; color:#ffffff;
+                       font-family:'Open Sans',sans-serif; letter-spacing:0.03em;">
+                <i class="fa fa-user-plus" style="margin-right:6px;"></i>
                 Completar Cadastro do Responsável Financeiro
             </h3>
-            <button type="button" id="btn_fechar_modal" class="text-white/80 hover:text-white text-lg font-bold leading-none">
-                ✕
-            </button>
+            <button type="button" id="btn_fechar_modal"
+                    style="background:none; border:none; color:#fff; font-size:20px;
+                           font-weight:700; cursor:pointer; line-height:1; padding:0 2px;"
+                    title="Fechar">✕</button>
         </div>
 
-        {{-- FIX: overflow-y-auto no body do modal para scroll interno --}}
-        <form id="form_modal_responsavel" class="p-5 space-y-4 overflow-y-auto flex-1">
+        {{-- Corpo com scroll interno --}}
+        <form id="form_modal_responsavel"
+              style="padding:18px 20px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:12px;">
+
             <input type="hidden" id="modal_pessoa_id" name="pessoa_id">
             <input type="hidden" id="modal_responsavel_id" name="responsavel_financeiro_id">
             <input type="hidden" id="modal_parentesco" name="parentesco">
 
-            <div class="p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs">
-                ℹ️ <strong>Cadastro rápido:</strong> O CPF e o endereço são obrigatórios para emissão de cobranças registradas no Asaas e emissão de recibos.
+            {{-- Aviso --}}
+            <div class="alert-warning alert" style="margin:0; font-size:12px; padding:10px 13px;">
+                ℹ️ <strong>Cadastro rápido:</strong>
+                O CPF e o endereço são obrigatórios para emissão de cobranças no Asaas e recibos.
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div class="sm:col-span-2">
-                    <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Nome Completo <span class="text-red-500">*</span></label>
-                    <input type="text" id="modal_nome" name="nome" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-xs focus:outline-none focus:border-[#47728f]">
-                </div>
+            {{-- Nome --}}
+            <div>
+                <label style="display:block; font-size:11px; font-weight:700; color:#47728f;
+                              text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">
+                    Nome Completo <span style="color:#cc0000;">*</span>
+                </label>
+                <input type="text" id="modal_nome" name="nome" required
+                       class="form-input" style="max-width:100%; font-size:13px; color:#333;">
+            </div>
 
+            {{-- CPF + Celular --}}
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                 <div>
-                    <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">CPF <span class="text-red-500">*</span></label>
-                    <input type="text" id="modal_cpf" name="cpf_cnpj" required placeholder="000.000.000-00" maxlength="14" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-xs focus:outline-none focus:border-[#47728f]">
+                    <label style="display:block; font-size:11px; font-weight:700; color:#47728f;
+                                  text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">
+                        CPF <span style="color:#cc0000;">*</span>
+                    </label>
+                    <input type="text" id="modal_cpf" name="cpf_cnpj" required
+                           placeholder="000.000.000-00" maxlength="14"
+                           class="form-input" style="max-width:100%; font-size:13px; color:#333;">
                 </div>
-
                 <div>
-                    <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Telefone Celular <span class="text-red-500">*</span></label>
-                    <input type="text" id="modal_celular" name="telefone_celular" required placeholder="(00) 00000-0000" maxlength="15" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-xs focus:outline-none focus:border-[#47728f]">
-                </div>
-
-                <div class="sm:col-span-2">
-                    <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">E-mail para Cobranças</label>
-                    <input type="email" id="modal_email" name="email" placeholder="responsavel@email.com" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-xs focus:outline-none focus:border-[#47728f]">
-                </div>
-
-                <div>
-                    <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">CEP</label>
-                    <input type="text" id="modal_cep" name="cep" placeholder="00000-000" maxlength="9" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-xs focus:outline-none focus:border-[#47728f]">
-                </div>
-
-                <div>
-                    <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Bairro</label>
-                    <input type="text" id="modal_bairro" name="bairro" placeholder="Bairro" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-xs focus:outline-none focus:border-[#47728f]">
-                </div>
-
-                <div class="sm:col-span-2 grid grid-cols-3 gap-2">
-                    <div class="col-span-2">
-                        <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Logradouro / Rua</label>
-                        <input type="text" id="modal_logradouro" name="logradouro" placeholder="Rua, Av..." class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-xs focus:outline-none focus:border-[#47728f]">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Número</label>
-                        <input type="text" id="modal_numero" name="numero" placeholder="123" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-xs focus:outline-none focus:border-[#47728f]">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Cidade</label>
-                    <input type="text" id="modal_cidade" name="cidade" placeholder="Cidade" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-xs focus:outline-none focus:border-[#47728f]">
-                </div>
-
-                <div>
-                    <label class="block font-semibold text-slate-700 uppercase tracking-wider mb-1">Estado (UF)</label>
-                    <input type="text" id="modal_estado" name="estado" placeholder="UF" maxlength="2" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-xs uppercase focus:outline-none focus:border-[#47728f]">
+                    <label style="display:block; font-size:11px; font-weight:700; color:#47728f;
+                                  text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">
+                        Telefone Celular <span style="color:#cc0000;">*</span>
+                    </label>
+                    <input type="text" id="modal_celular" name="telefone_celular" required
+                           placeholder="(00) 00000-0000" maxlength="15"
+                           class="form-input" style="max-width:100%; font-size:13px; color:#333;">
                 </div>
             </div>
 
-            <div id="modal_erro_msg" class="text-xs text-red-600 hidden font-medium"></div>
+            {{-- E-mail --}}
+            <div>
+                <label style="display:block; font-size:11px; font-weight:700; color:#47728f;
+                              text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">
+                    E-mail para Cobranças
+                </label>
+                <input type="email" id="modal_email" name="email"
+                       placeholder="responsavel@email.com"
+                       class="form-input" style="max-width:100%; font-size:13px; color:#333;">
+            </div>
 
-            <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5">
-                <button type="button" id="btn_cancelar_modal" class="px-3.5 py-2 btn-ieducar-action btn-ieducar-outline text-xs">
+            {{-- CEP + Bairro --}}
+            <div style="display:grid; grid-template-columns:140px 1fr; gap:10px;">
+                <div>
+                    <label style="display:block; font-size:11px; font-weight:700; color:#47728f;
+                                  text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">
+                        CEP
+                    </label>
+                    <input type="text" id="modal_cep" name="cep"
+                           placeholder="00000-000" maxlength="9"
+                           class="form-input" style="max-width:100%; font-size:13px; color:#333;">
+                </div>
+                <div>
+                    <label style="display:block; font-size:11px; font-weight:700; color:#47728f;
+                                  text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">
+                        Bairro
+                    </label>
+                    <input type="text" id="modal_bairro" name="bairro" placeholder="Bairro"
+                           class="form-input" style="max-width:100%; font-size:13px; color:#333;">
+                </div>
+            </div>
+
+            {{-- Logradouro + Número --}}
+            <div style="display:grid; grid-template-columns:1fr 90px; gap:10px;">
+                <div>
+                    <label style="display:block; font-size:11px; font-weight:700; color:#47728f;
+                                  text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">
+                        Logradouro / Rua
+                    </label>
+                    <input type="text" id="modal_logradouro" name="logradouro" placeholder="Rua, Av..."
+                           class="form-input" style="max-width:100%; font-size:13px; color:#333;">
+                </div>
+                <div>
+                    <label style="display:block; font-size:11px; font-weight:700; color:#47728f;
+                                  text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">
+                        Número
+                    </label>
+                    <input type="text" id="modal_numero" name="numero" placeholder="123"
+                           class="form-input" style="max-width:100%; font-size:13px; color:#333;">
+                </div>
+            </div>
+
+            {{-- Cidade + UF --}}
+            <div style="display:grid; grid-template-columns:1fr 80px; gap:10px;">
+                <div>
+                    <label style="display:block; font-size:11px; font-weight:700; color:#47728f;
+                                  text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">
+                        Cidade
+                    </label>
+                    <input type="text" id="modal_cidade" name="cidade" placeholder="Cidade"
+                           class="form-input" style="max-width:100%; font-size:13px; color:#333;">
+                </div>
+                <div>
+                    <label style="display:block; font-size:11px; font-weight:700; color:#47728f;
+                                  text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">
+                        UF
+                    </label>
+                    <input type="text" id="modal_estado" name="estado" placeholder="UF"
+                           maxlength="2" style="text-transform:uppercase;"
+                           class="form-input" style="max-width:100%; font-size:13px; color:#333;">
+                </div>
+            </div>
+
+            {{-- Erro inline --}}
+            <div id="modal_erro_msg"
+                 style="display:none; font-size:12px; color:#721c24; background:#f8d7da;
+                        border:1px solid #f5c6cb; padding:8px 12px; border-radius:3px; font-weight:600;"></div>
+
+            {{-- Botões --}}
+            <div style="display:flex; justify-content:flex-end; gap:10px;
+                        padding-top:12px; border-top:1px solid #e5eef5; flex-shrink:0; margin-top:auto;">
+                <button type="button" id="btn_cancelar_modal" class="btn btn-sm">
                     Cancelar
                 </button>
-                <button type="submit" id="btn_salvar_modal" class="px-4 py-2 btn-ieducar-action btn-ieducar-green text-xs">
+                <button type="submit" id="btn_salvar_modal" class="btn btn-green btn-sm">
                     Salvar e Selecionar para o Contrato
                 </button>
             </div>
@@ -716,14 +788,14 @@ document.addEventListener('DOMContentLoaded', function () {
         modalCep.value = cepDigitos;
         dispararMascara(modalCep); // formata e dispara ViaCEP se 8 dígitos
 
-        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
         // Foca no primeiro campo vazio obrigatório
         const primeiroVazio = [modalCpf, modalCelular].find(el => !el.value.trim());
         if (primeiroVazio) setTimeout(() => primeiroVazio.focus(), 80);
     }
 
     function fecharModal() {
-        modal.classList.add('hidden');
+        modal.style.display = 'none';
     }
 
     document.getElementById('btn_fechar_modal').addEventListener('click', fecharModal);
@@ -797,12 +869,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // Submissão do Modal
     formModal.addEventListener('submit', function (e) {
         e.preventDefault();
-        modalErro.classList.add('hidden');
+        modalErro.style.display = 'none';
 
         // FIX: validação de CPF antes do POST
         if (modalCpf.value && !validarCPF(modalCpf.value)) {
             modalErro.textContent = 'CPF inválido. Verifique os dígitos informados.';
-            modalErro.classList.remove('hidden');
+            modalErro.style.display = 'block';
             modalCpf.focus();
             return;
         }
@@ -844,7 +916,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (data.error) {
                 modalErro.textContent = data.error;
-                modalErro.classList.remove('hidden');
+                modalErro.style.display = 'block';
                 return;
             }
 
@@ -871,7 +943,7 @@ document.addEventListener('DOMContentLoaded', function () {
             btnSalvar.disabled = false;
             btnSalvar.textContent = 'Salvar e Selecionar para o Contrato';
             modalErro.textContent = 'Erro ao processar: ' + err.message;
-            modalErro.classList.remove('hidden');
+            modalErro.style.display = 'block';
         });
     });
 
