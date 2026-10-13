@@ -128,16 +128,31 @@ class TituloController extends Controller
 
             if (!empty($dados)) {
                 $statusExterno = $dados['status'] ?? null;
-                $titulo->cobrancaGateway->update([
+                $updateData = [
                     'status_externo' => $statusExterno,
                     'payload_resposta' => $dados,
-                ]);
+                ];
+
+                if (!empty($dados['identificationField'])) {
+                    $updateData['linha_digitavel'] = $dados['identificationField'];
+                }
+                if (!empty($dados['barCode'])) {
+                    $updateData['codigo_barras'] = $dados['barCode'];
+                }
+                if (!empty($dados['pixQrCode'])) {
+                    $updateData['pix_qr_code_base64'] = $dados['pixQrCode'];
+                }
+                if (!empty($dados['pixCopiaCola'])) {
+                    $updateData['pix_copia_cola'] = $dados['pixCopiaCola'];
+                }
+
+                $titulo->cobrancaGateway->update($updateData);
 
                 // Se no gateway já consta como recebido mas local ainda não foi baixado
                 if (in_array($statusExterno, ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH']) && !$titulo->isLiquidado()) {
                     /** @var \iEducar\Financeiro\Services\BaixaTituloService $baixaService */
                     $baixaService = app(\iEducar\Financeiro\Services\BaixaTituloService::class);
-                    $baixaService->realizarBaixa($tituloLocked, [
+                    $baixaService->realizarBaixa($titulo, [
                         'valor_pago' => (float) ($dados['value'] ?? $titulo->valor_saldo),
                         'forma_pagamento' => ($dados['billingType'] ?? 'BOLETO') === 'PIX' ? 'pix' : 'boleto',
                         'origem_baixa' => 'sincronizacao_gateway',

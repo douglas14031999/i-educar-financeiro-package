@@ -189,17 +189,36 @@ class AsaasGateway implements GatewayInterface
         $dados = $response->json();
         $chargeId = $dados['id'];
 
-        // Consulta QR Code Pix dinâmico
-        $pixQrCode = null;
-        $pixCopiaCola = null;
+        // Consulta Linha Digitável e Código de Barras do Boleto
+        $linhaDigitavel = $dados['identificationField'] ?? null;
+        $codigoBarras   = $dados['barCode'] ?? null;
         try {
-            $pixResponse = $this->client()->get("{$this->baseUrl}/payments/{$chargeId}/pixQrCode");
-            if ($pixResponse->successful()) {
-                $pixQrCode = $pixResponse->json('encodedImage');
-                $pixCopiaCola = $pixResponse->json('payload');
+            $identResponse = $this->client()->get("{$this->baseUrl}/payments/{$chargeId}/identificationField");
+            if ($identResponse->successful()) {
+                $linhaDigitavel = $identResponse->json('identificationField') ?? $linhaDigitavel;
+                $codigoBarras   = $identResponse->json('barCode') ?? $codigoBarras;
             }
         } catch (\Throwable $e) {
-            Log::warning("Não foi possível gerar Pix QR Code imediato para {$chargeId}: " . $e->getMessage());
+            Log::warning("Não foi possível consultar linha digitável para {$chargeId}: " . $e->getMessage());
+        }
+
+        // Consulta QR Code Pix dinâmico (com retry leve caso o Asaas ainda esteja gerando)
+        $pixQrCode = null;
+        $pixCopiaCola = null;
+        for ($tentativa = 1; $tentativa <= 3; $tentativa++) {
+            try {
+                $pixResponse = $this->client()->get("{$this->baseUrl}/payments/{$chargeId}/pixQrCode");
+                if ($pixResponse->successful() && !empty($pixResponse->json('payload'))) {
+                    $pixQrCode = $pixResponse->json('encodedImage');
+                    $pixCopiaCola = $pixResponse->json('payload');
+                    break;
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Tentativa {$tentativa} Pix QR Code para {$chargeId}: " . $e->getMessage());
+            }
+            if ($tentativa < 3) {
+                usleep(300000); // 300ms
+            }
         }
 
         // Salva ou atualiza registro de cobrança do gateway
@@ -209,8 +228,8 @@ class AsaasGateway implements GatewayInterface
             'gateway' => 'asaas',
             'gateway_charge_id' => $chargeId,
             'status_externo' => $dados['status'] ?? 'PENDING',
-            'linha_digitavel' => $dados['identificationField'] ?? null,
-            'codigo_barras' => $dados['barCode'] ?? null,
+            'linha_digitavel' => $linhaDigitavel,
+            'codigo_barras' => $codigoBarras,
             'link_boleto_pdf' => $dados['bankSlipUrl'] ?? null,
             'link_pagamento' => $dados['invoiceUrl'] ?? null,
             'pix_copia_cola' => $pixCopiaCola,
@@ -225,7 +244,9 @@ class AsaasGateway implements GatewayInterface
             'link_boleto' => $dados['bankSlipUrl'] ?? null,
             'link_pagamento' => $dados['invoiceUrl'] ?? null,
             'pix_copia_cola' => $pixCopiaCola,
-            'linha_digitavel' => $dados['identificationField'] ?? null,
+            'pix_qr_code_base64' => $pixQrCode,
+            'linha_digitavel' => $linhaDigitavel,
+            'codigo_barras' => $codigoBarras,
         ];
     }
 
@@ -236,7 +257,31 @@ class AsaasGateway implements GatewayInterface
     {
         $response = $this->client()->get("{$this->baseUrl}/payments/{$gatewayChargeId}");
         if ($response->successful()) {
-            return $response->json();
+            $dados = $response->json();
+
+            // Busca linha digitável e código de barras se não presentes
+            try {
+                $ident = $this->client()->get("{$this->baseUrl}/payments/{$gatewayChargeId}/identificationField");
+                if ($ident->successful()) {
+                    $dados['identificationField'] = $ident->json('identificationField');
+                    $dados['barCode'] = $ident->json('barCode');
+                }
+            } catch (\Throwable $e) {
+                // Silencia
+            }
+
+            // Busca Pix QR Code se não presente
+            try {
+                $pix = $this->client()->get("{$this->baseUrl}/payments/{$gatewayChargeId}/pixQrCode");
+                if ($pix->successful() && !empty($pix->json('payload'))) {
+                    $dados['pixQrCode'] = $pix->json('encodedImage');
+                    $dados['pixCopiaCola'] = $pix->json('payload');
+                }
+            } catch (\Throwable $e) {
+                // Silencia
+            }
+
+            return $dados;
         }
         return [];
     }
