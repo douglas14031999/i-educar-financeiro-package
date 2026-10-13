@@ -254,9 +254,13 @@ class AlunoBuscaController extends Controller
                     $cpf = $dadosPessoa->cpf;
                     $email = $dadosPessoa->email;
                     if (!empty($dadosPessoa->fone_mov)) {
-                        $telefone = ($dadosPessoa->ddd_mov ? "({$dadosPessoa->ddd_mov}) " : '') . $dadosPessoa->fone_mov;
+                        $ddd  = trim((string) $dadosPessoa->ddd_mov);
+                        $fone = preg_replace('/\D/', '', (string) $dadosPessoa->fone_mov);
+                        $telefone = $ddd ? "({$ddd}) {$fone}" : $fone;
                     } elseif (!empty($dadosPessoa->fone_1)) {
-                        $telefone = ($dadosPessoa->ddd_1 ? "({$dadosPessoa->ddd_1}) " : '') . $dadosPessoa->fone_1;
+                        $ddd  = trim((string) $dadosPessoa->ddd_1);
+                        $fone = preg_replace('/\D/', '', (string) $dadosPessoa->fone_1);
+                        $telefone = $ddd ? "({$ddd}) {$fone}" : $fone;
                     }
                     $endereco = [
                         'cep' => $dadosPessoa->cep,
@@ -400,20 +404,21 @@ class AlunoBuscaController extends Controller
             }
         } else {
             // Cria o registro no módulo financeiro
+            // IMPORTANTE: campos opcionais vão como null, nunca com placeholders falsos
             $responsavel = ResponsavelFinanceiro::create([
-                'pessoa_id' => !empty($validated['pessoa_id']) ? (int) $validated['pessoa_id'] : null,
-                'nome' => trim($validated['nome']),
-                'cpf_cnpj' => $cpfLimpo,
-                'email' => !empty($validated['email']) ? trim($validated['email']) : 'contato@ieducar.local',
-                'telefone_celular' => !empty($validated['telefone_celular']) ? trim($validated['telefone_celular']) : '(00) 00000-0000',
-                'cep' => !empty($validated['cep']) ? trim($validated['cep']) : '00000-000',
-                'logradouro' => !empty($validated['logradouro']) ? trim($validated['logradouro']) : 'Não informado',
-                'numero' => !empty($validated['numero']) ? trim($validated['numero']) : 'S/N',
-                'complemento' => $validated['complemento'] ?? null,
-                'bairro' => !empty($validated['bairro']) ? trim($validated['bairro']) : 'Centro',
-                'cidade' => !empty($validated['cidade']) ? trim($validated['cidade']) : 'Município',
-                'estado' => !empty($validated['estado']) ? strtoupper(trim($validated['estado'])) : 'UF',
-                'ativo' => true,
+                'pessoa_id'       => !empty($validated['pessoa_id']) ? (int) $validated['pessoa_id'] : null,
+                'nome'            => trim($validated['nome']),
+                'cpf_cnpj'        => $cpfLimpo,
+                'email'           => !empty($validated['email']) ? trim($validated['email']) : null,
+                'telefone_celular' => !empty($validated['telefone_celular']) ? trim($validated['telefone_celular']) : null,
+                'cep'             => !empty($validated['cep'])       ? trim($validated['cep'])       : null,
+                'logradouro'      => !empty($validated['logradouro']) ? trim($validated['logradouro']) : null,
+                'numero'          => !empty($validated['numero'])    ? trim($validated['numero'])    : null,
+                'complemento'     => $validated['complemento'] ?? null,
+                'bairro'          => !empty($validated['bairro'])    ? trim($validated['bairro'])    : null,
+                'cidade'          => !empty($validated['cidade'])    ? trim($validated['cidade'])    : null,
+                'estado'          => !empty($validated['estado'])    ? strtoupper(trim($validated['estado'])) : null,
+                'ativo'           => true,
             ]);
         }
 
