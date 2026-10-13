@@ -117,7 +117,29 @@ class ContratoService
             // A01 — Taxa de desconto proporcional aplicada a cada item
             $taxaDesconto = ($valorBruto > 0) ? ($descontoTotal / $valorBruto) : 0.0;
 
-            $numeroContrato = Contrato::gerarNumeroContrato($anoLetivo);
+            // -------------------------------------------------------------------
+            // A29 — número do contrato: retry até 5x para escapar de gaps
+            // Sequências PostgreSQL não fazem rollback: um nextval consumido em
+            // uma transação abortada gera um "buraco" que causa 23505 na retentativa.
+            // O loop consome até 5 nextvals até encontrar um número livre.
+            // -------------------------------------------------------------------
+            $numeroContrato = null;
+            for ($tentativa = 0; $tentativa < 5; $tentativa++) {
+                $candidato = Contrato::gerarNumeroContrato($anoLetivo);
+                $jaExiste  = Contrato::withTrashed()
+                    ->where('numero_contrato', $candidato)
+                    ->exists();
+                if (!$jaExiste) {
+                    $numeroContrato = $candidato;
+                    break;
+                }
+            }
+            if ($numeroContrato === null) {
+                throw new \RuntimeException(
+                    'Não foi possível gerar um número de contrato único após 5 tentativas.'
+                );
+            }
+
             $dataInicio     = Carbon::parse($dados['data_inicio'] ?? "{$anoLetivo}-01-01");
             $dataTermino    = Carbon::parse($dados['data_termino'] ?? "{$anoLetivo}-12-31");
 
