@@ -269,7 +269,8 @@
 
 {{-- MODAL RÁPIDO DE COMPLEMENTO DE DADOS DO RESPONSÁVEL (Opção A) --}}
 <div id="modal_complemento_responsavel" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-    <div class="bg-white border border-slate-200 shadow-xl max-w-xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    {{-- FIX: max-h + overflow-y-auto para viewport pequeno não cortar o cabeçalho --}}
+    <div class="bg-white border border-slate-200 shadow-xl max-w-xl w-full flex flex-col animate-in fade-in zoom-in-95 duration-150" style="max-height: 92vh;">
         {{-- Cabeçalho do Modal --}}
         <div class="bg-[#47728f] px-5 py-3.5 text-white flex items-center justify-between">
             <h3 class="text-sm font-semibold tracking-wide" style="margin: 0; color: white;">
@@ -280,7 +281,8 @@
             </button>
         </div>
 
-        <form id="form_modal_responsavel" class="p-5 space-y-4">
+        {{-- FIX: overflow-y-auto no body do modal para scroll interno --}}
+        <form id="form_modal_responsavel" class="p-5 space-y-4 overflow-y-auto flex-1">
             <input type="hidden" id="modal_pessoa_id" name="pessoa_id">
             <input type="hidden" id="modal_responsavel_id" name="responsavel_financeiro_id">
             <input type="hidden" id="modal_parentesco" name="parentesco">
@@ -519,7 +521,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const opt = seletorMatricula.selectedOptions[0];
         if (opt && opt.value) {
             inputMatriculaId.value = opt.value;
-            inputEscolaId.value = opt.dataset.escolaId || 1;
+            // FIX A03: sem fallback para escola_id=1 — deve vir sempre da matrícula
+            if (!opt.dataset.escolaId) {
+                console.error('[Financeiro] escola_id ausente na matrícula selecionada', opt);
+                inputEscolaId.value = '';
+            } else {
+                inputEscolaId.value = opt.dataset.escolaId;
+            }
             inputAnoLetivo.value = opt.dataset.ano || {{ $anoAtual }};
         }
     }
@@ -678,23 +686,40 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // 5. Modal Rápido de Complemento
+    // FIX: dispara mask via dispatchEvent para CPF/celular/CEP pré-preenchidos
+    function dispararMascara(el) {
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
     function abrirModalComplemento(resp) {
         modalErro.classList.add('hidden');
-        document.getElementById('modal_pessoa_id').value = resp.pessoa_id || '';
+        document.getElementById('modal_pessoa_id').value    = resp.pessoa_id || '';
         document.getElementById('modal_responsavel_id').value = resp.responsavel_financeiro_id || '';
-        document.getElementById('modal_parentesco').value = resp.parentesco || 'Responsável';
-        document.getElementById('modal_nome').value = resp.nome || '';
-        document.getElementById('modal_cpf').value = resp.cpf || '';
-        document.getElementById('modal_celular').value = resp.telefone_celular || '';
-        document.getElementById('modal_email').value = resp.email || '';
-        document.getElementById('modal_cep').value = resp.cep || '';
-        document.getElementById('modal_logradouro').value = resp.logradouro || '';
-        document.getElementById('modal_numero').value = resp.numero || '';
-        document.getElementById('modal_bairro').value = resp.bairro || '';
-        document.getElementById('modal_cidade').value = resp.cidade || '';
-        document.getElementById('modal_estado').value = resp.estado || '';
+        document.getElementById('modal_parentesco').value  = resp.parentesco || 'Responsável';
+        document.getElementById('modal_nome').value        = resp.nome || '';
+        document.getElementById('modal_email').value       = resp.email || '';
+        document.getElementById('modal_logradouro').value  = resp.logradouro || '';
+        document.getElementById('modal_numero').value      = resp.numero || '';
+        document.getElementById('modal_bairro').value      = resp.bairro || '';
+        document.getElementById('modal_cidade').value      = resp.cidade || '';
+        document.getElementById('modal_estado').value      = resp.estado || '';
+
+        // FIX: seta dígitos puros e dispara máscara para formatar corretamente
+        modalCpf.value = (resp.cpf_puro || resp.cpf || '').replace(/\D/g, '');
+        dispararMascara(modalCpf);
+
+        modalCelular.value = (resp.telefone_celular || '').replace(/\D/g, '');
+        dispararMascara(modalCelular);
+
+        // FIX: seta CEP e dispara lookup ViaCEP mesmo ao re-abrir
+        const cepDigitos = (resp.cep || '').replace(/\D/g, '');
+        modalCep.value = cepDigitos;
+        dispararMascara(modalCep); // formata e dispara ViaCEP se 8 dígitos
 
         modal.classList.remove('hidden');
+        // Foca no primeiro campo vazio obrigatório
+        const primeiroVazio = [modalCpf, modalCelular].find(el => !el.value.trim());
+        if (primeiroVazio) setTimeout(() => primeiroVazio.focus(), 80);
     }
 
     function fecharModal() {
@@ -755,10 +780,32 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // FIX: valida CPF (11 dígitos, não pode ser sequência uniforme)
+    function validarCPF(cpf) {
+        const d = cpf.replace(/\D/g, '');
+        if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+        let s = 0;
+        for (let i = 0; i < 9; i++) s += parseInt(d[i]) * (10 - i);
+        let r = (s * 10) % 11; if (r === 10 || r === 11) r = 0;
+        if (r !== parseInt(d[9])) return false;
+        s = 0;
+        for (let i = 0; i < 10; i++) s += parseInt(d[i]) * (11 - i);
+        r = (s * 10) % 11; if (r === 10 || r === 11) r = 0;
+        return r === parseInt(d[10]);
+    }
+
     // Submissão do Modal
     formModal.addEventListener('submit', function (e) {
         e.preventDefault();
         modalErro.classList.add('hidden');
+
+        // FIX: validação de CPF antes do POST
+        if (modalCpf.value && !validarCPF(modalCpf.value)) {
+            modalErro.textContent = 'CPF inválido. Verifique os dígitos informados.';
+            modalErro.classList.remove('hidden');
+            modalCpf.focus();
+            return;
+        }
 
         const dados = {
             aluno_id: inputAlunoId.value,
