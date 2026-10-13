@@ -66,7 +66,12 @@ class BaixaManualController extends Controller
         ]);
 
         $titulo = Titulo::findOrFail($validated['titulo_id']);
-        $validated['usuario_id'] = Auth::id() ?? 1;
+
+        // A28 — Usuário autenticado obrigatório; sem fallback para ID 1
+        if (!Auth::check()) {
+            return back()->with('error', 'Sessão expirada. Faça login novamente para registrar pagamentos.');
+        }
+        $validated['usuario_id'] = Auth::id();
         $validated['origem_baixa'] = 'manual';
 
         try {
@@ -94,7 +99,7 @@ class BaixaManualController extends Controller
             $this->baixaService->estornarBaixa(
                 $pagamento,
                 $request->input('motivo_estorno'),
-                Auth::id() ?? 1
+                Auth::id() // A28 — null é aceito e registrado em estornado_por_usuario_id
             );
 
             return back()->with('success', 'Pagamento estornado e saldo restaurado com sucesso.');

@@ -56,7 +56,28 @@
         ])
 
         <!-- Cards de Resumo Gerencial -->
+
+        {{-- P-04 / A14 — Aviso obrigatório: regime de caixa explícito --}}
+        <div class="flex items-start gap-3 bg-amber-50 border border-amber-300 px-4 py-3 text-amber-900 text-sm" role="alert" data-purpose="regime-caixa-notice">
+            <svg class="w-5 h-5 flex-shrink-0 text-amber-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            <div>
+                <p class="font-semibold text-amber-800 mb-0.5">⚠️ Demonstrativo em Regime de Caixa</p>
+                <p class="text-amber-700 leading-relaxed">
+                    Este relatório reconhece <strong>receitas pelo efetivo recebimento</strong> (data do pagamento) e
+                    <strong>despesas pela data do pagamento</strong> — não pela competência do serviço prestado.
+                    <span class="block mt-1 text-xs text-amber-600">
+                        Não incluídos: títulos em aberto / vencidos não recebidos · Títulos renegociados (contados apenas uma vez no acordo) ·
+                        Receita de matrículas ainda pendentes · Despesas provisionadas não pagas.
+                        Para análise por competência econômica, utilize o Fluxo de Caixa Previsto.
+                    </span>
+                </p>
+            </div>
+        </div>
+
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-purpose="kpi-cards">
+
             <article class="bg-white shadow-xs border border-slate-200 p-4 relative overflow-hidden flex flex-col justify-between">
                 <div class="absolute top-0 inset-x-0 h-1 bg-emerald-500"></div>
                 <div class="flex items-center justify-between text-slate-500 mb-2">

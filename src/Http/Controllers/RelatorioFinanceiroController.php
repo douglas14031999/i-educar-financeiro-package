@@ -88,24 +88,26 @@ class RelatorioFinanceiroController extends Controller
      */
     public function dre(Request $request)
     {
-        $ano = $request->input('ano', date('Y'));
+        $ano        = $request->input('ano', date('Y'));
         $dataInicio = "{$ano}-01-01";
-        $dataFim = "{$ano}-12-31";
+        $dataFim    = "{$ano}-12-31";
 
-        // 1. Receita Bruta (Títulos gerados no ano letivo)
-        $receitaBruta = Titulo::whereYear('data_vencimento', $ano)
-            ->where('status', '!=', 'cancelado')
-            ->sum('valor_nominal');
+        // A14 — Receita Bruta REALIZADA: somente pagamentos efetivos não-estornados.
+        // Não usar valor_nominal dos títulos (representá valor previsto, não arrecadado).
+        $receitaBruta = Pagamento::where('estornado', false)
+            ->whereBetween('data_pagamento', [$dataInicio, $dataFim])
+            ->sum(\Illuminate\Support\Facades\DB::raw('valor_pago + valor_juros + valor_multa'));
+        $receitaBruta = (float) $receitaBruta;
 
-        // 2. Deduções (Descontos e Bolsas concedidas)
-        $deducoes = Titulo::whereYear('data_vencimento', $ano)
-            ->where('status', '!=', 'cancelado')
-            ->sum('valor_desconto');
+        // A15 — Deduções: descontos concedidos nos pagamentos reais (não o campo do título).
+        $deducoes = (float) Pagamento::where('estornado', false)
+            ->whereBetween('data_pagamento', [$dataInicio, $dataFim])
+            ->sum('valor_desconto_concedido');
 
-        // 3. Receita Líquida Operacional
-        $receitaLiquida = $receitaBruta - $deducoes;
+        // Receita Líquida Operacional
+        $receitaLiquida = round($receitaBruta - $deducoes, 2);
 
-        // 4. Despesas Operacionais por Categoria do Plano de Contas
+        // Despesas Operacionais por Categoria do Plano de Contas
         $despesasPorCategoria = Lancamento::where('tipo', 'despesa')
             ->where('status', 'pago')
             ->whereBetween('data_pagamento', [$dataInicio, $dataFim])
@@ -114,10 +116,10 @@ class RelatorioFinanceiroController extends Controller
             ->groupBy('plano_conta_id')
             ->get();
 
-        $totalDespesasOperacionais = $despesasPorCategoria->sum('total');
+        $totalDespesasOperacionais = (float) $despesasPorCategoria->sum('total');
 
-        // 5. Resultado Líquido do Exercício (Lucro / Superávit ou Déficit)
-        $resultadoLiquido = $receitaLiquida - $totalDespesasOperacionais;
+        // Resultado Líquido do Exercício (Lucro / Superávit ou Déficit)
+        $resultadoLiquido = round($receitaLiquida - $totalDespesasOperacionais, 2);
 
         return view('financeiro::relatorios.dre', compact(
             'ano',

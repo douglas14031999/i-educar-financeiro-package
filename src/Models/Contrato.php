@@ -18,6 +18,7 @@ class Contrato extends Model
         'responsavel_financeiro_id',
         'plano_id',
         'ano_letivo',
+        'escola_id',     // A28/TALK-1: escola obrigatória
         'data_inicio',
         'data_termino',
         'valor_total_bruto',
@@ -58,11 +59,26 @@ class Contrato extends Model
     }
 
     /**
-     * Gera número sequencial amigável para o contrato
+     * Gera número sequencial único e seguro para concorrência.
+     *
+     * A23 — COUNT sem lock produz duplicações sob carga concorrente.
+     * Solução: sequence dedicada por ano no PostgreSQL, garantida pelo próprio banco.
+     *
+     * @param  int    $anoLetivo
+     * @return string e.g. "CTR-2026-00042"
      */
     public static function gerarNumeroContrato(int $anoLetivo): string
     {
-        $ultimoId = (int) static::where('ano_letivo', $anoLetivo)->count() + 1;
-        return sprintf('CTR-%d-%05d', $anoLetivo, $ultimoId);
+        $sequenceName = "financeiro.seq_contratos_{$anoLetivo}";
+
+        // Cria a sequence do ano se ainda não existir (idempotente)
+        \DB::statement(
+            "CREATE SEQUENCE IF NOT EXISTS {$sequenceName} START 1 INCREMENT 1 NO CYCLE"
+        );
+
+        $row = \DB::selectOne("SELECT nextval('{$sequenceName}') AS seq");
+        $seq = (int) $row->seq;
+
+        return sprintf('CTR-%d-%05d', $anoLetivo, $seq);
     }
 }

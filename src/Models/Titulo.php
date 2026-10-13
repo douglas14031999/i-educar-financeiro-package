@@ -16,6 +16,7 @@ class Titulo extends Model
     protected $fillable = [
         'uuid',
         'contrato_id',
+        'renegociacao_id',   // A19 — obrigatório para RenegociacaoService::confirmar()
         'aluno_id',
         'responsavel_financeiro_id',
         'escola_id',
@@ -36,20 +37,22 @@ class Titulo extends Model
     ];
 
     protected $casts = [
-        'contrato_id' => 'integer',
-        'aluno_id' => 'integer',
+        'contrato_id'               => 'integer',
+        'renegociacao_id'           => 'integer',
+        'aluno_id'                  => 'integer',
         'responsavel_financeiro_id' => 'integer',
-        'escola_id' => 'integer',
-        'numero_parcela' => 'integer',
-        'total_parcelas' => 'integer',
-        'valor_nominal' => 'float',
-        'valor_desconto' => 'float',
-        'valor_multa' => 'float',
-        'valor_juros' => 'float',
-        'valor_pago' => 'float',
-        'valor_saldo' => 'float',
-        'data_vencimento' => 'date',
-        'data_prorrogacao' => 'date',
+        'escola_id'                 => 'integer',
+        'numero_parcela'            => 'integer',
+        'total_parcelas'            => 'integer',
+        // A20 — decimal:2 evita imprecisão de ponto flutuante binário em comparações monetárias
+        'valor_nominal'             => 'decimal:2',
+        'valor_desconto'            => 'decimal:2',
+        'valor_multa'               => 'decimal:2',
+        'valor_juros'               => 'decimal:2',
+        'valor_pago'                => 'decimal:2',
+        'valor_saldo'               => 'decimal:2',
+        'data_vencimento'           => 'date',
+        'data_prorrogacao'          => 'date',
     ];
 
     protected static function boot()
@@ -86,6 +89,11 @@ class Titulo extends Model
         return $this->hasOne(CobrancaGateway::class, 'titulo_id');
     }
 
+    public function renegociacao()
+    {
+        return $this->belongsTo(Renegociacao::class, 'renegociacao_id');
+    }
+
     public function scopeAbertos($query)
     {
         return $query->whereIn('status', ['aberto', 'parcial', 'vencido']);
@@ -102,16 +110,29 @@ class Titulo extends Model
         });
     }
 
+    /**
+     * A21 — Título liquidado = status 'pago' OU saldo efectivamente zero.
+     * Exclui 'renegociado' e 'cancelado': nesses casos o saldo foi zerado
+     * por operação, não por pagamento — não são consideráveis como quitados.
+     */
     public function isLiquidado(): bool
     {
-        return $this->status === 'pago' || (float)$this->valor_saldo <= 0.01;
-    }
-
-    public function isVencido(): bool
-    {
-        if ($this->status === 'pago' || $this->status === 'cancelado') {
+        if (in_array($this->status, ['cancelado', 'renegociado'])) {
             return false;
         }
+        return $this->status === 'pago' || (float) $this->valor_saldo < 0.005;
+    }
+
+    /**
+     * A22 — Usa data_prorrogacao quando existir, consistente com getDiasAtrasoAttribute.
+     * Todos os caminhos de vencimento devem usar o mesmo critério.
+     */
+    public function isVencido(): bool
+    {
+        if (in_array($this->status, ['pago', 'cancelado', 'renegociado'])) {
+            return false;
+        }
+        // A22 — data_prorrogacao tem precedência sobre data_vencimento original
         $vencimentoEfetivo = $this->data_prorrogacao ?? $this->data_vencimento;
         return Carbon::today()->gt($vencimentoEfetivo);
     }
@@ -160,44 +181,79 @@ class Titulo extends Model
     }
 
     /**
-     * Retorna o nome completo do aluno vinculado consultando a base do i-Educar
+     * A32 — Cache de nomes acadêmicos na instância para evitar N+1 em listagens.
+     * Cada accessor faz 1 query por aluno; em uma página de 50 títulos isso seria 50 queries.
+     * O cache vive apenas no ciclo de vida da instância (sem estado persistido).
+     */
+    private array $_cacheAcademico = [];
+
+    /**
+     * Retorna o nome completo do aluno vinculado consultando a base do i-Educar.
+     * A32 — Resultado memoizado por instância.
      */
     public function getAlunoNomeAttribute(): string
     {
         if (empty($this->aluno_id)) {
             return '-';
         }
+
+        $cacheKey = 'aluno_' . $this->aluno_id;
+        if (isset($this->_cacheAcademico[$cacheKey])) {
+            return $this->_cacheAcademico[$cacheKey];
+        }
+
         try {
             $nome = \DB::table('pmieducar.aluno')
                 ->join('cadastro.pessoa', 'cadastro.pessoa.idpes', '=', 'pmieducar.aluno.ref_idpes')
                 ->where('pmieducar.aluno.cod_aluno', $this->aluno_id)
                 ->value('cadastro.pessoa.nome');
 
-            return $nome ?: ('Aluno #' . $this->aluno_id);
+            $resultado = $nome ?: ('Aluno #' . $this->aluno_id);
         } catch (\Throwable $e) {
-            return 'Aluno #' . $this->aluno_id;
+            $resultado = 'Aluno #' . $this->aluno_id;
         }
+
+        return $this->_cacheAcademico[$cacheKey] = $resultado;
     }
 
     /**
-     * Retorna o nome da turma ativa do aluno consultando a base do i-Educar
+     * Retorna o nome da turma do aluno no ano letivo do título.
+     * A32 — Resultado memoizado por instância.
+     * A22 — Filtra pelo ano letivo do contrato para não retornar turma de outro ano.
      */
     public function getTurmaNomeAttribute(): string
     {
         if (empty($this->aluno_id)) {
             return '-';
         }
+
+        // A22 — usa o ano do título (via competencia ou contrato) para filtrar a turma correta
+        $anoFiltro = $this->contrato?->ano_letivo
+            ?? ($this->competencia ? (int) substr($this->competencia, 0, 4) : null);
+
+        $cacheKey = 'turma_' . $this->aluno_id . '_' . ($anoFiltro ?? 'any');
+        if (isset($this->_cacheAcademico[$cacheKey])) {
+            return $this->_cacheAcademico[$cacheKey];
+        }
+
         try {
-            $turma = \DB::table('pmieducar.matricula')
+            $query = \DB::table('pmieducar.matricula')
                 ->join('pmieducar.matricula_turma', 'pmieducar.matricula_turma.ref_cod_matricula', '=', 'pmieducar.matricula.cod_matricula')
                 ->join('pmieducar.turma', 'pmieducar.turma.cod_turma', '=', 'pmieducar.matricula_turma.ref_cod_turma')
                 ->where('pmieducar.matricula.ref_cod_aluno', $this->aluno_id)
-                ->where('pmieducar.matricula.ativo', 1)
-                ->value('pmieducar.turma.nm_turma');
+                ->where('pmieducar.matricula.ativo', 1);
 
-            return $turma ?: '-';
+            // A22 — filtra pelo ano letivo quando disponível
+            if ($anoFiltro) {
+                $query->where('pmieducar.matricula.ano', $anoFiltro);
+            }
+
+            $turma = $query->value('pmieducar.turma.nm_turma');
+            $resultado = $turma ?: '-';
         } catch (\Throwable $e) {
-            return '-';
+            $resultado = '-';
         }
+
+        return $this->_cacheAcademico[$cacheKey] = $resultado;
     }
 }

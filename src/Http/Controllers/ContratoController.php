@@ -107,4 +107,71 @@ class ContratoController extends Controller
 
         return back()->with('success', 'Contrato financeiro cancelado e parcelas futuras suspensas com sucesso.');
     }
-}
+
+    /**
+     * A27 — Gera (ou regenera) os títulos de um contrato existente.
+     * Handler que estava roteado mas não existia, causando fatal error.
+     *
+     * Casos de uso:
+     *  - Contrato criado sem plano (sem itens) que depois recebeu itens.
+     *  - Reprocessamento após correção de dia de vencimento.
+     *
+     * Só gera títulos para os meses que ainda NÃO possuem título no contrato (idempotente).
+     */
+    public function gerarTitulos(Request $request, $id)
+    {
+        $contrato = Contrato::with(['plano.itens', 'titulos'])->findOrFail($id);
+
+        if ($contrato->status === 'cancelado') {
+            return redirect()->back()->with('error', 'Não é possível gerar títulos para um contrato cancelado.');
+        }
+
+        $parcelasExistentes = $contrato->titulos->pluck('numero_parcela')->unique()->toArray();
+        $plano = $contrato->plano;
+
+        if (!$plano || $plano->itens->isEmpty()) {
+            return redirect()->back()->with('error', 'O plano de pagamento associado não possui itens configurados.');
+        }
+
+        $gerados = 0;
+
+        foreach ($plano->itens as $item) {
+            if (in_array($item->numero_parcela, $parcelasExistentes)) {
+                continue; // Idempotente: pula parcelas já existentes
+            }
+
+            $anoLetivo  = $contrato->ano_letivo;
+            $mesComp    = str_pad($item->mes_competencia, 2, '0', STR_PAD_LEFT);
+            $ultimoDia  = \Carbon\Carbon::create($anoLetivo, $item->mes_competencia, 1)->endOfMonth()->day;
+            $diaEfetivo = min($contrato->dia_vencimento, $ultimoDia);
+
+            \iEducar\Financeiro\Models\Titulo::create([
+                'contrato_id'               => $contrato->id,
+                'aluno_id'                  => $contrato->aluno_id,
+                'responsavel_financeiro_id' => $contrato->responsavel_financeiro_id,
+                'escola_id'                 => $contrato->escola_id,
+                'tipo'                      => $item->tipo_item,
+                'numero_parcela'            => $item->numero_parcela,
+                'total_parcelas'            => $plano->itens->where('numero_parcela', '>', 0)->count(),
+                'competencia'               => "{$anoLetivo}-{$mesComp}",
+                'data_vencimento'           => \Carbon\Carbon::create($anoLetivo, $item->mes_competencia, $diaEfetivo),
+                'valor_nominal'             => (float) $item->valor,
+                'valor_desconto'            => 0.00,
+                'valor_multa'               => 0.00,
+                'valor_juros'               => 0.00,
+                'valor_pago'                => 0.00,
+                'valor_saldo'               => (float) $item->valor,
+                'status'                    => 'aberto',
+                'observacoes'               => sprintf('%s - %s', $contrato->numero_contrato, $item->descricao),
+            ]);
+
+            $gerados++;
+        }
+
+        if ($gerados === 0) {
+            return redirect()->back()->with('info', 'Todos os títulos já existem para este contrato.');
+        }
+
+        return redirect()->route('financeiro.contratos.show', $contrato->id)
+            ->with('success', "{$gerados} título(s) gerado(s) com sucesso para o contrato {$contrato->numero_contrato}.");
+    }

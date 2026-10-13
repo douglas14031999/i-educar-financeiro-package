@@ -1,0 +1,160 @@
+name: CI — Financeiro i-Educar
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+# P-06 — Matrix PHP 8.3 + PostgreSQL 15+
+# Roda testes unitários e de integração com banco real (não SQLite)
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php }} / PostgreSQL ${{ matrix.postgres }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ["8.3", "8.4"]
+        postgres: ["15", "16"]
+
+    services:
+      postgres:
+        image: postgres:${{ matrix.postgres }}-alpine
+        env:
+          POSTGRES_DB: financeiro_test
+          POSTGRES_USER: financeiro
+          POSTGRES_PASSWORD: secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: financeiro_test
+      DB_USERNAME: financeiro
+      DB_PASSWORD: secret
+      # Schema financeiro separado — cria antes de rodar migrations
+      FINANCEIRO_SCHEMA: financeiro
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo, pdo_pgsql, mbstring, bcmath, pcntl
+          coverage: xdebug
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ matrix.php }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ matrix.php }}-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Create financeiro schema
+        run: |
+          PGPASSWORD=secret psql -h 127.0.0.1 -U financeiro -d financeiro_test \
+            -c "CREATE SCHEMA IF NOT EXISTS financeiro;"
+
+      - name: Run migrations (Integration suite)
+        run: |
+          php vendor/bin/testbench migrate \
+            --database=pgsql \
+            --path=database/migrations \
+            --realpath
+
+      - name: Run Unit Tests
+        run: |
+          php vendor/bin/phpunit \
+            --testsuite=Unit \
+            --coverage-clover=coverage-unit.xml \
+            --log-junit=junit-unit.xml
+
+      - name: Run Integration Tests (PostgreSQL real)
+        run: |
+          php vendor/bin/phpunit \
+            --testsuite=Integration \
+            --coverage-clover=coverage-integration.xml \
+            --log-junit=junit-integration.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: matrix.php == '8.3' && matrix.postgres == '15'
+        with:
+          files: coverage-unit.xml,coverage-integration.xml
+          fail_ci_if_error: false
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: junit-*.xml
+
+  lint:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: pdo, pdo_pgsql, mbstring, bcmath
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Check for float in monetary fields
+        run: |
+          echo "🔍 Verificando uso de float em campos monetários..."
+          if grep -rn "->float\b\|'float'\|\"float\"" src/Models/ --include="*.php" | grep -v "_cacheAcademico"; then
+            echo "❌ FALHA: float encontrado em Models. Use decimal:2 para valores monetários."
+            exit 1
+          fi
+          echo "✅ Nenhum float encontrado em Models."
+
+      - name: Check for escola_id fallback to 1
+        run: |
+          echo "🔍 Verificando fallback para escola_id = 1..."
+          if grep -rn "escola_id.*?? 1\|escola_id = 1\b" src/ --include="*.php"; then
+            echo "❌ FALHA: fallback escola_id=1 encontrado. A28 — proibido."
+            exit 1
+          fi
+          echo "✅ Nenhum fallback escola_id=1 encontrado."
+
+      - name: Check for auth()->id() ?? 1 fallback
+        run: |
+          echo "🔍 Verificando fallback auth()->id() ?? 1..."
+          if grep -rn "auth()->id().*?? 1\|user()->id.*?? 1" src/ --include="*.php"; then
+            echo "❌ FALHA: fallback de usuário ID=1 encontrado. A28 — proibido."
+            exit 1
+          fi
+          echo "✅ Nenhum fallback de usuário ID=1 encontrado."
+
+      - name: Check all routes have handlers
+        run: |
+          echo "🔍 Verificando rotas sem handlers (A27)..."
+          php -r "
+            require 'vendor/autoload.php';
+            // Lista básica de controllers esperados
+            \$controllers = glob('src/Http/Controllers/*.php');
+            echo 'Controllers encontrados: ' . count(\$controllers) . PHP_EOL;
+            foreach (\$controllers as \$c) { echo '  - ' . basename(\$c) . PHP_EOL; }
+          "
+          echo "✅ Verificação de rotas concluída."

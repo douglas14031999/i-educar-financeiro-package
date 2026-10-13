@@ -29,9 +29,15 @@ class TituloController extends Controller
 
         if ($busca) {
             $query->where(function ($q) use ($busca) {
-                $q->whereHas('responsavel', function ($rq) use ($busca) {
-                    $rq->where('nome', 'ilike', "%{$busca}%")
-                       ->orWhere('cpf_cnpj', 'like', "%" . preg_replace('/\D/', '', $busca) . "%");
+                // A30 — cpf_cnpj é armazenado sem pontuação (setCpfCnpjAttribute).
+                // Remove dígitos não-numéricos do termo de busca antes de comparar.
+                $cpfLimpo = preg_replace('/\D/', '', $busca);
+
+                $q->whereHas('responsavel', function ($rq) use ($busca, $cpfLimpo) {
+                    $rq->where('nome', 'ilike', "%{$busca}%");
+                    if (!empty($cpfLimpo)) {
+                        $rq->orWhere('cpf_cnpj', 'like', "%{$cpfLimpo}%");
+                    }
                 })->orWhere('observacoes', 'ilike', "%{$busca}%");
             });
         }
@@ -131,7 +137,7 @@ class TituloController extends Controller
                 if (in_array($statusExterno, ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH']) && !$titulo->isLiquidado()) {
                     /** @var \iEducar\Financeiro\Services\BaixaTituloService $baixaService */
                     $baixaService = app(\iEducar\Financeiro\Services\BaixaTituloService::class);
-                    $baixaService->baixar($titulo, [
+                    $baixaService->realizarBaixa($tituloLocked, [
                         'valor_pago' => (float) ($dados['value'] ?? $titulo->valor_saldo),
                         'forma_pagamento' => ($dados['billingType'] ?? 'BOLETO') === 'PIX' ? 'pix' : 'boleto',
                         'origem_baixa' => 'sincronizacao_gateway',
@@ -155,10 +161,10 @@ class TituloController extends Controller
     public function notificarWhatsApp($id)
     {
         $titulo = Titulo::with(['responsavel', 'cobrancaGateway'])->findOrFail($id);
-        $telefone = preg_replace('/\D/', '', $titulo->responsavel->celular ?? $titulo->responsavel->telefone ?? '');
+        $telefone = preg_replace('/\D/', '', $titulo->responsavel->telefone_celular ?? '');
 
         if (empty($telefone)) {
-            return redirect()->back()->with('error', 'O responsável financeiro não possui celular cadastrado.');
+            return redirect()->back()->with('error', 'O responsável financeiro não possui telefone celular cadastrado.');
         }
 
         // Adiciona DDI 55 se não tiver

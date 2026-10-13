@@ -28,10 +28,18 @@ class CriarContratoAposMatricula
     public function handle($event)
     {
         try {
-            $matriculaId = is_object($event) ? ($event->matriculaId ?? $event->cod_matricula ?? null) : ($event['matriculaId'] ?? null);
-            $alunoId = is_object($event) ? ($event->alunoId ?? $event->ref_cod_aluno ?? null) : ($event['alunoId'] ?? null);
+            $matriculaId = is_object($event)
+                ? ($event->matriculaId ?? $event->cod_matricula ?? null)
+                : ($event['matriculaId'] ?? null);
+            $alunoId = is_object($event)
+                ? ($event->alunoId ?? $event->ref_cod_aluno ?? null)
+                : ($event['alunoId'] ?? null);
             $anoLetivo = is_object($event) ? ($event->ano ?? date('Y')) : date('Y');
-            $escolaId = is_object($event) ? ($event->escolaId ?? 1) : 1;
+
+            // A28 — escola_id não pode ser assumido como 1; sem ele o ContratoService falha explicitamente
+            $escolaId = is_object($event)
+                ? ($event->escolaId ?? $event->ref_ref_cod_escola ?? null)
+                : ($event['escolaId'] ?? null);
 
             if (!$matriculaId || !$alunoId) {
                 return;

@@ -5,8 +5,9 @@ composer.lock
 
 # Ambientes e Logs
 .env
-.env.backup
+.env.*
 *.log
+setup-vps-tests.sh
 
 # IDEs e Editores
 .idea/

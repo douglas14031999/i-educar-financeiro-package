@@ -18,58 +18,75 @@ class AsaasWebhookController extends Controller
      */
     public function handle(Request $request)
     {
-        // 1. Validação do Token de Webhook se configurado
+        // A08 — Autenticação obrigatória (fail-closed).
+        // Se webhook_token não estiver configurado, o endpoint rejeita TUDO.
+        // Nunca opere sem autenticação em produção.
         $expectedToken = config('financeiro.gateways.asaas.webhook_token');
-        if (!empty($expectedToken)) {
-            $receivedToken = $request->header('asaas-access-token');
-            if ($receivedToken !== $expectedToken) {
-                Log::warning('Webhook Asaas rejeitado: token de segurança inválido.');
-                return response()->json(['error' => 'Unauthorized'], 401);
-            }
+        if (empty($expectedToken)) {
+            Log::error('Webhook Asaas recusado: webhook_token n\u00e3o configurado. Configure financeiro.gateways.asaas.webhook_token.');
+            return response()->json(['error' => 'Webhook n\u00e3o configurado no servidor.'], 503);
         }
 
-        $payload = $request->all();
-        $eventType = $payload['event'] ?? 'UNKNOWN';
+        $receivedToken = $request->header('asaas-access-token');
+        if ($receivedToken !== $expectedToken) {
+            Log::warning('Webhook Asaas rejeitado: token inv\u00e1lido.', [
+                'ip' => $request->ip(),
+            ]);
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $payload     = $request->all();
+        $eventType   = $payload['event'] ?? 'UNKNOWN';
         $paymentData = $payload['payment'] ?? [];
-        $paymentId = $paymentData['id'] ?? ($payload['id'] ?? null);
+        $paymentId   = $paymentData['id'] ?? ($payload['id'] ?? null);
+
+        // A09 — Chave de idempotência usa o ID externo do evento Asaas.
+        // O ID do evento garante unicidade por evento individual.
+        // Não usamos tipo+pagamento porque PAYMENT_CONFIRMED e PAYMENT_RECEIVED
+        // são eventos distintos para o mesmo pagamento e devem ser tratados uma vez cada.
+        $asaasEventId = $payload['id'] ?? null; // ID único do evento no Asaas
 
         if (!$paymentId) {
-            return response()->json(['error' => 'Identificador do pagamento não informado'], 400);
+            return response()->json(['error' => 'Identificador do pagamento n\u00e3o informado'], 400);
         }
 
-        // Chave única de idempotência do evento
-        $eventId = sprintf('asaas_%s_%s', $eventType, $paymentId);
+        // Chave de idempotência: ID do evento externo é a fonte de verdade
+        // Fallback para tipo+pagamento apenas quando o Asaas não envia 'id' do evento
+        $eventKey = $asaasEventId
+            ? 'asaas_evt_' . $asaasEventId
+            : sprintf('asaas_%s_%s', $eventType, $paymentId);
 
-        // 2. Checagem de Idempotência: impede qualquer processamento duplicado
-        $eventoExistente = WebhookEvent::where('event_id', $eventId)->first();
+        // Checagem de idempotência pelo ID do evento
+        $eventoExistente = WebhookEvent::where('event_id', $eventKey)->first();
         if ($eventoExistente) {
             return response()->json([
-                'status' => 'already_processed',
-                'message' => 'Evento já recebido e registrado anteriormente.',
+                'status'  => 'already_processed',
+                'message' => 'Evento j\u00e1 recebido e registrado anteriormente.',
             ], 200);
         }
 
-        // 3. Persistência na tabela de auditoria
+        // Persistência na tabela de auditoria antes de responder sucesso (RN53)
         $webhookEvent = WebhookEvent::create([
-            'gateway' => 'asaas',
-            'event_id' => $eventId,
+            'gateway'    => 'asaas',
+            'event_id'   => $eventKey,
             'event_type' => $eventType,
-            'payload' => $payload,
+            'payload'    => $payload,
             'processado' => false,
         ]);
 
-        // 4. Despacha Job Assíncrono de Processamento
+        // Despacha o Job — falha no dispatch não deve impedir o HTTP 200
+        // O evento já foi persistido; o Job pode ser reenfileirado manualmente se necessário
         try {
-            if (class_exists(ProcessarWebhookJob::class)) {
-                ProcessarWebhookJob::dispatch($webhookEvent->id);
-            }
+            ProcessarWebhookJob::dispatch($webhookEvent->id);
         } catch (\Throwable $e) {
-            Log::error('Erro ao enfileirar job do webhook Asaas: ' . $e->getMessage());
+            Log::error('Erro ao enfileirar ProcessarWebhookJob: ' . $e->getMessage(), [
+                'webhook_event_id' => $webhookEvent->id,
+            ]);
         }
 
         return response()->json([
-            'status' => 'received',
-            'event_id' => $eventId,
+            'status'   => 'received',
+            'event_id' => $eventKey,
         ], 200);
     }
 }

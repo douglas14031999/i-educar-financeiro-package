@@ -6,8 +6,26 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Módulo Financeiro') - i-Educar</title>
 
-    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    {{--
+        P-05 — CDN externo substituído por assets self-hosted.
+        - Google Fonts (Open Sans): substituída por stack de fontes do sistema (zero latência, funciona offline).
+        - Font Awesome 4.7: carregado via asset() do pacote (distribuído em public/vendor/financeiro/).
+          Se o pacote não tiver publicado os assets, rode: php artisan vendor:publish --tag=financeiro-assets
+    --}}
+    @if(file_exists(public_path('vendor/financeiro/css/font-awesome.min.css')))
+        <link rel="stylesheet" href="{{ asset('vendor/financeiro/css/font-awesome.min.css') }}">
+    @else
+        {{-- Fallback para CDN apenas se os assets não foram publicados --}}
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">
+    @endif
+    <style>
+        /* P-05 — Stack de fontes do sistema substitui Google Fonts */
+        body, * {
+            font-family: "Open Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                         "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+        }
+    </style>
+
 
     <style>
         * { box-sizing: border-box; }

@@ -1,29 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit backupGlobals="false"
-         backupStaticAttributes="false"
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.0/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
-         convertErrorsToExceptions="true"
-         convertNoticesToExceptions="true"
-         convertWarningsToExceptions="true"
-         processIsolation="false"
          stopOnFailure="false">
+
     <testsuites>
+        <!-- Testes de domínio puro: sem banco, sem I/O externo -->
         <testsuite name="Unit">
             <directory suffix="Test.php">./tests/Unit</directory>
         </testsuite>
+        <!-- Testes com banco PostgreSQL real (schema financeiro.*, FOR UPDATE) -->
         <testsuite name="Feature">
             <directory suffix="Test.php">./tests/Feature</directory>
         </testsuite>
+        <!-- Testes de integração end-to-end com PostgreSQL e i-Educar -->
+        <testsuite name="Integration">
+            <directory suffix="Test.php">./tests/Integration</directory>
+        </testsuite>
     </testsuites>
+
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_DRIVER" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
-        <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <env name="MAIL_MAILER" value="array"/>
+
+        <!-- Unit: SQLite em memória para testes de domínio puro (sem schema financeiro.*) -->
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+
+        <!--
+            Para Feature e Integration, sobrescreva via variáveis de ambiente no CI/CD:
+              DB_CONNECTION=pgsql
+              DB_HOST=127.0.0.1
+              DB_PORT=5432
+              DB_DATABASE=ieducar_test
+              DB_USERNAME=ieducar
+              DB_PASSWORD=secret
+              DB_SCHEMA=financeiro
+
+            Ou crie um arquivo .env.testing com essas variáveis.
+            SQLite NÃO suporta: schemas (financeiro.*), SELECT FOR UPDATE, DECIMAL com escala,
+            ou sequências PostgreSQL usadas nas migrations deste pacote.
+        -->
     </php>
+
+    <source>
+        <include>
+            <directory suffix=".php">./src</directory>
+        </include>
+    </source>
 </phpunit>

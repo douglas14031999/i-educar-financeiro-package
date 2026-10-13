@@ -41,10 +41,10 @@ class ProcessarWebhookJob implements ShouldQueue
         }
 
         try {
-            $payload = $evento->payload;
-            $eventType = $evento->event_type;
+            $payload     = $evento->payload;
+            $eventType   = $evento->event_type;
             $paymentData = $payload['payment'] ?? [];
-            $chargeId = $paymentData['id'] ?? null;
+            $chargeId    = $paymentData['id'] ?? null;
 
             if (!$chargeId) {
                 $evento->update(['erro' => 'Identificador da cobrança ausente no payload']);
@@ -59,9 +59,16 @@ class ProcessarWebhookJob implements ShouldQueue
 
             $titulo = $cobranca->titulo;
 
-            // Eventos de Pagamento Confirmado / Recebido
             if (in_array($eventType, ['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED'])) {
-                $valorPago = (float) ($paymentData['value'] ?? $titulo->valor_saldo);
+                // A09 (complementar) — Idempotência financeira:
+                // Se o título já foi liquidado por outro evento, sai sem erro.
+                if ($titulo->isLiquidado()) {
+                    Log::info("Webhook {$this->webhookEventId}: título #{$titulo->id} já liquidado. Ignorando.");
+                    $evento->update(['processado' => true, 'processado_em' => Carbon::now()]);
+                    return;
+                }
+
+                $valorPago     = (float) ($paymentData['value'] ?? $titulo->valor_saldo);
                 $dataPagamento = Carbon::parse($paymentData['paymentDate'] ?? Carbon::today());
                 $formaPagamento = strtolower($paymentData['billingType'] ?? 'pix');
                 if ($formaPagamento === 'undefined') {
@@ -69,30 +76,41 @@ class ProcessarWebhookJob implements ShouldQueue
                 }
 
                 $baixaService->realizarBaixa($titulo, [
-                    'valor_pago' => $valorPago,
-                    'forma_pagamento' => $formaPagamento,
-                    'data_pagamento' => $dataPagamento,
-                    'origem_baixa' => 'webhook_asaas',
+                    'valor_pago'              => $valorPago,
+                    'forma_pagamento'         => $formaPagamento,
+                    'data_pagamento'          => $dataPagamento,
+                    'origem_baixa'            => 'webhook_asaas',
                     'valor_desconto_concedido' => (float) ($paymentData['discountValue'] ?? 0.00),
-                    'valor_multa' => (float) ($paymentData['fineValue'] ?? 0.00),
-                    'valor_juros' => (float) ($paymentData['interestValue'] ?? 0.00),
+                    'valor_multa'             => (float) ($paymentData['fineValue'] ?? 0.00),
+                    'valor_juros'             => (float) ($paymentData['interestValue'] ?? 0.00),
                 ]);
 
                 $cobranca->update(['status_externo' => 'RECEIVED']);
+
             } elseif ($eventType === 'PAYMENT_OVERDUE') {
                 if ($titulo->status === 'aberto') {
                     $titulo->update(['status' => 'vencido']);
                 }
                 $cobranca->update(['status_externo' => 'OVERDUE']);
+            } else {
+                // A10 — Eventos desconhecidos ficam registrados sem processamento (RN59)
+                Log::info("Webhook {$this->webhookEventId}: evento '{$eventType}' ignorado — sem handler definido.");
             }
 
             $evento->update([
-                'processado' => true,
+                'processado'   => true,
                 'processado_em' => Carbon::now(),
             ]);
+
         } catch (\Throwable $e) {
-            Log::error("Erro ao processar webhook {$this->webhookEventId}: " . $e->getMessage());
+            // A10 — Log + relance: a fila de retentativas (backoff, max_attempts) funciona corretamente.
+            // Não silenciar a exceção aqui era o bug original.
+            Log::error("Erro ao processar webhook {$this->webhookEventId}: " . $e->getMessage(), [
+                'exception' => $e,
+            ]);
             $evento->update(['erro' => $e->getMessage()]);
+
+            throw $e; // Permite que a fila tente novamente (backoff progressivo)
         }
     }
 }

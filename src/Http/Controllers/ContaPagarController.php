@@ -69,10 +69,15 @@ class ContaPagarController extends Controller
             'observacoes' => 'nullable|string',
         ]);
 
-        $dados['tipo'] = 'despesa';
-        $dados['status'] = 'a_pagar';
-        $dados['escola_id'] = $request->input('escola_id', 1);
-        $dados['usuario_id'] = auth()->id() ?? 1;
+        $dados['tipo']     = 'despesa';
+        $dados['status']   = 'a_pagar';
+        // A28 — escola_id deve vir do formulário; sem fallback silencioso para ID 1
+        $dados['escola_id'] = $request->input('escola_id') ? (int) $request->input('escola_id') : null;
+        // A28 — usuário autenticado obrigatório
+        if (!auth()->check()) {
+            return redirect()->back()->with('error', 'Sessão expirada. Faça login novamente.');
+        }
+        $dados['usuario_id'] = auth()->id();
 
         Lancamento::create($dados);
 
@@ -100,16 +105,22 @@ class ContaPagarController extends Controller
     {
         $despesa = Lancamento::findOrFail($id);
 
+        // A24 / A25 — Despesas liquidadas são imutáveis (integridade contábil)
+        if ($despesa->status === 'pago') {
+            return redirect()->route('financeiro.contas-pagar.index')
+                ->with('error', "A despesa '{$despesa->descricao}' já foi liquidada e não pode ser alterada.");
+        }
+
         $dados = $request->validate([
-            'descricao' => 'required|string|max:255',
-            'fornecedor_nome' => 'nullable|string|max:200',
-            'valor' => 'required|numeric|min:0.01',
+            'descricao'        => 'required|string|max:255',
+            'fornecedor_nome'  => 'nullable|string|max:200',
+            'valor'            => 'required|numeric|min:0.01',
             'data_competencia' => 'required|date',
-            'data_vencimento' => 'required|date',
-            'plano_conta_id' => 'required|exists:financeiro.plano_contas,id',
-            'centro_custo_id' => 'nullable|exists:financeiro.centros_custo,id',
+            'data_vencimento'  => 'required|date',
+            'plano_conta_id'   => 'required|exists:financeiro.plano_contas,id',
+            'centro_custo_id'  => 'nullable|exists:financeiro.centros_custo,id',
             'documento_fiscal' => 'nullable|string|max:100',
-            'observacoes' => 'nullable|string',
+            'observacoes'      => 'nullable|string',
         ]);
 
         $despesa->update($dados);
@@ -145,6 +156,13 @@ class ContaPagarController extends Controller
     public function destroy($id)
     {
         $despesa = Lancamento::findOrFail($id);
+
+        // A25 — Despesas liquidadas não podem ser excluídas (audit trail obrigatório)
+        if ($despesa->status === 'pago') {
+            return redirect()->route('financeiro.contas-pagar.index')
+                ->with('error', "A despesa '{$despesa->descricao}' já está liquidada e não pode ser excluída. Crie um estorno contabil se necessário.");
+        }
+
         $despesa->delete();
 
         return redirect()->route('financeiro.contas-pagar.index')

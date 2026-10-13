@@ -75,7 +75,7 @@ class RenegociacaoController extends Controller
                 (float) $request->input('desconto_valor', 0.0),
                 (int) $request->input('qtd_parcelas', 1),
                 $request->input('primeiro_vencimento'),
-                auth()->id() ?? 1
+                auth()->id() // A28 — null registrado; contexto web sempre tem usuário pelo middleware auth
             );
 
             return redirect()->route('financeiro.renegociacao.termo-pdf', $renegociacao->id)

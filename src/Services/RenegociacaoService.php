@@ -28,7 +28,16 @@ class RenegociacaoService
             ->get();
 
         if ($titulos->isEmpty()) {
-            throw new Exception('Nenhum título elegível encontrado para renegociação.');
+            throw new Exception('Nenhum título elegível encontrado para renegocição.');
+        }
+
+        // A13 — Todos os títulos devem pertencer ao mesmo responsável financeiro
+        $responsaveisIds = $titulos->pluck('responsavel_financeiro_id')->unique();
+        if ($responsaveisIds->count() > 1) {
+            throw new Exception(
+                'Todos os títulos de uma renegocição devem pertencer ao mesmo responsável financeiro. ' .
+                'IDs encontrados: ' . $responsaveisIds->implode(', ')
+            );
         }
 
         $totalOriginal = (float) $titulos->sum('valor_saldo');
@@ -38,34 +47,38 @@ class RenegociacaoService
         }
 
         $valorFinalAcordo = round($totalOriginal - $descontoValor, 2);
-        $qtdParcelas = max(1, min(24, $qtdParcelas));
-        $dataInicial = $primeiroVencimento ? Carbon::parse($primeiroVencimento) : Carbon::today()->addDays(5);
+        $qtdParcelas      = max(1, min(24, $qtdParcelas));
+        $dataInicial      = $primeiroVencimento ? Carbon::parse($primeiroVencimento) : Carbon::today()->addDays(5);
 
-        // Divisão em parcelas com ajuste de centavos na 1ª parcela
-        $valorBaseParcela = floor(($valorFinalAcordo / $qtdParcelas) * 100) / 100;
-        $diferencaCentavos = round($valorFinalAcordo - ($valorBaseParcela * $qtdParcelas), 2);
+        // Distribui o valor entre as parcelas com Largest Remainder (mesmo algoritmo do ContratoService)
+        // Garante que simulacao e confirmacao produzam exatamente os mesmos valores
+        $totalCentavos = (int) round($valorFinalAcordo * 100);
+        $baseCentavos  = (int) floor($totalCentavos / $qtdParcelas);
+        $residuo       = $totalCentavos - ($baseCentavos * $qtdParcelas);
 
         $parcelasProjetadas = [];
         for ($i = 1; $i <= $qtdParcelas; $i++) {
-            $valorParcela = ($i === 1) ? round($valorBaseParcela + $diferencaCentavos, 2) : $valorBaseParcela;
-            $dataVenc = (clone $dataInicial)->addMonths($i - 1);
+            // Distribui o resíduo nas primeiras parcelas (uma unidade de centavo cada)
+            $centavosExtra = ($i <= $residuo) ? 1 : 0;
+            $valorParcela  = round(($baseCentavos + $centavosExtra) / 100, 2);
+            $dataVenc      = (clone $dataInicial)->addMonths($i - 1);
 
             $parcelasProjetadas[] = [
-                'numero_parcela' => $i,
-                'total_parcelas' => $qtdParcelas,
-                'data_vencimento' => $dataVenc->format('Y-m-d'),
+                'numero_parcela'           => $i,
+                'total_parcelas'           => $qtdParcelas,
+                'data_vencimento'          => $dataVenc->format('Y-m-d'),
                 'data_vencimento_formatada' => $dataVenc->format('d/m/Y'),
-                'valor' => $valorParcela,
+                'valor'                    => $valorParcela,
             ];
         }
 
         return [
-            'titulos' => $titulos,
-            'total_original' => $totalOriginal,
+            'titulos'           => $titulos,
+            'total_original'    => $totalOriginal,
             'desconto_concedido' => $descontoValor,
-            'valor_acordo' => $valorFinalAcordo,
-            'qtd_parcelas' => $qtdParcelas,
-            'parcelas' => $parcelasProjetadas,
+            'valor_acordo'      => $valorFinalAcordo,
+            'qtd_parcelas'      => $qtdParcelas,
+            'parcelas'          => $parcelasProjetadas,
         ];
     }
 
