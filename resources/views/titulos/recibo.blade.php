@@ -154,6 +154,12 @@
             </div>
         </div>
 
+        @if(!empty($ultimoPagamento) && $ultimoPagamento->estornado)
+            <div style="background-color: #ffe4e6; border: 2px solid #e11d48; color: #9f1239; padding: 12px 16px; margin: 16px 0; text-align: center; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">
+                ⚠️ Este Comprovante foi Estornado em {{ \Carbon\Carbon::parse($ultimoPagamento->estornado_em)->format('d/m/Y H:i') }} &bull; Motivo: {{ $ultimoPagamento->motivo_estorno ?? 'Estorno administrativo' }}
+            </div>
+        @endif
+
         <div class="corpo-texto">
             Recebemos de <strong>{{ $titulo->responsavel->nome ?? 'Responsável não identificado' }}</strong>,
             inscrito(a) no CPF/CNPJ sob o nº <strong>{{ $titulo->responsavel->cpf_cnpj_formatado ?? '-' }}</strong>,
@@ -194,6 +200,12 @@
                         <td style="text-align: right; color: #e11d48; font-weight: 600;">+ R$ {{ number_format($ultimoPagamento->valor_juros, 2, ',', '.') }}</td>
                     </tr>
                 @endif
+                @if(($ultimoPagamento->valor_amortizado ?? 0) > 0)
+                    <tr>
+                        <td>Amortização Efetiva da Dívida</td>
+                        <td style="text-align: right; font-weight: 600; color: #0284c7;">R$ {{ number_format($ultimoPagamento->valor_amortizado, 2, ',', '.') }}</td>
+                    </tr>
+                @endif
                 <tr>
                     <td><strong>Forma de Pagamento</strong></td>
                     <td style="text-align: right; text-transform: capitalize; font-weight: 600;">{{ str_replace('_', ' ', $ultimoPagamento->forma_pagamento ?? 'dinheiro') }}</td>
@@ -201,6 +213,10 @@
                 <tr>
                     <td><strong>Data do Recebimento Efetivo</strong></td>
                     <td style="text-align: right; font-weight: 600;">{{ \Carbon\Carbon::parse($ultimoPagamento->data_pagamento ?? now())->format('d/m/Y') }}</td>
+                </tr>
+                <tr style="background-color: #f8fafc; border-top: 1px solid #cbd5e1;">
+                    <td><strong>Saldo Restante da Dívida</strong></td>
+                    <td style="text-align: right; font-weight: 700; color: #334155;">R$ {{ number_format($titulo->valor_saldo, 2, ',', '.') }}</td>
                 </tr>
             </tbody>
         </table>

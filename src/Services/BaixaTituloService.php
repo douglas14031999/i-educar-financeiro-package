@@ -32,11 +32,11 @@ class BaixaTituloService
             /** @var Titulo $tituloLocked */
             $tituloLocked = Titulo::lockForUpdate()->findOrFail($titulo->id);
 
-            if ($tituloLocked->status === 'pago') {
-                throw new InvalidArgumentException('Este título já se encontra totalmente quitado.');
-            }
-            if ($tituloLocked->status === 'cancelado') {
-                throw new InvalidArgumentException('Não é possível dar baixa em um título cancelado.');
+            if (!$tituloLocked->isElegivelBaixa()) {
+                throw new InvalidArgumentException(sprintf(
+                    'Não é possível dar baixa em um título com status "%s".',
+                    $tituloLocked->status
+                ));
             }
 
             $valorPago = (float) $dados['valor_pago'];
@@ -91,6 +91,7 @@ class BaixaTituloService
                 'data_pagamento'         => $dataPagamento,
                 'data_compensacao'       => $dataPagamento,
                 'valor_pago'             => $valorPago,
+                'valor_amortizado'       => $amortizacao,
                 'valor_juros'            => $valorJuros,
                 'valor_multa'            => $valorMulta,
                 'valor_desconto_concedido' => $descontoConcedido,
@@ -139,40 +140,60 @@ class BaixaTituloService
     public function estornarBaixa(Pagamento $pagamento, string $motivo, ?int $usuarioId = null): void
     {
         DB::transaction(function () use ($pagamento, $motivo, $usuarioId) {
-            if ($pagamento->estornado) {
+            // Relê e bloqueia o pagamento com lock exclusivo
+            /** @var Pagamento $pagamentoLocked */
+            $pagamentoLocked = Pagamento::lockForUpdate()->findOrFail($pagamento->id);
+
+            if ($pagamentoLocked->estornado) {
                 throw new InvalidArgumentException('Este pagamento já foi estornado anteriormente.');
+            }
+
+            // Tratamento explícito de crédito já utilizado (FIN-002)
+            if ($pagamentoLocked->valor_credito_gerado > 0) {
+                $creditoUtilizado = CreditoResponsavel::where('pagamento_id', $pagamentoLocked->id)
+                    ->where('utilizado', true)
+                    ->exists();
+
+                if ($creditoUtilizado) {
+                    throw new \RuntimeException(
+                        "Não é possível estornar este pagamento pois o crédito excedente de R$ " .
+                        number_format($pagamentoLocked->valor_credito_gerado, 2, ',', '.') .
+                        " gerado por ele já foi utilizado pelo responsável."
+                    );
+                }
+
+                // Cancela o crédito pendente não utilizado
+                CreditoResponsavel::where('pagamento_id', $pagamentoLocked->id)
+                    ->where('utilizado', false)
+                    ->update(['cancelado' => true]);
             }
 
             // Relê o título com lock para garantir consistência concorrente
             /** @var Titulo $titulo */
-            $titulo = Titulo::lockForUpdate()->findOrFail($pagamento->titulo_id);
+            $titulo = Titulo::lockForUpdate()->findOrFail($pagamentoLocked->titulo_id);
 
-            // Restaura exatamente a amortizacao original, não o valor_pago bruto
-            $amortizacao = round(
-                max(0, ($pagamento->valor_pago + $pagamento->valor_desconto_concedido)
-                    - ($pagamento->valor_juros + $pagamento->valor_multa)),
-                2
-            );
+            // Restaura exatamente a amortização efetivamente aplicada na baixa
+            $amortizacao = $pagamentoLocked->valor_amortizado > 0
+                ? (float) $pagamentoLocked->valor_amortizado
+                : round(
+                    max(0, ($pagamentoLocked->valor_pago + $pagamentoLocked->valor_desconto_concedido)
+                        - ($pagamentoLocked->valor_juros + $pagamentoLocked->valor_multa)
+                        - (float) $pagamentoLocked->valor_credito_gerado),
+                    2
+                );
 
             $titulo->valor_saldo  = round((float) $titulo->valor_saldo + $amortizacao, 2);
-            $titulo->valor_pago   = max(0, round((float) $titulo->valor_pago - $pagamento->valor_pago, 2));
-            $titulo->valor_juros  = max(0, round((float) $titulo->valor_juros - $pagamento->valor_juros, 2));
-            $titulo->valor_multa  = max(0, round((float) $titulo->valor_multa - $pagamento->valor_multa, 2));
+            $titulo->valor_pago   = max(0, round((float) $titulo->valor_pago - $pagamentoLocked->valor_pago, 2));
+            $titulo->valor_juros  = max(0, round((float) $titulo->valor_juros - $pagamentoLocked->valor_juros, 2));
+            $titulo->valor_multa  = max(0, round((float) $titulo->valor_multa - $pagamentoLocked->valor_multa, 2));
             $titulo->valor_desconto = max(0, round(
-                (float) $titulo->valor_desconto - $pagamento->valor_desconto_concedido, 2
+                (float) $titulo->valor_desconto - $pagamentoLocked->valor_desconto_concedido, 2
             ));
             $titulo->status = $titulo->valor_pago > 0 ? 'parcial'
                 : ($titulo->isVencido() ? 'vencido' : 'aberto');
             $titulo->save();
 
-            // Cancela crédito gerado pelo pagamento estornado (se houver)
-            if ($pagamento->valor_credito_gerado > 0) {
-                CreditoResponsavel::where('pagamento_id', $pagamento->id)
-                    ->where('utilizado', false)
-                    ->update(['cancelado' => true]);
-            }
-
-            $pagamento->update([
+            $pagamentoLocked->update([
                 'estornado'                => true,
                 'motivo_estorno'           => $motivo,
                 'data_estorno'             => Carbon::now(),

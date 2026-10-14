@@ -63,6 +63,13 @@ class PlanoPagamentoController extends Controller
         ]);
 
         return DB::transaction(function () use ($validated, $request) {
+            $diaVencimento = (int) $validated['dia_vencimento_padrao'];
+            $qtd = (int) $validated['qtd_parcelas'];
+            $valorMensalidades = (float) $validated['valor_total'];
+            $temMatricula = $request->boolean('gerar_matricula_avulsa') && (float) $request->input('valor_matricula') > 0;
+            $valorMatricula = $temMatricula ? (float) $request->input('valor_matricula') : 0.00;
+            $valorTotalPlano = round($valorMensalidades + $valorMatricula, 2);
+
             $plano = PlanoPagamento::create([
                 'escola_id' => $validated['escola_id'],
                 'ano_letivo' => $validated['ano_letivo'],
@@ -70,34 +77,31 @@ class PlanoPagamentoController extends Controller
                 'serie_id' => $validated['serie_id'] ?? null,
                 'nome' => $validated['nome'],
                 'descricao' => $validated['descricao'] ?? null,
-                'valor_total' => $validated['valor_total'],
-                'qtd_parcelas' => $validated['qtd_parcelas'],
+                'valor_total' => $valorTotalPlano,
+                'qtd_parcelas' => $qtd,
                 'ativo' => true,
             ]);
 
-            $diaVencimento = (int) $validated['dia_vencimento_padrao'];
-            $qtd = (int) $validated['qtd_parcelas'];
-            $valorTotal = (float) $validated['valor_total'];
-
-            // Se houver matrícula avulsa à parte
-            if ($request->boolean('gerar_matricula_avulsa') && (float) $request->input('valor_matricula') > 0) {
+            // Se houver matrícula integrada ao plano
+            if ($temMatricula) {
                 PlanoItem::create([
                     'plano_id' => $plano->id,
                     'tipo_item' => 'matricula',
                     'descricao' => 'Taxa de Matrícula',
                     'numero_parcela' => 0,
-                    'valor' => (float) $request->input('valor_matricula'),
+                    'valor' => $valorMatricula,
                     'mes_competencia' => 1,
                     'dia_vencimento_padrao' => $diaVencimento,
                 ]);
             }
 
             // Distribuição das mensalidades regulares
-            $valorParcela = round($valorTotal / $qtd, 2);
-            $centavosAjuste = round($valorTotal - ($valorParcela * $qtd), 2);
+            $valorParcela = round($valorMensalidades / $qtd, 2);
+            $centavosAjuste = round($valorMensalidades - ($valorParcela * $qtd), 2);
 
             for ($i = 1; $i <= $qtd; $i++) {
-                $mesComp = $i <= 12 ? $i : ($i % 12);
+                // FIN-007: Mês de competência nunca pode ser 0. Para parcelas > 12 avança ciclicamente de 1 a 12
+                $mesComp = (($i - 1) % 12) + 1;
                 $valorFinalItem = ($i === 1) ? ($valorParcela + $centavosAjuste) : $valorParcela;
 
                 PlanoItem::create([

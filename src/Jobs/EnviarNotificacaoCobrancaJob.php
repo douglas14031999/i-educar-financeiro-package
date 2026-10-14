@@ -35,11 +35,28 @@ class EnviarNotificacaoCobrancaJob implements ShouldQueue
 
     public function handle(): void
     {
-        $titulo      = $this->titulo->load(['responsavel', 'cobrancaGateway']);
+        $titulo      = $this->titulo->fresh() ?? $this->titulo;
+        $titulo->load(['responsavel', 'cobrancaGateway']);
         $responsavel = $titulo->responsavel;
 
         if (!$responsavel) {
             Log::warning("Notificação régua: título #{$titulo->id} sem responsável associado.");
+            return;
+        }
+
+        if (in_array($titulo->status, ['pago', 'cancelado', 'renegociado']) || (float) $titulo->valor_saldo <= 0) {
+            ReguaEnvioLog::create([
+                'regra_id'         => $this->regra->id,
+                'titulo_id'        => $titulo->id,
+                'responsavel_id'   => $responsavel->id,
+                'canal'            => $this->regra->canal,
+                'destinatario'     => $this->regra->canal === 'email' ? ($responsavel->email ?? 'Não informado') : ($responsavel->telefone_celular ?? 'Não informado'),
+                'mensagem_enviada' => 'Notificação cancelada: título já ' . $titulo->status,
+                'sucesso'          => false,
+                'erro'             => "Título #{$titulo->id} já está {$titulo->status} e não deve receber notificação de cobrança.",
+                'enviado_em'       => now(),
+            ]);
+            Log::info("Notificação régua ignorada: título #{$titulo->id} já possui status '{$titulo->status}'.");
             return;
         }
 

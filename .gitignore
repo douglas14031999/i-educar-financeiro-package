@@ -21,3 +21,5 @@ Thumbs.db
 storage/
 *.tmp
 scratch/
+composer.phar
+

@@ -228,8 +228,8 @@
                                     <div>
                                         <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Linha Digitável do Boleto:</label>
                                         <div class="flex gap-2">
-                                            <input type="text" readonly value="{{ $titulo->cobrancaGateway->linha_digitavel }}" id="input-linha-dig" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 font-mono text-xs text-slate-800 focus:outline-none">
-                                            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('input-linha-dig').value); alert('Linha digitável copiada!');" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold whitespace-nowrap">
+                                            <input type="text" readonly value="{{ $titulo->cobrancaGateway->linha_digitavel }}" id="input-linha-dig" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 font-mono text-xs text-slate-800 focus:outline-none" aria-label="Linha digitável do boleto">
+                                            <button type="button" onclick="copiarTextoParaClipboard('input-linha-dig', this, 'Linha digitável copiada!')" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold whitespace-nowrap transition">
                                                 Copiar
                                             </button>
                                         </div>
@@ -240,8 +240,8 @@
                                     <div>
                                         <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Código Pix Copia e Cola:</label>
                                         <div class="flex gap-2">
-                                            <input type="text" readonly value="{{ $titulo->cobrancaGateway->pix_copia_cola }}" id="input-pix" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 font-mono text-xs text-slate-800 focus:outline-none">
-                                            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('input-pix').value); alert('Código Pix copiado!');" class="px-3 py-1.5 btn-ieducar-action btn-ieducar-green whitespace-nowrap">
+                                            <input type="text" readonly value="{{ $titulo->cobrancaGateway->pix_copia_cola }}" id="input-pix" class="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 font-mono text-xs text-slate-800 focus:outline-none" aria-label="Código Pix Copia e Cola">
+                                            <button type="button" onclick="copiarTextoParaClipboard('input-pix', this, 'Código Pix copiado!')" class="px-3 py-1.5 btn-ieducar-action btn-ieducar-green whitespace-nowrap transition">
                                                 Copiar Pix
                                             </button>
                                         </div>
@@ -329,17 +329,23 @@
                                     @endif
                                 </td>
                                 <td class="py-3 px-4 text-center whitespace-nowrap">
-                                    @if(!$pag->estornado)
-                                        <form method="post" action="{{ route('financeiro.baixas.estornar', $pag->id) }}" onsubmit="return confirm('Deseja realmente estornar este recebimento? O saldo do título será recalculado.');">
-                                            @csrf
-                                            <input type="hidden" name="motivo_estorno" value="Estorno administrativo presencial">
-                                            <button type="submit" class="px-2.5 py-1 btn-ieducar-action btn-ieducar-danger">
-                                                Estornar
-                                            </button>
-                                        </form>
-                                    @else
-                                        <span class="text-xs text-slate-400 italic">{{ $pag->motivo_estorno }}</span>
-                                    @endif
+                                    <div class="inline-flex items-center gap-1.5">
+                                        <a href="{{ route('financeiro.pagamentos.recibo', $pag->id) }}" target="_blank" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-300 transition" title="Imprimir Recibo Deste Pagamento" style="text-decoration: none;">
+                                            Recibo
+                                        </a>
+
+                                        @if(!$pag->estornado)
+                                            <form method="post" action="{{ route('financeiro.baixas.estornar', $pag->id) }}" onsubmit="var m = prompt('Informe o motivo do estorno para auditoria contábil:'); if (!m || !m.trim()) { alert('O motivo do estorno é obrigatório.'); return false; } this.querySelector('input[name=motivo_estorno]').value = m.trim(); return confirm('Confirmar estorno deste pagamento? O saldo da dívida será restaurado.');">
+                                                @csrf
+                                                <input type="hidden" name="motivo_estorno" value="">
+                                                <button type="submit" class="px-2 py-1 btn-ieducar-action btn-ieducar-danger text-xs font-semibold">
+                                                    Estornar
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="text-xs text-rose-500 italic" title="Estornado: {{ $pag->motivo_estorno }}">[Estornado]</span>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -356,4 +362,42 @@
 
     </main>
 </div>
+
+<script>
+function copiarTextoParaClipboard(inputId, btnElement, sucessoMsg) {
+    var input = document.getElementById(inputId);
+    if (!input) return;
+    input.focus();
+    input.select();
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(input.value)
+            .then(function() {
+                var originalText = btnElement.innerText;
+                btnElement.innerText = 'Copiado! ✓';
+                btnElement.classList.add('bg-emerald-600', 'text-white');
+                setTimeout(function() {
+                    btnElement.innerText = originalText;
+                    btnElement.classList.remove('bg-emerald-600', 'text-white');
+                }, 2500);
+            })
+            .catch(function(err) {
+                console.error('Falha ao copiar com Clipboard API:', err);
+                try {
+                    document.execCommand('copy');
+                    alert(sucessoMsg);
+                } catch(e) {
+                    alert('Não foi possível copiar automaticamente. O código foi selecionado; copie usando Ctrl+C.');
+                }
+            });
+    } else {
+        try {
+            document.execCommand('copy');
+            alert(sucessoMsg);
+        } catch(e) {
+            alert('Copie manualmente o código selecionado usando Ctrl+C.');
+        }
+    }
+}
+</script>
 @endsection

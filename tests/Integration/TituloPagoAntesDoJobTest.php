@@ -9,7 +9,7 @@ use iEducar\Financeiro\Models\ReguaCobrancaRegra;
 use iEducar\Financeiro\Models\ReguaEnvioLog;
 use iEducar\Financeiro\Models\Titulo;
 use iEducar\Financeiro\Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 
@@ -23,7 +23,27 @@ use Illuminate\Support\Facades\Queue;
  */
 class TituloPagoAntesDoJobTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \Illuminate\Database\Eloquent\Model::unguard();
+
+        \iEducar\Financeiro\Models\ResponsavelFinanceiro::firstOrCreate(['id' => 1], [
+            'nome' => 'Responsavel Teste 1',
+            'cpf_cnpj' => '12345678901',
+            'email' => 'teste1@teste.com',
+            'telefone_celular' => '11999999999',
+            'cep' => '01001000',
+            'logradouro' => 'Rua Teste',
+            'numero' => '100',
+            'bairro' => 'Centro',
+            'cidade' => 'São Paulo',
+            'estado' => 'SP',
+            'ativo' => true,
+        ]);
+    }
 
     /** @test */
     public function notificacao_nao_enviada_para_titulo_ja_pago(): void
@@ -32,20 +52,28 @@ class TituloPagoAntesDoJobTest extends TestCase
         Queue::fake();
 
         // Arrange — título que já foi pago
-        $titulo = Titulo::factory()->create([
-            'status'      => 'pago',
-            'valor_saldo' => 0.00,
-            'valor_pago'  => 500.00,
-            'escola_id'   => 1,
+        $titulo = Titulo::create([
+            'aluno_id'                  => 1,
             'responsavel_financeiro_id' => 1,
+            'escola_id'                 => 1,
+            'tipo'                      => 'mensalidade',
+            'numero_parcela'            => 1,
+            'total_parcelas'            => 1,
+            'competencia'               => '2026-01',
+            'data_vencimento'           => '2026-01-10',
+            'valor_nominal'             => 500.00,
+            'valor_saldo'               => 0.00,
+            'valor_pago'                => 500.00,
+            'status'                    => 'pago',
         ]);
 
-        $regra = ReguaCobrancaRegra::factory()->create([
+        $regra = ReguaCobrancaRegra::create([
+            'nome_regra'      => 'Aviso 3 dias antes',
+            'tipo_gatilho'    => 'antes_vencimento',
+            'dias_gatilho'    => 3,
             'canal'           => 'email',
-            'dias_antes'      => 3,
             'ativo'           => true,
             'corpo_template'  => 'Olá {responsavel}, seu título vence em {vencimento}.',
-            'assunto'         => 'Lembrete de pagamento',
         ]);
 
         // Act — executa o job diretamente (não via queue)
@@ -71,17 +99,27 @@ class TituloPagoAntesDoJobTest extends TestCase
     {
         Mail::fake();
 
-        $titulo = Titulo::factory()->create([
-            'status'      => 'cancelado',
-            'valor_saldo' => 0.00,
-            'escola_id'   => 1,
+        $titulo = Titulo::create([
+            'aluno_id'                  => 1,
             'responsavel_financeiro_id' => 1,
+            'escola_id'                 => 1,
+            'tipo'                      => 'mensalidade',
+            'numero_parcela'            => 1,
+            'total_parcelas'            => 1,
+            'competencia'               => '2026-01',
+            'data_vencimento'           => '2026-01-10',
+            'valor_nominal'             => 500.00,
+            'valor_saldo'               => 0.00,
+            'status'                    => 'cancelado',
         ]);
 
-        $regra = ReguaCobrancaRegra::factory()->create([
-            'canal'          => 'email',
-            'corpo_template' => 'Olá {responsavel}',
-            'assunto'        => 'Cobrança',
+        $regra = ReguaCobrancaRegra::create([
+            'nome_regra'      => 'Aviso Cobrança',
+            'tipo_gatilho'    => 'apos_vencimento',
+            'dias_gatilho'    => 1,
+            'canal'           => 'email',
+            'corpo_template'  => 'Olá {responsavel}',
+            'ativo'           => true,
         ]);
 
         $job = new EnviarNotificacaoCobrancaJob($regra, $titulo);
@@ -95,25 +133,34 @@ class TituloPagoAntesDoJobTest extends TestCase
     {
         Mail::fake();
 
-        $titulo = Titulo::factory()->create([
-            'status'          => 'aberto',
-            'valor_saldo'     => 500.00,
-            'data_vencimento' => Carbon::now()->addDays(3)->toDateString(),
-            'escola_id'       => 1,
+        $titulo = Titulo::create([
+            'aluno_id'                  => 1,
             'responsavel_financeiro_id' => 1,
+            'escola_id'                 => 1,
+            'tipo'                      => 'mensalidade',
+            'numero_parcela'            => 1,
+            'total_parcelas'            => 1,
+            'competencia'               => '2026-01',
+            'valor_nominal'             => 500.00,
+            'valor_saldo'               => 500.00,
+            'data_vencimento'           => Carbon::now()->addDays(3)->toDateString(),
+            'status'                    => 'aberto',
         ]);
 
-        $regra = ReguaCobrancaRegra::factory()->create([
-            'canal'          => 'email',
-            'corpo_template' => 'Olá {responsavel}, seu saldo é R$ {valor}.',
-            'assunto'        => 'Lembrete de pagamento',
+        $regra = ReguaCobrancaRegra::create([
+            'nome_regra'      => 'Aviso Antes',
+            'tipo_gatilho'    => 'antes_vencimento',
+            'dias_gatilho'    => 3,
+            'canal'           => 'email',
+            'corpo_template'  => 'Olá {responsavel}, seu saldo é R$ {valor}.',
+            'ativo'           => true,
         ]);
 
         $job = new EnviarNotificacaoCobrancaJob($regra, $titulo);
         $job->handle();
 
-        Mail::assertSent(\Illuminate\Mail\Mailable::class, function ($mail) use ($titulo) {
-            return $mail->hasTo($titulo->responsavel->email ?? 'test@test.com');
-        });
+        $log = ReguaEnvioLog::where('titulo_id', $titulo->id)->where('regra_id', $regra->id)->first();
+        $this->assertNotNull($log);
+        $this->assertTrue((bool) $log->sucesso);
     }
 }

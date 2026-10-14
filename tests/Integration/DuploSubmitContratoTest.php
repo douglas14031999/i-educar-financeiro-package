@@ -7,7 +7,7 @@ use iEducar\Financeiro\Models\Contrato;
 use iEducar\Financeiro\Models\Titulo;
 use iEducar\Financeiro\Services\ContratoService;
 use iEducar\Financeiro\Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
  */
 class DuploSubmitContratoTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     private ContratoService $service;
 
@@ -26,6 +26,52 @@ class DuploSubmitContratoTest extends TestCase
     {
         parent::setUp();
         $this->service = app(ContratoService::class);
+
+        \Illuminate\Database\Eloquent\Model::unguard();
+        \iEducar\Financeiro\Models\ResponsavelFinanceiro::firstOrCreate(['id' => 1], [
+            'nome' => 'Responsavel Teste',
+            'cpf_cnpj' => '12345678901',
+            'email' => 'teste@teste.com',
+            'telefone_celular' => '11999999999',
+            'cep' => '01001000',
+            'logradouro' => 'Rua Teste',
+            'numero' => '100',
+            'bairro' => 'Centro',
+            'cidade' => 'São Paulo',
+            'estado' => 'SP',
+            'ativo' => true,
+        ]);
+
+        \iEducar\Financeiro\Models\AlunoResponsavel::firstOrCreate([
+            'aluno_id' => 1,
+            'responsavel_id' => 1,
+        ], [
+            'parentesco' => 'Pai',
+            'percentual_rateio' => 100.00,
+            'responsavel_principal' => true,
+        ]);
+
+        $plano = \iEducar\Financeiro\Models\PlanoPagamento::firstOrCreate(['id' => 1], [
+            'nome' => 'Plano Anual',
+            'ano_letivo' => (int) date('Y'),
+            'qtd_parcelas' => 12,
+            'valor_total' => 1200.00,
+            'escola_id' => 1,
+            'ativo' => true,
+        ]);
+
+        for ($i = 1; $i <= 12; $i++) {
+            \iEducar\Financeiro\Models\PlanoItem::firstOrCreate([
+                'plano_id' => $plano->id,
+                'numero_parcela' => $i,
+            ], [
+                'tipo_item' => 'mensalidade',
+                'descricao' => "Mensalidade {$i}/12",
+                'valor' => 100.00,
+                'mes_competencia' => $i,
+                'dia_vencimento_padrao' => 10,
+            ]);
+        }
     }
 
     /** @test */
@@ -58,8 +104,29 @@ class DuploSubmitContratoTest extends TestCase
     /** @test */
     public function soma_de_titulos_fecha_com_valor_contratual(): void
     {
+        $plano12k = \iEducar\Financeiro\Models\PlanoPagamento::create([
+            'nome' => 'Plano 12k',
+            'ano_letivo' => (int) date('Y'),
+            'qtd_parcelas' => 12,
+            'valor_total' => 12000.00,
+            'escola_id' => 1,
+            'ativo' => true,
+        ]);
+
+        for ($i = 1; $i <= 12; $i++) {
+            \iEducar\Financeiro\Models\PlanoItem::create([
+                'plano_id' => $plano12k->id,
+                'numero_parcela' => $i,
+                'tipo_item' => 'mensalidade',
+                'descricao' => "Mensalidade {$i}/12",
+                'valor' => 1000.00,
+                'mes_competencia' => $i,
+                'dia_vencimento_padrao' => 10,
+            ]);
+        }
+
         $dados = $this->dadosContratoValidos();
-        $dados['valor_total']   = 10800.00; // R$ 12.000 com 10% desconto
+        $dados['plano_id']       = $plano12k->id;
         $dados['valor_desconto'] = 1200.00;
 
         $contrato = $this->service->criarContratoEParcelas($dados);

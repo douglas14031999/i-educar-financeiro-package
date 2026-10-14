@@ -33,7 +33,7 @@ class ReguaCobrancaController extends Controller
 
         $request->validate([
             'nome_regra' => 'required|string|max:150',
-            'canal' => 'required|string',
+            'canal' => 'required|string|in:whatsapp,email,sms',
             'corpo_template' => 'required|string',
             'ativo' => 'nullable|boolean',
         ]);
@@ -42,7 +42,7 @@ class ReguaCobrancaController extends Controller
             'nome_regra' => $request->input('nome_regra'),
             'canal' => $request->input('canal'),
             'corpo_template' => $request->input('corpo_template'),
-            'ativo' => $request->has('ativo'),
+            'ativo' => $request->boolean('ativo'),
         ]);
 
         return redirect()->back()->with('success', "Regra '{$regra->nome_regra}' atualizada com sucesso!");

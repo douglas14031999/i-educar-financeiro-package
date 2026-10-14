@@ -68,11 +68,29 @@ class TituloController extends Controller
     /**
      * Emissão e Visualização do Recibo Oficial para Impressão
      */
-    public function imprimirRecibo($id)
+    public function imprimirRecibo(Request $request, $id)
     {
         $titulo = Titulo::with(['contrato', 'responsavel', 'pagamentos'])->findOrFail($id);
 
-        $ultimoPagamento = $titulo->pagamentos()->where('estornado', false)->first();
+        $pagamentoId = $request->query('pagamento_id');
+        if ($pagamentoId) {
+            $ultimoPagamento = $titulo->pagamentos()->where('id', $pagamentoId)->firstOrFail();
+        } else {
+            $ultimoPagamento = $titulo->pagamentos()->where('estornado', false)->latest('id')->first()
+                ?? $titulo->pagamentos()->latest('id')->first();
+        }
+
+        return view('financeiro::titulos.recibo', compact('titulo', 'ultimoPagamento'));
+    }
+
+    /**
+     * Visualização do Recibo Oficial direcionado diretamente pelo ID do Pagamento
+     */
+    public function imprimirReciboPorPagamento($pagamentoId)
+    {
+        $pagamento = \iEducar\Financeiro\Models\Pagamento::with(['titulo.contrato', 'titulo.responsavel'])->findOrFail($pagamentoId);
+        $titulo = $pagamento->titulo;
+        $ultimoPagamento = $pagamento;
 
         return view('financeiro::titulos.recibo', compact('titulo', 'ultimoPagamento'));
     }
@@ -84,8 +102,11 @@ class TituloController extends Controller
     {
         $titulo = Titulo::with(['responsavel'])->findOrFail($id);
 
-        if ($titulo->isLiquidado()) {
-            return redirect()->back()->with('error', 'Este título já se encontra liquidado.');
+        if (!$titulo->isElegivelEmissaoGateway()) {
+            return redirect()->back()->with('error', sprintf(
+                'Este título não está elegível para emissão de cobrança no Asaas (status: %s).',
+                $titulo->status
+            ));
         }
 
         try {
@@ -243,11 +264,10 @@ class TituloController extends Controller
     }
 
     /**
-     * Emissão de Carnê Escolar para Impressão via Asaas.
+     * Emissão e Impressão de Carnê Escolar (FIN-004)
      *
-     * Quando todos os títulos selecionados pertencem ao mesmo contrato,
-     * delega para o ContratoController@imprimirCarne que usa o Asaas.
-     * Caso contrário, renderiza a view HTML de impressão manual.
+     * Preserva estritamente a seleção enviada por IDs.
+     * Rejeita seleção vazia ou parâmetros ausentes sem imprimir títulos arbitrários.
      */
     public function imprimirCarne(Request $request)
     {
@@ -256,29 +276,42 @@ class TituloController extends Controller
             $ids = explode(',', $ids);
         }
         $ids = array_filter(array_map('intval', (array) $ids));
-
         $contratoId = $request->input('contrato_id');
+
+        if (empty($ids) && empty($contratoId)) {
+            return redirect()->back()->with('error', 'Nenhum título ou contrato foi selecionado para impressão de carnê.');
+        }
 
         $query = Titulo::with(['responsavel', 'cobrancaGateway', 'contrato']);
 
         if (!empty($ids)) {
             $query->whereIn('id', $ids);
-        } elseif (!empty($contratoId)) {
-            $query->where('contrato_id', $contratoId);
         } else {
-            $query->whereIn('status', ['aberto', 'parcial', 'vencido'])->limit(12);
+            $query->where('contrato_id', $contratoId);
         }
 
         $titulos = $query->orderBy('data_vencimento')->get();
 
-        // Se todos os títulos pertencem ao mesmo contrato → usa Asaas via ContratoController
-        $contratoIds = $titulos->pluck('contrato_id')->filter()->unique();
-        if ($contratoIds->count() === 1 && !empty($contratoIds->first())) {
-            $cid = $contratoIds->first();
-            return app(ContratoController::class)->imprimirCarne($cid);
+        if ($titulos->isEmpty()) {
+            return redirect()->back()->with('error', 'Nenhum título encontrado para os parâmetros selecionados.');
         }
 
-        // Múltiplos contratos ou sem contrato → fallback para view HTML
+        // Títulos cancelados são inelegíveis para compor carnê
+        $inelegiveis = $titulos->filter(fn($t) => $t->status === 'cancelado');
+        if ($inelegiveis->count() === $titulos->count()) {
+            return redirect()->back()->with('error', 'Todos os títulos selecionados estão cancelados ou inelegíveis para impressão de carnê.');
+        }
+
+        // Se o pedido foi expressamente de um contrato completo (sem IDs específicos)
+        // e existir carnê externo Asaas já emitido, pode direcionar diretamente
+        if (empty($ids) && !empty($contratoId)) {
+            $contrato = \iEducar\Financeiro\Models\Contrato::find($contratoId);
+            if ($contrato && $contrato->carne_asaas_url) {
+                return redirect()->away($contrato->carne_asaas_url);
+            }
+        }
+
+        // Caso contrário, renderiza rigorosamente apenas os títulos selecionados na view do carnê
         return view('financeiro::titulos.carne', compact('titulos'));
     }
 }

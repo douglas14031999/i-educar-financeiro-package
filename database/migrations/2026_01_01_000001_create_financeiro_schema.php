@@ -12,7 +12,9 @@ class CreateFinanceiroSchema extends Migration
      */
     public function up()
     {
-        DB::statement('CREATE SCHEMA IF NOT EXISTS financeiro;');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('CREATE SCHEMA IF NOT EXISTS financeiro;');
+        }
     }
 
     /**
@@ -22,6 +24,8 @@ class CreateFinanceiroSchema extends Migration
      */
     public function down()
     {
-        DB::statement('DROP SCHEMA IF EXISTS financeiro CASCADE;');
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('DROP SCHEMA IF EXISTS financeiro CASCADE;');
+        }
     }
 }

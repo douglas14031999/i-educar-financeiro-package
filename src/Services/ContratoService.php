@@ -36,14 +36,14 @@ class ContratoService
             $diaVencimento = (int) ($dados['dia_vencimento'] ?? 10);
 
             // ----------------------------------------------------------------
-            // A03 / A28 — escola_id obrigatório; sem fallback para ID 1
+            // FIN-006 — SEMPRE valida matrícula, aluno, escola e ano letivo
             // ----------------------------------------------------------------
             $escolaId = !empty($dados['escola_id']) ? (int) $dados['escola_id'] : null;
 
-            if (!$escolaId && $matriculaId) {
+            if ($matriculaId) {
                 $matriculaRow = DB::table('pmieducar.matricula')
                     ->where('cod_matricula', $matriculaId)
-                    ->select('ref_ref_cod_escola', 'ref_cod_aluno')
+                    ->select('ref_ref_cod_escola', 'ref_cod_aluno', 'ano')
                     ->first();
 
                 if (!$matriculaRow) {
@@ -58,9 +58,25 @@ class ContratoService
                     );
                 }
 
-                $escolaId = $matriculaRow->ref_ref_cod_escola
+                $matriculaEscolaId = isset($matriculaRow->ref_ref_cod_escola)
                     ? (int) $matriculaRow->ref_ref_cod_escola
                     : null;
+
+                if ($escolaId && $matriculaEscolaId && $escolaId !== $matriculaEscolaId) {
+                    throw new InvalidArgumentException(
+                        "A matrícula #{$matriculaId} pertence à escola #{$matriculaEscolaId}, divergente da escola #{$escolaId} informada."
+                    );
+                }
+
+                if (!$escolaId && $matriculaEscolaId) {
+                    $escolaId = $matriculaEscolaId;
+                }
+
+                if (isset($matriculaRow->ano) && (int) $matriculaRow->ano !== $anoLetivo) {
+                    throw new InvalidArgumentException(
+                        "A matrícula #{$matriculaId} é do ano letivo {$matriculaRow->ano}, incompatível com o ano {$anoLetivo} do contrato."
+                    );
+                }
             }
 
             if (!$escolaId) {
@@ -110,7 +126,13 @@ class ContratoService
 
             $plano = PlanoPagamento::with('itens')->findOrFail($planoId);
 
-            $descontoTotal = (float) ($dados['valor_total_descontos'] ?? 0.00);
+            if ($plano->escola_id && (int) $plano->escola_id !== $escolaId) {
+                throw new InvalidArgumentException(
+                    "O plano de pagamento selecionado pertence à escola #{$plano->escola_id}, divergente da escola #{$escolaId} do contrato."
+                );
+            }
+
+            $descontoTotal = (float) ($dados['valor_total_descontos'] ?? ($dados['valor_desconto'] ?? 0.00));
             $valorBruto    = (float) $plano->valor_total;
             $valorLiquido  = max(0.0, round($valorBruto - $descontoTotal, 2));
 
@@ -163,13 +185,16 @@ class ContratoService
             $totalParcelas = $plano->itens->where('numero_parcela', '>', 0)->count();
 
             foreach ($plano->itens as $item) {
-                $mesComp     = str_pad($item->mes_competencia, 2, '0', STR_PAD_LEFT);
-                $competencia = "{$anoLetivo}-{$mesComp}";
+                // FIN-007: Se número da parcela for > 12, avança o ano letivo correspondente
+                $anosAdicionais = ($item->numero_parcela > 0) ? intdiv($item->numero_parcela - 1, 12) : 0;
+                $anoEfetivo     = $anoLetivo + $anosAdicionais;
+                $mesComp        = str_pad($item->mes_competencia, 2, '0', STR_PAD_LEFT);
+                $competencia    = "{$anoEfetivo}-{$mesComp}";
 
                 // Trata vencimento em dias 29/30/31 sem overflow de mês (T20)
-                $ultimoDiaMes   = Carbon::create($anoLetivo, $item->mes_competencia, 1)->endOfMonth()->day;
+                $ultimoDiaMes   = Carbon::create($anoEfetivo, $item->mes_competencia, 1)->endOfMonth()->day;
                 $diaEfetivo     = min($diaVencimento, $ultimoDiaMes);
-                $dataVencimento = Carbon::create($anoLetivo, $item->mes_competencia, $diaEfetivo);
+                $dataVencimento = Carbon::create($anoEfetivo, $item->mes_competencia, $diaEfetivo);
 
                 // A01 — Valor líquido do item após desconto proporcional
                 $valorItemBruto   = (float) $item->valor;
@@ -304,5 +329,129 @@ class ContratoService
                 CancelarCobrancaGatewayJob::dispatch($cobranca->id, $motivo);
             }
         }
+    }
+
+    /**
+     * Regenera parcelas faltantes de um contrato preservando as condições financeiras
+     * originais (rateio de responsáveis e taxa de desconto contratual).
+     * (FIN-005)
+     *
+     * @param int|Contrato $contrato
+     * @return int Quantidade de novos títulos gerados
+     */
+    public function regenerarTitulosFaltantes(int|Contrato $contrato): int
+    {
+        $contratoId = $contrato instanceof Contrato ? $contrato->id : $contrato;
+
+        return DB::transaction(function () use ($contratoId) {
+            /** @var Contrato $contratoLocked */
+            $contratoLocked = Contrato::lockForUpdate()->with(['plano.itens'])->findOrFail($contratoId);
+
+            if ($contratoLocked->status === 'cancelado') {
+                throw new InvalidArgumentException('Não é possível gerar títulos para um contrato cancelado.');
+            }
+
+            $plano = $contratoLocked->plano;
+            if (!$plano || $plano->itens->isEmpty()) {
+                throw new InvalidArgumentException('O plano de pagamento associado não possui itens configurados.');
+            }
+
+            $alunoId = $contratoLocked->aluno_id;
+            $escolaId = $contratoLocked->escola_id;
+            $anoLetivo = $contratoLocked->ano_letivo;
+            $diaVencimento = $contratoLocked->dia_vencimento;
+
+            // Identifica responsáveis financeiros do aluno
+            $vinculos = AlunoResponsavel::with('responsavel')
+                ->where('aluno_id', $alunoId)
+                ->get();
+
+            if ($vinculos->isEmpty()) {
+                $vinculos = collect([
+                    (object) [
+                        'responsavel_id'        => $contratoLocked->responsavel_financeiro_id,
+                        'percentual_rateio'     => 100.00,
+                        'responsavel_principal' => true,
+                    ]
+                ]);
+            }
+
+            // Preserva as condições financeiras contratadas (taxa de desconto original)
+            $valorBruto    = (float) $contratoLocked->valor_total_bruto;
+            $descontoTotal = (float) $contratoLocked->valor_total_descontos;
+            $taxaDesconto  = ($valorBruto > 0) ? ($descontoTotal / $valorBruto) : 0.0;
+
+            $totalParcelas = $plano->itens->where('numero_parcela', '>', 0)->count() ?: 1;
+
+            // Bloqueia e consulta títulos já existentes para este contrato
+            $titulosExistentes = Titulo::where('contrato_id', $contratoLocked->id)
+                ->lockForUpdate()
+                ->get();
+
+            $gerados = 0;
+
+            foreach ($plano->itens as $item) {
+                $anosAdicionais = ($item->numero_parcela > 0) ? intdiv($item->numero_parcela - 1, 12) : 0;
+                $anoEfetivo     = $anoLetivo + $anosAdicionais;
+                $mesComp        = str_pad($item->mes_competencia, 2, '0', STR_PAD_LEFT);
+                $competencia    = "{$anoEfetivo}-{$mesComp}";
+
+                $ultimoDiaMes   = Carbon::create($anoEfetivo, $item->mes_competencia, 1)->endOfMonth()->day;
+                $diaEfetivo     = min($diaVencimento, $ultimoDiaMes);
+                $dataVencimento = Carbon::create($anoEfetivo, $item->mes_competencia, $diaEfetivo);
+
+                $valorItemBruto   = (float) $item->valor;
+                $descontoItem     = round($valorItemBruto * $taxaDesconto, 2);
+                $valorItemLiquido = round($valorItemBruto - $descontoItem, 2);
+
+                $valoresRateio = $this->distribuirComResiduo($valorItemLiquido, $vinculos);
+
+                foreach ($vinculos as $idx => $vinculo) {
+                    $valorVinculo = $valoresRateio[$idx];
+                    if ($valorVinculo <= 0) {
+                        continue;
+                    }
+
+                    // Verifica se já existe título para esta parcela, responsável e tipo
+                    $existe = $titulosExistentes->first(function ($t) use ($item, $vinculo) {
+                        return (int)$t->numero_parcela === (int)$item->numero_parcela
+                            && (int)$t->responsavel_financeiro_id === (int)$vinculo->responsavel_id
+                            && $t->tipo === $item->tipo_item;
+                    });
+
+                    if ($existe) {
+                        continue;
+                    }
+
+                    Titulo::create([
+                        'contrato_id'               => $contratoLocked->id,
+                        'aluno_id'                  => $alunoId,
+                        'responsavel_financeiro_id' => $vinculo->responsavel_id,
+                        'escola_id'                 => $escolaId,
+                        'tipo'                      => $item->tipo_item,
+                        'numero_parcela'            => $item->numero_parcela,
+                        'total_parcelas'            => $totalParcelas,
+                        'competencia'               => $competencia,
+                        'data_vencimento'           => $dataVencimento,
+                        'valor_nominal'             => $valorVinculo,
+                        'valor_desconto'            => 0.00,
+                        'valor_multa'               => 0.00,
+                        'valor_juros'               => 0.00,
+                        'valor_pago'                => 0.00,
+                        'valor_saldo'               => $valorVinculo,
+                        'status'                    => 'aberto',
+                        'observacoes'               => sprintf(
+                            '%s - %s',
+                            $contratoLocked->numero_contrato,
+                            $item->descricao
+                        ),
+                    ]);
+
+                    $gerados++;
+                }
+            }
+
+            return $gerados;
+        });
     }
 }

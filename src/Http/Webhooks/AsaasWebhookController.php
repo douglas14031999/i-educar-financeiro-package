@@ -24,51 +24,45 @@ class AsaasWebhookController extends Controller
         $expectedToken = $dbConfig?->webhook_token ?: config('financeiro.gateways.asaas.webhook_token');
         $receivedToken = $request->header('asaas-access-token');
 
-        if (!empty($expectedToken)) {
-            if ($receivedToken !== $expectedToken) {
-                Log::warning('Webhook Asaas rejeitado: token inválido.', [
-                    'ip' => $request->ip(),
-                ]);
-                return response()->json(['error' => 'Unauthorized'], 401);
-            }
-        } else {
-            // Se o token ainda não estiver configurado no banco mas veio na requisição,
-            // sincroniza com o banco para garantir a autenticação dos próximos callbacks
-            if (!empty($receivedToken) && $dbConfig) {
-                $dbConfig->update(['webhook_token' => $receivedToken]);
-                Log::info('Webhook Asaas: token recebido sincronizado com a configuração do gateway.');
-            } else {
-                Log::notice('Webhook Asaas recebido sem autenticação de token configurada.');
-            }
+        if (empty($expectedToken)) {
+            Log::error('Webhook Asaas rejeitado: nenhum webhook_token configurado no sistema.', [
+                'ip' => $request->ip(),
+            ]);
+            return response()->json(['error' => 'Webhook authentication not configured'], 401);
         }
 
-        $payload     = $request->all();
-        $eventType   = $payload['event'] ?? 'UNKNOWN';
-        $paymentData = $payload['payment'] ?? [];
-        $paymentId   = $paymentData['id'] ?? ($payload['id'] ?? null);
+        if (empty($receivedToken) || !hash_equals((string) $expectedToken, (string) $receivedToken)) {
+            Log::warning('Webhook Asaas rejeitado: token ausente ou inválido.', [
+                'ip' => $request->ip(),
+            ]);
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
 
-        // A09 — Chave de idempotência usa o ID externo do evento Asaas.
-        // O ID do evento garante unicidade por evento individual.
-        // Não usamos tipo+pagamento porque PAYMENT_CONFIRMED e PAYMENT_RECEIVED
-        // são eventos distintos para o mesmo pagamento e devem ser tratados uma vez cada.
-        $asaasEventId = $payload['id'] ?? null; // ID único do evento no Asaas
+        $payload      = $request->all();
+        $eventType    = $payload['event'] ?? null;
+        $asaasEventId = $payload['id'] ?? null;
+        $paymentData  = $payload['payment'] ?? [];
+        $paymentId    = $paymentData['id'] ?? ($payload['payment_id'] ?? ($payload['id'] ?? null));
+
+        if (empty($eventType)) {
+            return response()->json(['error' => 'Tipo de evento não informado'], 400);
+        }
 
         if (!$paymentId) {
-            return response()->json(['error' => 'Identificador do pagamento n\u00e3o informado'], 400);
+            return response()->json(['error' => 'Identificador do pagamento não informado'], 400);
         }
 
         // Chave de idempotência: ID do evento externo é a fonte de verdade
         // Fallback para tipo+pagamento apenas quando o Asaas não envia 'id' do evento
-        $eventKey = $asaasEventId
-            ? 'asaas_evt_' . $asaasEventId
-            : sprintf('asaas_%s_%s', $eventType, $paymentId);
+        $eventKey = $asaasEventId ?: sprintf('asaas_%s_%s', $eventType, $paymentId);
 
         // Checagem de idempotência pelo ID do evento
         $eventoExistente = WebhookEvent::where('event_id', $eventKey)->first();
         if ($eventoExistente) {
             return response()->json([
-                'status'  => 'already_processed',
-                'message' => 'Evento j\u00e1 recebido e registrado anteriormente.',
+                'status'     => 'already_processed',
+                'duplicated' => true,
+                'message'    => 'Evento já recebido e registrado anteriormente.',
             ], 200);
         }
 

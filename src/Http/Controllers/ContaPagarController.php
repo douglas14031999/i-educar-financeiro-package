@@ -8,6 +8,7 @@ use iEducar\Financeiro\Models\Lancamento;
 use iEducar\Financeiro\Models\PlanoConta;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 
 class ContaPagarController extends Controller
 {
@@ -62,9 +63,9 @@ class ContaPagarController extends Controller
             'valor' => 'required|numeric|min:0.01',
             'data_competencia' => 'required|date',
             'data_vencimento' => 'required|date',
-            'plano_conta_id' => 'required|exists:financeiro.plano_contas,id',
-            'centro_custo_id' => 'nullable|exists:financeiro.centros_custo,id',
-            'conta_bancaria_id' => 'nullable|exists:financeiro.contas_bancarias,id',
+            'plano_conta_id' => 'required|exists:plano_contas,id',
+            'centro_custo_id' => 'nullable|exists:centros_custo,id',
+            'conta_bancaria_id' => 'nullable|exists:contas_bancarias,id',
             'documento_fiscal' => 'nullable|string|max:100',
             'observacoes' => 'nullable|string',
         ]);
@@ -90,7 +91,7 @@ class ContaPagarController extends Controller
      */
     public function edit($id)
     {
-        $despesa = Lancamento::findOrFail($id);
+        $despesa = Lancamento::where('tipo', 'despesa')->findOrFail($id);
         $planosContas = PlanoConta::where('tipo', 'despesa')->orderBy('codigo')->get();
         $centrosCusto = CentroCusto::where('ativo', true)->orderBy('nome')->get();
         $contasBancarias = ContaBancaria::where('ativo', true)->orderBy('nome')->get();
@@ -103,7 +104,7 @@ class ContaPagarController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $despesa = Lancamento::findOrFail($id);
+        $despesa = Lancamento::where('tipo', 'despesa')->findOrFail($id);
 
         // A24 / A25 — Despesas liquidadas são imutáveis (integridade contábil)
         if ($despesa->status === 'pago') {
@@ -117,8 +118,8 @@ class ContaPagarController extends Controller
             'valor'            => 'required|numeric|min:0.01',
             'data_competencia' => 'required|date',
             'data_vencimento'  => 'required|date',
-            'plano_conta_id'   => 'required|exists:financeiro.plano_contas,id',
-            'centro_custo_id'  => 'nullable|exists:financeiro.centros_custo,id',
+            'plano_conta_id'   => 'required|exists:plano_contas,id',
+            'centro_custo_id'  => 'nullable|exists:centros_custo,id',
             'documento_fiscal' => 'nullable|string|max:100',
             'observacoes'      => 'nullable|string',
         ]);
@@ -130,24 +131,38 @@ class ContaPagarController extends Controller
     }
 
     /**
-     * Liquidação / Baixa da Conta a Pagar
+     * Liquidação / Baixa da Conta a Pagar (FIN-012)
      */
     public function liquidar(Request $request, $id)
     {
-        $despesa = Lancamento::findOrFail($id);
-
         $request->validate([
             'data_pagamento' => 'required|date',
-            'conta_bancaria_id' => 'required|exists:financeiro.contas_bancarias,id',
+            'conta_bancaria_id' => 'required|exists:contas_bancarias,id',
         ]);
 
-        $despesa->update([
-            'status' => 'pago',
-            'data_pagamento' => $request->input('data_pagamento'),
-            'conta_bancaria_id' => $request->input('conta_bancaria_id'),
-        ]);
+        return DB::transaction(function () use ($request, $id) {
+            $despesa = Lancamento::where('tipo', 'despesa')
+                ->lockForUpdate()
+                ->findOrFail($id);
 
-        return redirect()->back()->with('success', "Despesa '{$despesa->descricao}' liquidada com sucesso!");
+            if ($despesa->status === 'pago') {
+                return redirect()->back()
+                    ->with('error', "A despesa '{$despesa->descricao}' já foi liquidada anteriormente e não pode ser sobrescrita.");
+            }
+
+            if ($despesa->status === 'cancelado') {
+                return redirect()->back()
+                    ->with('error', "Não é possível liquidar uma despesa cancelada.");
+            }
+
+            $despesa->update([
+                'status' => 'pago',
+                'data_pagamento' => $request->input('data_pagamento'),
+                'conta_bancaria_id' => $request->input('conta_bancaria_id'),
+            ]);
+
+            return redirect()->back()->with('success', "Despesa '{$despesa->descricao}' liquidada com sucesso!");
+        });
     }
 
     /**
@@ -155,7 +170,7 @@ class ContaPagarController extends Controller
      */
     public function destroy($id)
     {
-        $despesa = Lancamento::findOrFail($id);
+        $despesa = Lancamento::where('tipo', 'despesa')->findOrFail($id);
 
         // A25 — Despesas liquidadas não podem ser excluídas (audit trail obrigatório)
         if ($despesa->status === 'pago') {

@@ -101,13 +101,39 @@ class Titulo extends Model
 
     public function scopeVencidos($query)
     {
-        return $query->where(function ($queryScope) {
+        $hoje = Carbon::today()->toDateString();
+
+        return $query->where(function ($queryScope) use ($hoje) {
             $queryScope->where('status', 'vencido')
-                ->orWhere(function ($q) {
+                ->orWhere(function ($q) use ($hoje) {
                     $q->whereIn('status', ['aberto', 'parcial'])
-                      ->where('data_vencimento', '<', Carbon::today()->toDateString());
+                      ->whereRaw('COALESCE(data_prorrogacao, data_vencimento) < ?', [$hoje]);
                 });
         });
+    }
+
+    /**
+     * Elegibilidade estrita para baixa ordinária (FIN-010)
+     */
+    public function isElegivelBaixa(): bool
+    {
+        return in_array($this->status, ['aberto', 'parcial', 'vencido']) && (float) $this->valor_saldo >= 0.005;
+    }
+
+    /**
+     * Elegibilidade para emissão de boleto/Pix no gateway Asaas (FIN-010)
+     */
+    public function isElegivelEmissaoGateway(): bool
+    {
+        return in_array($this->status, ['aberto', 'parcial', 'vencido']) && (float) $this->valor_saldo >= 0.005;
+    }
+
+    /**
+     * Elegibilidade para inclusão em termo de acordo de renegociação (FIN-010)
+     */
+    public function isElegivelRenegociacao(): bool
+    {
+        return in_array($this->status, ['aberto', 'parcial', 'vencido']) && (float) $this->valor_saldo >= 0.005;
     }
 
     /**

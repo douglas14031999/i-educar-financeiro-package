@@ -92,19 +92,20 @@ class RelatorioFinanceiroController extends Controller
         $dataInicio = "{$ano}-01-01";
         $dataFim    = "{$ano}-12-31";
 
-        // A14 — Receita Bruta REALIZADA: somente pagamentos efetivos não-estornados.
-        // Não usar valor_nominal dos títulos (representá valor previsto, não arrecadado).
+        // FIN-013 — Receita Bruta REALIZADA: valor efetivamente liquidado antes das deduções.
+        // Fórmula contábil: Receita Bruta = valor_pago + deduções (descontos concedidos).
+        // Isso reconcilia a Receita Líquida exatamente com o Caixa Efetivo (valor_pago) sem dupla contagem de encargos.
         $receitaBruta = Pagamento::where('estornado', false)
             ->whereBetween('data_pagamento', [$dataInicio, $dataFim])
-            ->sum(\Illuminate\Support\Facades\DB::raw('valor_pago + valor_juros + valor_multa'));
+            ->sum(\Illuminate\Support\Facades\DB::raw('valor_pago + valor_desconto_concedido'));
         $receitaBruta = (float) $receitaBruta;
 
-        // A15 — Deduções: descontos concedidos nos pagamentos reais (não o campo do título).
+        // Deduções: descontos concedidos nos pagamentos reais
         $deducoes = (float) Pagamento::where('estornado', false)
             ->whereBetween('data_pagamento', [$dataInicio, $dataFim])
             ->sum('valor_desconto_concedido');
 
-        // Receita Líquida Operacional
+        // Receita Líquida Operacional (= Caixa Líquido Arrecadado de Receitas)
         $receitaLiquida = round($receitaBruta - $deducoes, 2);
 
         // Despesas Operacionais por Categoria do Plano de Contas

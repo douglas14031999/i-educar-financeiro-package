@@ -29,14 +29,15 @@ Route::group(['prefix' => $prefix, 'as' => 'financeiro.', 'middleware' => $middl
     Route::get('api/alunos/{id}/detalhes', 'AlunoBuscaController@detalhes')->name('api.alunos.detalhes');
     Route::post('api/responsaveis/vincular-ou-criar', 'AlunoBuscaController@vincularOuCriarResponsavel')->name('api.responsaveis.vincular-ou-criar');
 
-    // 3. Planos de Cobrança e Tabela de Preços
-    Route::resource('planos', 'PlanoPagamentoController');
+    // 3. Planos de Cobrança e Tabela de Preços (FIN-008: sem edit/update)
+    Route::resource('planos', 'PlanoPagamentoController')->only(['index', 'create', 'store', 'show', 'destroy']);
 
-    // 4. Contratos Financeiros
-    Route::resource('contratos', 'ContratoController');
+    // 4. Contratos Financeiros (FIN-008: sem edit/update/destroy)
+    Route::resource('contratos', 'ContratoController')->only(['index', 'create', 'store', 'show']);
     Route::post('contratos/{id}/gerar-titulos', 'ContratoController@gerarTitulos')->name('contratos.gerar-titulos');
     Route::post('contratos/{id}/cancelar', 'ContratoController@cancelar')->name('contratos.cancelar');
     Route::get('contratos/{id}/imprimir-carne', 'ContratoController@imprimirCarne')->name('contratos.imprimir-carne');
+    Route::post('contratos/{id}/emitir-carne-asaas', 'ContratoController@emitirCarneAsaas')->name('contratos.emitir-carne-asaas');
     Route::get('contratos/{id}/carne-asaas', 'ContratoController@carneAsaas')->name('contratos.carne-asaas');
 
     // 5. Títulos (Parcelas e Mensalidades)
@@ -47,6 +48,7 @@ Route::group(['prefix' => $prefix, 'as' => 'financeiro.', 'middleware' => $middl
     Route::post('titulos/{id}/emitir-asaas', 'TituloController@emitirAsaas')->name('titulos.emitir-asaas');
     Route::post('titulos/{id}/sincronizar-asaas', 'TituloController@sincronizarStatus')->name('titulos.sincronizar-asaas');
     Route::get('titulos/{id}/recibo-pdf', 'TituloController@imprimirRecibo')->name('titulos.recibo-pdf');
+    Route::get('pagamentos/{id}/recibo', 'TituloController@imprimirReciboPorPagamento')->name('pagamentos.recibo');
     Route::get('titulos/{id}/notificar-whatsapp', 'TituloController@notificarWhatsApp')->name('titulos.notificar-whatsapp');
 
     // 6. Baixa de Balcão (Caixa / Secretaria)
@@ -60,8 +62,8 @@ Route::group(['prefix' => $prefix, 'as' => 'financeiro.', 'middleware' => $middl
     Route::post('renegociacao/confirmar', 'RenegociacaoController@confirmar')->name('renegociacao.confirmar');
     Route::get('renegociacao/{id}/termo-pdf', 'RenegociacaoController@imprimirTermo')->name('renegociacao.termo-pdf');
 
-    // 8. Contas a Pagar e Movimentação de Caixa
-    Route::resource('contas-pagar', 'ContaPagarController');
+    // 8. Contas a Pagar e Movimentação de Caixa (FIN-008: sem show)
+    Route::resource('contas-pagar', 'ContaPagarController')->except(['show']);
     Route::post('contas-pagar/{id}/liquidar', 'ContaPagarController@liquidar')->name('contas-pagar.liquidar');
 
     // 9. Histórico de Notificações da Secretaria e Régua

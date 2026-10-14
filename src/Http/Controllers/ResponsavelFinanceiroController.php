@@ -160,8 +160,17 @@ class ResponsavelFinanceiroController extends Controller
     {
         $responsavel = ResponsavelFinanceiro::findOrFail($id);
 
-        if ($responsavel->titulos()->where('status', 'aberto')->exists()) {
-            return back()->with('error', 'Não é possível excluir um responsável com títulos em aberto.');
+        // FIN-015 — Bloqueia exclusão se houver títulos (abertos, parciais, vencidos, pagos ou renegociados)
+        if ($responsavel->titulos()->exists()) {
+            return back()->with('error', 'Não é possível excluir fisicamente este responsável financeiro pois existem títulos e histórico financeiro vinculados. Altere o cadastro para inativo (ativo = falso) para preservar a integridade contábil e documental.');
+        }
+
+        if (\iEducar\Financeiro\Models\Contrato::where('responsavel_financeiro_id', $id)->exists()) {
+            return back()->with('error', 'Não é possível excluir este responsável pois existem contratos associados.');
+        }
+
+        if ($responsavel->alunos()->exists()) {
+            return back()->with('error', 'Não é possível excluir este responsável pois ainda possui vínculos com alunos.');
         }
 
         $responsavel->delete();

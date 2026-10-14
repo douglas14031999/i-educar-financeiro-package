@@ -77,8 +77,10 @@ class BaixaManualController extends Controller
         try {
             $pagamento = $this->baixaService->realizarBaixa($titulo, $validated);
 
-            return redirect()->route('financeiro.titulos.recibo-pdf', $titulo->id)
-                ->with('success', 'Baixa registrada com sucesso! Recibo gerado.');
+            return redirect()->route('financeiro.titulos.recibo-pdf', [
+                'id' => $titulo->id,
+                'pagamento_id' => $pagamento->id,
+            ])->with('success', 'Baixa registrada com sucesso! Recibo gerado.');
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }

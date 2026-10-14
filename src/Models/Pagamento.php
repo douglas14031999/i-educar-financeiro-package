@@ -14,6 +14,8 @@ class Pagamento extends Model
         'data_pagamento',
         'data_compensacao',
         'valor_pago',
+        'valor_amortizado',
+        'valor_credito_gerado',
         'valor_juros',
         'valor_multa',
         'valor_desconto_concedido',
@@ -29,6 +31,8 @@ class Pagamento extends Model
     protected $casts = [
         'titulo_id' => 'integer',
         'valor_pago' => 'float',
+        'valor_amortizado' => 'float',
+        'valor_credito_gerado' => 'float',
         'valor_juros' => 'float',
         'valor_multa' => 'float',
         'valor_desconto_concedido' => 'float',
@@ -41,5 +45,10 @@ class Pagamento extends Model
     public function titulo()
     {
         return $this->belongsTo(Titulo::class, 'titulo_id');
+    }
+
+    public function creditosGerados()
+    {
+        return $this->hasMany(CreditoResponsavel::class, 'pagamento_id');
     }
 }
