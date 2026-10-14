@@ -48,10 +48,10 @@
 
 ### 🟣 Fase 4: Deploy, Sincronização na VPS e Validação
 - [x] **4.1** Executar checagem de sintaxe e estrutura de views.
-- [ ] **4.2** Sincronizar arquivos na VPS (`/var/www/financeiro-package` e `/var/www/ieducar/vendor/...`).
-- [ ] **4.3** Limpar caches do Laravel (`route:clear`, `view:clear`, `cache:clear`).
-- [ ] **4.4** Recarregar `php8.4-fpm` e testar a renderização visual das páginas e da impressão de carnê no navegador.
-- [ ] **4.5** Commit e push no repositório GitHub.
+- [x] **4.2** Sincronizar arquivos na VPS (`/var/www/financeiro-package` e `/var/www/ieducar/vendor/...`).
+- [x] **4.3** Limpar caches do Laravel (`route:clear`, `view:clear`, `cache:clear`).
+- [x] **4.4** Recarregar `php8.4-fpm` e testar a renderização visual das páginas e da impressão de carnê no navegador.
+- [x] **4.5** Commit e push no repositório GitHub.
 
 ---
 
@@ -59,3 +59,4 @@
 - *13/10/2026 23:25:* Submenus alinhados 100% com o padrão oficial do i-Educar (mesmas classes `.ieducar-menu-container`, `.ieducar-menu`, `.ieducar-sub-menu` e visual fiel à imagem do usuário).
 - *13/10/2026 23:30:* View de carnê pronta para impressão em folha A4 com 3 carnês por página e QR Code Pix dinâmico.
 - *13/10/2026 23:32:* Seleção em lote com barra flutuante e emissão de carnê integrada à tabela de títulos e contratos.
+- *13/10/2026 23:40:* Testes de renderização automatizados concluídos na VPS (181 KB de HTML nativo validado, rotas registradas e `php8.4-fpm` ativo).
