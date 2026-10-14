@@ -381,50 +381,50 @@
     }
 
     /* ========================================================
-       SUBMENU OFICIAL NATIVO I-EDUCAR (PADRÃO EXACTO DA VPS)
+       SUBMENU OFICIAL NATIVO I-EDUCAR (CORES PADRÃO DA VPS)
        ======================================================== */
-    .ieducar-menu-container {
-        background-color: #47728f !important;
-        position: relative;
-        z-index: 1000;
-        width: 100%;
-        margin-bottom: 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    }
+    .ieducar-menu-container,
     .ieducar-menu {
+        background: #e9eff7 !important;
         list-style: none !important;
         margin: 0 !important;
         padding: 0 !important;
+        width: 100%;
+        position: relative;
+        z-index: 1000;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .ieducar-menu {
         display: flex;
         flex-wrap: wrap;
-        background-color: #47728f;
     }
     .ieducar-menu > li {
         position: relative;
         list-style: none !important;
         margin: 0 !important;
         padding: 0 !important;
+        float: left;
     }
     .ieducar-menu > li > a {
         display: block;
-        padding: 9px 18px;
-        color: #ffffff !important;
-        font-size: 13px;
+        padding: 10px 16px;
+        color: #47728f !important;
+        font-family: "Open Sans", sans-serif;
+        font-size: 15px;
         font-weight: 500;
         text-decoration: none !important;
-        font-family: "Open Sans", Arial, sans-serif;
         line-height: 1.4;
         transition: background-color 0.15s ease, color 0.15s ease;
-        border-right: 1px solid rgba(255, 255, 255, 0.12);
-        white-space: nowrap;
     }
+    .ieducar-menu > li:hover,
     .ieducar-menu > li > a:hover {
-        background-color: rgba(255, 255, 255, 0.15) !important;
-        color: #ffffff !important;
+        background: #cddce6 !important;
+        color: #47728f !important;
+        text-decoration: none !important;
     }
-    .ieducar-menu > li.ieducar-sidebar-menu-active > a,
+    .ieducar-menu > li.ieducar-sidebar-menu-active,
     .ieducar-menu > li > a.ieducar-sidebar-menu-active {
-        background-color: #c8dced !important;
+        background: #cddce6 !important;
         color: #1b4c6b !important;
         font-weight: 600;
     }
@@ -438,10 +438,10 @@
         top: 100%;
         left: 0;
         min-width: 220px;
-        background-color: #ffffff !important;
-        border: 1px solid #d4dce2 !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
-        z-index: 99999 !important;
+        background: #FFF !important;
+        border: 1px solid #f3f3f3 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+        z-index: 1100 !important;
         list-style: none !important;
         margin: 0 !important;
         padding: 0 !important;
@@ -450,31 +450,31 @@
         list-style: none !important;
         margin: 0 !important;
         padding: 0 !important;
-        border-bottom: 1px solid #f0f2f5 !important;
+        border-bottom: 1px solid #f3f3f3 !important;
     }
     .ieducar-sub-menu > li:last-child {
         border-bottom: none !important;
     }
     .ieducar-sub-menu > li > a {
         display: block !important;
-        padding: 8px 16px !important;
-        color: #334155 !important;
-        font-size: 12.5px !important;
-        font-family: "Open Sans", Arial, sans-serif !important;
+        padding: 7px 14px !important;
+        color: #646b71 !important;
+        font-size: 13.5px !important;
+        font-family: "Open Sans", sans-serif !important;
         text-decoration: none !important;
         text-align: left !important;
-        background-color: #ffffff !important;
+        background: #FFF !important;
         line-height: 1.4 !important;
         white-space: nowrap;
         transition: background-color 0.15s ease, color 0.15s ease;
     }
+    .ieducar-sub-menu > li:hover,
     .ieducar-sub-menu > li > a:hover {
-        background-color: #f1f5f9 !important;
-        color: #0f172a !important;
-        font-weight: 500;
+        background: #cddce6 !important;
+        color: #1b4c6b !important;
     }
     .ieducar-sub-menu > li > a.ieducar-sidebar-menu-active {
-        background-color: #e2edf6 !important;
+        background: #cddce6 !important;
         color: #1b4c6b !important;
         font-weight: 600 !important;
     }
