@@ -1,4 +1,23 @@
 @php
+    if (!isset($config)) {
+        $config = config('legacy') ?: ['app' => ['database' => ['dbname' => config('database.connections.pgsql.database', 'ieducar')]]];
+    }
+    if (!isset($loggedUser)) {
+        $u = auth()->user();
+        $loggedUser = $u ?: new \stdClass();
+        if (!isset($loggedUser->personId)) $loggedUser->personId = $u->id ?? 1;
+        if (!isset($loggedUser->name)) $loggedUser->name = $u->name ?? 'Administrador';
+        if (!isset($loggedUser->email)) $loggedUser->email = $u->email ?? 'admin@ieducar.com.br';
+        if (!isset($loggedUser->role)) $loggedUser->role = 'Administrador';
+        if (!isset($loggedUser->created_at)) $loggedUser->created_at = time();
+        if (!isset($loggedUser->institution)) $loggedUser->institution = '';
+        if (!isset($loggedUser->city)) $loggedUser->city = '';
+        if (!isset($loggedUser->state)) $loggedUser->state = '';
+        if (!isset($loggedUser->students_count)) $loggedUser->students_count = 0;
+        if (!isset($loggedUser->teachers_count)) $loggedUser->teachers_count = 0;
+        if (!isset($loggedUser->classes_count)) $loggedUser->classes_count = 0;
+    }
+
     if (!isset($menu)) {
         $user = auth()->user();
         $menuList = collect();
