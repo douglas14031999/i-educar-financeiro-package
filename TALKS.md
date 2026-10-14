@@ -61,3 +61,31 @@
 - *13/10/2026 23:32:* Seleção em lote com barra flutuante e emissão de carnê integrada à tabela de títulos e contratos.
 - *13/10/2026 23:40:* Testes de renderização automatizados concluídos na VPS (181 KB de HTML nativo validado, rotas registradas e `php8.4-fpm` ativo).
 - *13/10/2026 23:50:* Ajustada a paleta de cores do submenu para o padrão oficial nativo do i-Educar (fundo da barra em `#e9eff7`, links em `#47728f`, aba ativa/hover em `#cddce6` e dropdown em `#FFF` com `#f3f3f3`), além da remoção definitiva dos itens órfãos na raiz.
+
+### 📅 Sessão 3 — 14/10/2026: Carnê via Asaas Installments (decisão do usuário)
+
+- **Diretriz do Usuário:** "o carnê é para ser gerado no asaas" — os carnês **não devem** ser apenas HTML imprimível local; devem ser PDFs oficiais gerados pelo Asaas via `/v3/installments/{id}/paymentBook`.
+- **Arquitetura Implementada:**
+  1. **`POST /v3/installments`** — Cria parcelamento no Asaas com todos os títulos em aberto do contrato. O Asaas gera N cobranças internas e retorna um `installment_id`.
+  2. **`GET /v3/installments/{id}/paymentBook`** — Retorna o PDF oficial do carnê. O sistema faz streaming do binário PDF diretamente para o browser.
+  3. **Fallback inteligente** — Se o gateway não estiver configurado ou falhar, renderiza a view HTML de impressão manual sem perda de funcionalidade.
+  4. **Idempotência** — Se o contrato já possui `installment_id` cadastrado, reutiliza sem criar novamente. A rota `/carne-asaas` força regeneração quando necessário.
+- **Arquivos Alterados:**
+  - `GatewayInterface.php` — Novos métodos `criarInstallment()` e `gerarCarneUrl()`
+  - `AsaasGateway.php` — Implementação de `criarInstallment`, `gerarCarneUrl` e `baixarCarnePdf`
+  - `CobrancaGateway.php` (model) — Campos `installment_id`, `carne_url`, `contrato_id`
+  - `ContratoController.php` — `imprimirCarne` com integração Asaas completa + fallback + `carneAsaas` para regeneração
+  - `TituloController.php` — `imprimirCarne` delega para `ContratoController` quando títulos são do mesmo contrato
+  - `routes/web.php` — Nova rota `GET contratos/{id}/carne-asaas`
+  - `migrations/000014` — Colunas `installment_id`, `carne_url`, `contrato_id` na tabela `cobrancas_gateway`
+- **Commit:** `622836f` — Push em `main` realizado com sucesso.
+
+---
+
+### 🟠 Fase 5: Testes de Carnê Asaas em Produção (Pendente)
+
+- [ ] **5.1** Executar `php artisan migrate --force` na VPS para aplicar migration `000014`.
+- [ ] **5.2** Acessar `/financeiro/contratos/{id}/imprimir-carne` com um contrato real e validar que o PDF do Asaas é retornado.
+- [ ] **5.3** Verificar no painel do Asaas Sandbox que o installment foi criado com as parcelas corretas.
+- [ ] **5.4** Testar a rota de regeneração `/financeiro/contratos/{id}/carne-asaas` após alteração de valores.
+- [ ] **5.5** Validar fallback HTML quando gateway estiver desabilitado ou sem API key.
