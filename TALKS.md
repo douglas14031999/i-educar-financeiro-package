@@ -60,3 +60,4 @@
 - *13/10/2026 23:30:* View de carnê pronta para impressão em folha A4 com 3 carnês por página e QR Code Pix dinâmico.
 - *13/10/2026 23:32:* Seleção em lote com barra flutuante e emissão de carnê integrada à tabela de títulos e contratos.
 - *13/10/2026 23:40:* Testes de renderização automatizados concluídos na VPS (181 KB de HTML nativo validado, rotas registradas e `php8.4-fpm` ativo).
+- *13/10/2026 23:50:* Ajustada a paleta de cores do submenu para o padrão oficial nativo do i-Educar (fundo da barra em `#e9eff7`, links em `#47728f`, aba ativa/hover em `#cddce6` e dropdown em `#FFF` com `#f3f3f3`), além da remoção definitiva dos itens órfãos na raiz.
