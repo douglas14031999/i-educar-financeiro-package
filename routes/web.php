@@ -37,6 +37,7 @@ Route::group(['prefix' => $prefix, 'as' => 'financeiro.', 'middleware' => $middl
     Route::post('contratos/{id}/gerar-titulos', 'ContratoController@gerarTitulos')->name('contratos.gerar-titulos');
     Route::post('contratos/{id}/cancelar', 'ContratoController@cancelar')->name('contratos.cancelar');
     Route::get('contratos/{id}/imprimir-carne', 'ContratoController@imprimirCarne')->name('contratos.imprimir-carne');
+    Route::get('contratos/{id}/carne-asaas', 'ContratoController@carneAsaas')->name('contratos.carne-asaas');
 
     // 5. Títulos (Parcelas e Mensalidades)
     Route::get('titulos', 'TituloController@index')->name('titulos.index');

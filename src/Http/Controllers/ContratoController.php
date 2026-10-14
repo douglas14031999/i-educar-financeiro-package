@@ -177,13 +177,115 @@ class ContratoController extends Controller
     }
 
     /**
-     * Emissão de Carnê Escolar do Contrato
+     * Emissão de Carnê Escolar do Contrato via Asaas.
+     *
+     * Fluxo:
+     *  1. Verifica se já existe installment_id salvo → usa /paymentBook direto
+     *  2. Se não, cria installment via POST /v3/installments e salva o ID
+     *  3. Faz streaming do PDF retornado pelo Asaas
+     *  4. Fallback: renderiza a view HTML para impressão manual
      */
     public function imprimirCarne($id)
     {
-        $contrato = Contrato::with(['titulos.responsavel', 'titulos.cobrancaGateway'])->findOrFail($id);
-        $titulos = $contrato->titulos()->orderBy('data_vencimento')->get();
+        $contrato = Contrato::with([
+            'responsavel',
+            'titulos.cobrancaGateway',
+            'titulos.responsavel',
+        ])->findOrFail($id);
 
+        $titulos = $contrato->titulos()
+            ->whereIn('status', ['aberto', 'parcial', 'vencido'])
+            ->orderBy('data_vencimento')
+            ->get();
+
+        // Se não há títulos em aberto, renderiza a view com todos (para reimpressão)
+        if ($titulos->isEmpty()) {
+            $titulos = $contrato->titulos()->orderBy('data_vencimento')->get();
+            return view('financeiro::titulos.carne', compact('titulos', 'contrato'));
+        }
+
+        // Verifica se já existe um installment ativo no Asaas para este contrato
+        $cobrancaExistente = \iEducar\Financeiro\Models\CobrancaGateway::where('contrato_id', $contrato->id)
+            ->whereNotNull('installment_id')
+            ->first();
+
+        try {
+            /** @var \iEducar\Financeiro\Gateways\GatewayManager $manager */
+            $manager = app(\iEducar\Financeiro\Gateways\GatewayManager::class);
+            /** @var \iEducar\Financeiro\Gateways\Drivers\AsaasGateway $gateway */
+            $gateway = $manager->driver('asaas');
+
+            $installmentId = $cobrancaExistente?->installment_id;
+
+            // Se não há installment, cria agora no Asaas
+            if (empty($installmentId)) {
+                $resultado = $gateway->criarInstallment($contrato, $titulos->all());
+                $installmentId = $resultado['installment_id'];
+
+                // Salva registro de cobrança por contrato (sem titulo_id específico)
+                \iEducar\Financeiro\Models\CobrancaGateway::create([
+                    'contrato_id'      => $contrato->id,
+                    'titulo_id'        => $titulos->first()->id, // âncora no primeiro título
+                    'gateway'          => 'asaas',
+                    'installment_id'   => $installmentId,
+                    'carne_url'        => $resultado['carne_url'],
+                    'status_externo'   => 'PENDING',
+                    'payload_resposta' => $resultado['payload_resposta'] ?? [],
+                ]);
+            }
+
+            // Faz streaming do PDF do carnê
+            $pdfContent = $gateway->baixarCarnePdf($installmentId);
+
+            if (!empty($pdfContent)) {
+                $filename = 'carne-' . $contrato->numero_contrato . '.pdf';
+                return response($pdfContent, 200, [
+                    'Content-Type'        => 'application/pdf',
+                    'Content-Disposition' => "inline; filename=\"{$filename}\"",
+                    'Cache-Control'       => 'no-store, no-cache',
+                ]);
+            }
+
+            // Se o Asaas retornou URL pública, redireciona
+            $carneUrl = $cobrancaExistente?->carne_url ?? $resultado['carne_url'] ?? null;
+            if (!empty($carneUrl)) {
+                return redirect()->away($carneUrl);
+            }
+
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('ContratoController::imprimirCarne falhou', [
+                'contrato_id' => $contrato->id,
+                'erro'        => $e->getMessage(),
+            ]);
+            // Fallback para view HTML com mensagem de aviso
+            return view('financeiro::titulos.carne', compact('titulos', 'contrato'))
+                ->with('aviso_carne', 'Não foi possível gerar o carnê via Asaas. Utilize a impressão manual abaixo. Detalhe: ' . $e->getMessage());
+        }
+
+        // Fallback final: view HTML para impressão manual
         return view('financeiro::titulos.carne', compact('titulos', 'contrato'));
+    }
+
+    /**
+     * Força a regeneração do carnê no Asaas (descarta installment anterior e cria novo).
+     * Útil quando o contrato foi alterado após a primeira emissão.
+     *
+     * GET /financeiro/contratos/{id}/carne-asaas
+     */
+    public function carneAsaas($id)
+    {
+        $contrato = Contrato::with([
+            'responsavel',
+            'titulos.cobrancaGateway',
+            'titulos.responsavel',
+        ])->findOrFail($id);
+
+        // Remove registro de installment anterior (para forçar recriação)
+        \iEducar\Financeiro\Models\CobrancaGateway::where('contrato_id', $contrato->id)
+            ->whereNotNull('installment_id')
+            ->delete();
+
+        // Delega para o fluxo padrão (que agora vai criar um novo installment)
+        return $this->imprimirCarne($id);
     }
 }

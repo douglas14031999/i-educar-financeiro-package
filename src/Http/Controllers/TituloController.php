@@ -243,7 +243,11 @@ class TituloController extends Controller
     }
 
     /**
-     * Emissão de Carnê Escolar para Impressão
+     * Emissão de Carnê Escolar para Impressão via Asaas.
+     *
+     * Quando todos os títulos selecionados pertencem ao mesmo contrato,
+     * delega para o ContratoController@imprimirCarne que usa o Asaas.
+     * Caso contrário, renderiza a view HTML de impressão manual.
      */
     public function imprimirCarne(Request $request)
     {
@@ -255,7 +259,7 @@ class TituloController extends Controller
 
         $contratoId = $request->input('contrato_id');
 
-        $query = Titulo::with(['responsavel', 'cobrancaGateway']);
+        $query = Titulo::with(['responsavel', 'cobrancaGateway', 'contrato']);
 
         if (!empty($ids)) {
             $query->whereIn('id', $ids);
@@ -267,6 +271,14 @@ class TituloController extends Controller
 
         $titulos = $query->orderBy('data_vencimento')->get();
 
+        // Se todos os títulos pertencem ao mesmo contrato → usa Asaas via ContratoController
+        $contratoIds = $titulos->pluck('contrato_id')->filter()->unique();
+        if ($contratoIds->count() === 1 && !empty($contratoIds->first())) {
+            $cid = $contratoIds->first();
+            return app(ContratoController::class)->imprimirCarne($cid);
+        }
+
+        // Múltiplos contratos ou sem contrato → fallback para view HTML
         return view('financeiro::titulos.carne', compact('titulos'));
     }
 }

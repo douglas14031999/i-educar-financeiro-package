@@ -2,6 +2,7 @@
 
 namespace iEducar\Financeiro\Gateways\Contracts;
 
+use iEducar\Financeiro\Models\Contrato;
 use iEducar\Financeiro\Models\Titulo;
 
 interface GatewayInterface
@@ -30,4 +31,19 @@ interface GatewayInterface
      * Testa a conectividade com o gateway
      */
     public function testarConexao(): array;
+
+    /**
+     * Cria um parcelamento (installment) no Asaas para um contrato inteiro.
+     * Retorna o installment_id gerado pelo gateway.
+     *
+     * POST /v3/installments
+     */
+    public function criarInstallment(Contrato $contrato, array $titulos): array;
+
+    /**
+     * Obtém a URL pública do carnê PDF de um installment no Asaas.
+     *
+     * GET /v3/installments/{id}/paymentBook
+     */
+    public function gerarCarneUrl(string $installmentId): ?string;
 }
