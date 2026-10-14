@@ -112,16 +112,47 @@
                 </a>
             </div>
             
-            <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
-                <div class="inline-flex p-0.5 bg-slate-200/80 text-xs font-medium text-slate-600">
-                    <button class="px-3 py-1 bg-white text-slate-800 shadow-xs" type="button">Recentes</button>
+            <!-- Barra de Filtros Rápidos e Ações -->
+            <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                <div class="inline-flex p-1 bg-slate-200/70 border border-slate-200 rounded-lg gap-1 shadow-2xs">
+                    <button class="dash-filter-btn group inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-all {{ ($filtro ?? 'todos') === 'todos' ? 'bg-white shadow-xs text-slate-900 ring-1 ring-slate-900/5 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60' }}" type="button" data-filter="todos" aria-pressed="{{ ($filtro ?? 'todos') === 'todos' ? 'true' : 'false' }}">
+                        <svg class="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        <span>Todos</span>
+                        <span class="dash-badge inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-slate-200/80 text-slate-700 min-w-5">
+                            {{ $counts['todos'] ?? count($titulosRecentes) }}
+                        </span>
+                    </button>
+                    <button class="dash-filter-btn group inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-all {{ ($filtro ?? 'todos') === 'pendentes' ? 'bg-white shadow-xs text-amber-900 ring-1 ring-amber-200 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60' }}" type="button" data-filter="pendentes" aria-pressed="{{ ($filtro ?? 'todos') === 'pendentes' ? 'true' : 'false' }}">
+                        <svg class="w-3.5 h-3.5 text-amber-500 group-hover:text-amber-600" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        <span>Pendentes</span>
+                        <span class="dash-badge inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200/60 min-w-5">
+                            {{ $counts['pendentes'] ?? 0 }}
+                        </span>
+                    </button>
+                    <button class="dash-filter-btn group inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-all {{ ($filtro ?? 'todos') === 'atrasados' ? 'bg-white shadow-xs text-rose-800 ring-1 ring-rose-200 font-bold' : 'text-slate-600 hover:text-rose-700 hover:bg-white/60' }}" type="button" data-filter="atrasados" aria-pressed="{{ ($filtro ?? 'todos') === 'atrasados' ? 'true' : 'false' }}">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                        </span>
+                        <span>Em Atraso</span>
+                        <span class="dash-badge inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-rose-100 text-rose-800 border border-rose-200/60 min-w-5">
+                            {{ $counts['atrasados'] ?? 0 }}
+                        </span>
+                    </button>
+                    <button class="dash-filter-btn group inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-all {{ ($filtro ?? 'todos') === 'pagos' ? 'bg-white shadow-xs text-emerald-800 ring-1 ring-emerald-200 font-bold' : 'text-slate-600 hover:text-emerald-700 hover:bg-white/60' }}" type="button" data-filter="pagos" aria-pressed="{{ ($filtro ?? 'todos') === 'pagos' ? 'true' : 'false' }}">
+                        <svg class="w-3.5 h-3.5 text-emerald-500 group-hover:text-emerald-600" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                        <span>Pagos / Liquidados</span>
+                        <span class="dash-badge inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200/60 min-w-5">
+                            {{ $counts['pagos'] ?? 0 }}
+                        </span>
+                    </button>
                 </div>
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('financeiro.planos.create') }}" class="text-xs font-medium inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition shadow-2xs" style="text-decoration: none;">
+                <div class="flex items-center gap-2.5">
+                    <a href="{{ route('financeiro.planos.create') }}" class="text-xs font-semibold inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 hover:border-emerald-500 text-slate-700 hover:text-emerald-700 hover:bg-emerald-50/50 rounded-md transition shadow-2xs" style="text-decoration: none;">
                         <svg class="w-3.5 h-3.5 text-emerald-600" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                         Novo Plano de Pagamento
                     </a>
-                    <a href="{{ route('financeiro.responsaveis.create') }}" class="text-xs font-medium inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition shadow-2xs" style="text-decoration: none;">
+                    <a href="{{ route('financeiro.responsaveis.create') }}" class="text-xs font-semibold inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-300 hover:border-brand-petroleum text-slate-700 hover:text-brand-petroleum hover:bg-slate-50 rounded-md transition shadow-2xs" style="text-decoration: none;">
                         <svg class="w-3.5 h-3.5 text-slate-600" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                         Cadastrar Responsável
                     </a>
@@ -139,24 +170,56 @@
                             <th class="py-3 px-4 text-center" scope="col">Parcela</th>
                             <th class="py-3 px-4 text-right" scope="col">Valor</th>
                             <th class="py-3 px-4 text-center" scope="col">Status</th>
+                            <th class="py-3 px-4 text-center" scope="col">Ações</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 text-slate-700">
                         @forelse($titulosRecentes ?? [] as $titulo)
                             @php
-                                $isAtrasado = ($titulo->status === 'vencido' || $titulo->isVencido());
-                                $isPago = $titulo->status === 'pago';
-                                $bgClass = $isAtrasado ? 'hover:bg-rose-50/40 bg-rose-50/20' : 'hover:bg-slate-50/80';
+                                $hoje = \Carbon\Carbon::today();
+                                $dataVenc = \Carbon\Carbon::parse($titulo->data_vencimento)->startOfDay();
+                                $diasDiff = (int) $hoje->diffInDays($dataVenc, false);
+
+                                $isPago = $titulo->isLiquidado() || $titulo->status === 'pago';
+                                $isRenegociado = $titulo->status === 'renegociado';
+                                $isCancelado = $titulo->status === 'cancelado';
+                                $isParcial = $titulo->status === 'parcial';
+                                $isAtrasado = !$isPago && !$isRenegociado && !$isCancelado && ($titulo->status === 'vencido' || $titulo->isVencido() || ($diasDiff < 0 && (float)$titulo->valor_saldo > 0.005));
+
+                                $tipoFiltro = 'pendente';
+                                if ($isPago) {
+                                    $tipoFiltro = 'pago';
+                                } elseif ($isAtrasado) {
+                                    $tipoFiltro = 'atrasado';
+                                } elseif ($isRenegociado) {
+                                    $tipoFiltro = 'renegociado';
+                                } elseif ($isCancelado) {
+                                    $tipoFiltro = 'cancelado';
+                                }
+
+                                $bgClass = $isAtrasado ? 'hover:bg-rose-50/40 bg-rose-50/20' : ($isPago ? 'hover:bg-slate-50/80 bg-emerald-50/10' : 'hover:bg-slate-50/80');
+
+                                // Garante que o valor exibido seja o valor nominal da parcela e nunca R$ 0,00 quando liquidado
+                                $valorNominal = (float) $titulo->valor_nominal;
+                                $valorSaldo = (float) $titulo->valor_saldo;
+                                $valorPago = (float) $titulo->valor_pago;
+                                $valorExibicao = $valorNominal > 0 ? $valorNominal : ($valorPago > 0 ? $valorPago : $valorSaldo);
                             @endphp
-                            <tr class="{{ $bgClass }} transition-colors">
+                            <tr class="{{ $bgClass }} transition-colors dash-row" data-type="{{ $tipoFiltro }}">
                                 <td class="py-3 px-4 whitespace-nowrap font-medium {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
-                                    {{ \Carbon\Carbon::parse($titulo->data_vencimento)->format('d/m/Y') }}
-                                    @if($isAtrasado)
-                                        <span class="block text-[10px] text-rose-500 font-semibold">{{ \Carbon\Carbon::parse($titulo->data_vencimento)->diffInDays() }} dias atrasado</span>
-                                    @elseif($isPago)
-                                        <span class="block text-[10px] text-slate-400">Liquidado</span>
+                                    {{ $dataVenc->format('d/m/Y') }}
+                                    @if($isPago)
+                                        <span class="block text-[10px] text-emerald-600 font-semibold">Liquidado</span>
+                                    @elseif($isRenegociado)
+                                        <span class="block text-[10px] text-cyan-600 font-medium">Acordo Formalizado</span>
+                                    @elseif($isAtrasado)
+                                        <span class="block text-[10px] text-rose-500 font-semibold">{{ abs($diasDiff) == 1 ? '1 dia atrasado' : abs($diasDiff) . ' dias atrasado' }}</span>
+                                    @elseif($diasDiff === 0)
+                                        <span class="block text-[10px] text-amber-600 font-bold">Vence Hoje</span>
+                                    @elseif($diasDiff === 1)
+                                        <span class="block text-[10px] text-amber-600 font-medium">Vence amanhã</span>
                                     @else
-                                        <span class="block text-[10px] text-slate-400">Em {{ \Carbon\Carbon::parse($titulo->data_vencimento)->diffInDays() }} dias</span>
+                                        <span class="block text-[10px] text-slate-400">Em {{ $diasDiff }} dias</span>
                                     @endif
                                 </td>
                                 <td class="py-3 px-4 font-semibold text-slate-900">{{ $titulo->aluno_nome ?? ($titulo->aluno->nome ?? 'Aluno #' . $titulo->aluno_id) }}</td>
@@ -166,33 +229,68 @@
                                         {{ $titulo->turma_nome ?? '-' }}
                                     </span>
                                 </td>
-                                <td class="py-3 px-4 text-center whitespace-nowrap font-medium">{{ $titulo->numero_parcela }}/{{ $titulo->total_parcelas }}</td>
-                                <td class="py-3 px-4 text-right font-bold {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">R$ {{ number_format($titulo->valor_saldo ?? $titulo->valor_nominal, 2, ',', '.') }}</td>
+                                <td class="py-3 px-4 text-center whitespace-nowrap font-medium">{{ $titulo->numero_parcela == 0 ? 'Matr.' : sprintf('%02d/%02d', $titulo->numero_parcela, $titulo->total_parcelas) }}</td>
+                                <td class="py-3 px-4 text-right font-bold {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
+                                    R$ {{ number_format($valorExibicao, 2, ',', '.') }}
+                                    @if($isParcial && $valorSaldo > 0)
+                                        <span class="block text-[10px] font-normal text-cyan-700">Saldo: R$ {{ number_format($valorSaldo, 2, ',', '.') }}</span>
+                                    @endif
+                                </td>
                                 <td class="py-3 px-4 text-center whitespace-nowrap">
                                     @if($isPago)
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Liquidado</span>
                                     @elseif($isAtrasado)
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">Em Atraso</span>
-                                    @elseif($titulo->status === 'cancelado')
+                                    @elseif($isParcial)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-50 text-cyan-800 border border-cyan-200">Parcial</span>
+                                    @elseif($isRenegociado)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-300">Renegociado</span>
+                                    @elseif($isCancelado)
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Cancelado</span>
                                     @else
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/70">Pendente</span>
                                     @endif
                                 </td>
+                                <td class="py-3 px-4 text-center whitespace-nowrap">
+                                    <div class="flex items-center justify-center gap-1.5">
+                                        <a href="{{ route('financeiro.titulos.show', $titulo->id) }}" class="inline-flex items-center justify-center p-1.5 text-slate-500 hover:text-brand-petroleum hover:bg-slate-100 rounded transition" title="Ver Detalhes do Título">
+                                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                        </a>
+                                        @if(!$isPago && !$isCancelado && !$isRenegociado)
+                                            <a href="{{ route('financeiro.baixas.create', ['titulo_id' => $titulo->id]) }}" class="inline-flex items-center justify-center p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded transition" title="Baixa Presencial no Caixa">
+                                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                            </a>
+                                            <a href="{{ route('financeiro.titulos.notificar-whatsapp', $titulo->id) }}" target="_blank" class="inline-flex items-center justify-center p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition" title="Enviar Cobrança / Link por WhatsApp">
+                                                <svg class="w-4 h-4" width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.073.043.419-.101.824z"/></svg>
+                                            </a>
+                                        @elseif($isPago)
+                                            <a href="{{ route('financeiro.titulos.recibo-pdf', $titulo->id) }}" class="inline-flex items-center justify-center p-1.5 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded transition" title="Imprimir Recibo de Pagamento" target="_blank">
+                                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                            </a>
+                                        @endif
+                                    </div>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="py-8 text-center text-slate-500">
+                                <td colspan="8" class="py-8 text-center text-slate-500">
                                     <svg class="w-10 h-10 mx-auto text-slate-300 mb-3" width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                                     Não há cobranças recentes geradas.
                                 </td>
                             </tr>
                         @endforelse
+                        <tr id="dash-empty-filter-row" class="hidden" style="display: none;">
+                            <td colspan="8" class="py-8 text-center text-slate-500">
+                                <svg class="w-10 h-10 mx-auto text-slate-300 mb-2" width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                <span id="dash-empty-filter-msg">Nenhuma cobrança encontrada para este filtro.</span>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
             <footer class="p-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
-                <span>Mostrando as cobranças mais recentes com movimentação operacional</span>
+                <span>Mostrando cobranças operacionais priorizadas por urgência e vencimento</span>
+                <span class="text-[11px] text-slate-400">Total exibido: {{ count($titulosRecentes ?? []) }} registro(s)</span>
             </footer>
         </section>
 
@@ -258,4 +356,107 @@
         </section>
     </main>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const filterButtons = document.querySelectorAll('.dash-filter-btn');
+    const rows = document.querySelectorAll('.dash-row');
+    const emptyRow = document.getElementById('dash-empty-filter-row');
+    const emptyMsg = document.getElementById('dash-empty-filter-msg');
+
+    function applyFilter(filter) {
+        let visibleCount = 0;
+
+        rows.forEach(function (row) {
+            const type = row.getAttribute('data-type');
+            let show = false;
+
+            if (filter === 'todos') {
+                show = true;
+            } else if (filter === 'pendentes') {
+                show = (type === 'pendente');
+            } else if (filter === 'atrasados') {
+                show = (type === 'atrasado');
+            } else if (filter === 'pagos') {
+                show = (type === 'pago');
+            }
+
+            if (show) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        if (emptyRow) {
+            if (visibleCount === 0 && rows.length > 0) {
+                emptyRow.classList.remove('hidden');
+                emptyRow.style.display = '';
+                if (emptyMsg) {
+                    const labels = {
+                        'pendentes': 'Nenhum título pendente / a vencer encontrado.',
+                        'atrasados': 'Excelente! Nenhum título em atraso encontrado.',
+                        'pagos': 'Nenhum título liquidado encontrado.',
+                        'todos': 'Nenhuma cobrança recente gerada.'
+                    };
+                    emptyMsg.textContent = labels[filter] || 'Nenhuma cobrança encontrada.';
+                }
+            } else {
+                emptyRow.classList.add('hidden');
+                emptyRow.style.display = 'none';
+            }
+        }
+
+        // Atualiza a estilização dos botões
+        filterButtons.forEach(function (btn) {
+            const bFilter = btn.getAttribute('data-filter');
+            const isActive = (bFilter === filter);
+            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+
+            const baseClass = 'dash-filter-btn group inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-all ';
+            if (isActive) {
+                if (filter === 'atrasados') {
+                    btn.className = baseClass + 'bg-white shadow-xs text-rose-800 ring-1 ring-rose-200 font-bold';
+                } else if (filter === 'pagos') {
+                    btn.className = baseClass + 'bg-white shadow-xs text-emerald-800 ring-1 ring-emerald-200 font-bold';
+                } else if (filter === 'pendentes') {
+                    btn.className = baseClass + 'bg-white shadow-xs text-amber-900 ring-1 ring-amber-200 font-bold';
+                } else {
+                    btn.className = baseClass + 'bg-white shadow-xs text-slate-900 ring-1 ring-slate-900/5 font-bold';
+                }
+            } else {
+                if (bFilter === 'atrasados') {
+                    btn.className = baseClass + 'text-slate-600 hover:text-rose-700 hover:bg-white/60';
+                } else if (bFilter === 'pagos') {
+                    btn.className = baseClass + 'text-slate-600 hover:text-emerald-700 hover:bg-white/60';
+                } else {
+                    btn.className = baseClass + 'text-slate-600 hover:text-slate-900 hover:bg-white/60';
+                }
+            }
+        });
+    }
+
+    filterButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const filter = this.getAttribute('data-filter');
+            applyFilter(filter);
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.set('filtro', filter);
+                window.history.replaceState({}, '', url.toString());
+            } catch (e) {}
+        });
+    });
+
+    // Se houver filtro na URL, aciona imediatamente
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlFilter = urlParams.get('filtro');
+        if (urlFilter && ['todos', 'pendentes', 'atrasados', 'pagos'].includes(urlFilter)) {
+            applyFilter(urlFilter);
+        }
+    } catch (e) {}
+});
+</script>
 @endsection

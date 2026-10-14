@@ -109,17 +109,31 @@
                     <tbody class="divide-y divide-slate-200 text-slate-700">
                         @forelse($titulos as $titulo)
                             @php
-                                $isAtrasado = ($titulo->status === 'vencido' || $titulo->isVencido());
-                                $isPago = $titulo->status === 'pago';
-                                $bgClass = $isAtrasado ? 'hover:bg-rose-50/40 bg-rose-50/20' : 'hover:bg-slate-50/80';
+                                $hoje = \Carbon\Carbon::today();
+                                $dataVenc = \Carbon\Carbon::parse($titulo->data_vencimento)->startOfDay();
+                                $diasDiff = (int) $hoje->diffInDays($dataVenc, false);
+
+                                $isPago = $titulo->isLiquidado() || $titulo->status === 'pago';
+                                $isRenegociado = $titulo->status === 'renegociado';
+                                $isCancelado = $titulo->status === 'cancelado';
+                                $isAtrasado = !$isPago && !$isRenegociado && !$isCancelado && ($titulo->status === 'vencido' || $titulo->isVencido() || ($diasDiff < 0 && (float)$titulo->valor_saldo > 0.005));
+                                $bgClass = $isAtrasado ? 'hover:bg-rose-50/40 bg-rose-50/20' : ($isPago ? 'hover:bg-slate-50/80 bg-emerald-50/10' : 'hover:bg-slate-50/80');
                             @endphp
                             <tr class="{{ $bgClass }} transition-colors">
                                 <td class="py-3 px-4 whitespace-nowrap font-medium {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
-                                    {{ \Carbon\Carbon::parse($titulo->data_vencimento)->format('d/m/Y') }}
-                                    @if($isAtrasado)
-                                        <span class="block text-[10px] text-rose-500 font-semibold">{{ \Carbon\Carbon::parse($titulo->data_vencimento)->diffInDays() }} dias atrasado</span>
-                                    @elseif($isPago)
-                                        <span class="block text-[10px] text-slate-400">Liquidado</span>
+                                    {{ $dataVenc->format('d/m/Y') }}
+                                    @if($isPago)
+                                        <span class="block text-[10px] text-emerald-600 font-semibold">Liquidado</span>
+                                    @elseif($isRenegociado)
+                                        <span class="block text-[10px] text-cyan-600 font-medium">Acordo Formalizado</span>
+                                    @elseif($isAtrasado)
+                                        <span class="block text-[10px] text-rose-500 font-semibold">{{ abs($diasDiff) == 1 ? '1 dia atrasado' : abs($diasDiff) . ' dias atrasado' }}</span>
+                                    @elseif($diasDiff === 0)
+                                        <span class="block text-[10px] text-amber-600 font-bold">Vence Hoje</span>
+                                    @elseif($diasDiff === 1)
+                                        <span class="block text-[10px] text-amber-600 font-medium">Vence amanhã</span>
+                                    @else
+                                        <span class="block text-[10px] text-slate-400">Em {{ $diasDiff }} dias</span>
                                     @endif
                                 </td>
                                 <td class="py-3 px-4 text-center whitespace-nowrap font-bold {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
@@ -137,16 +151,23 @@
                                     {{ $titulo->observacoes ?? ucfirst($titulo->tipo) }}
                                 </td>
                                 <td class="py-3 px-4 text-right font-bold {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
-                                    R$ {{ number_format($titulo->valor_saldo, 2, ',', '.') }}
+                                    R$ {{ number_format($isPago ? $titulo->valor_nominal : $titulo->valor_saldo, 2, ',', '.') }}
+                                    @if($isPago)
+                                        <span class="block text-[10px] font-normal text-emerald-700">Quitado</span>
+                                    @elseif($titulo->status === 'parcial')
+                                        <span class="block text-[10px] font-normal text-cyan-700">Nominal: R$ {{ number_format($titulo->valor_nominal, 2, ',', '.') }}</span>
+                                    @endif
                                 </td>
                                 <td class="py-3 px-4 text-center whitespace-nowrap">
                                     @if($isPago)
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Liquidado</span>
                                     @elseif($titulo->status === 'parcial')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">Parcial</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-50 text-cyan-800 border border-cyan-200">Parcial</span>
                                     @elseif($isAtrasado)
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">Em Atraso</span>
-                                    @elseif($titulo->status === 'cancelado')
+                                    @elseif($isRenegociado)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-300">Renegociado</span>
+                                    @elseif($isCancelado)
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Cancelado</span>
                                     @else
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/70">Pendente</span>

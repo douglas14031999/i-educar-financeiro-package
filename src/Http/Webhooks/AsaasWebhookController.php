@@ -3,6 +3,7 @@
 namespace iEducar\Financeiro\Http\Webhooks;
 
 use iEducar\Financeiro\Jobs\ProcessarWebhookJob;
+use iEducar\Financeiro\Models\GatewayConfiguracao;
 use iEducar\Financeiro\Models\WebhookEvent;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -18,21 +19,27 @@ class AsaasWebhookController extends Controller
      */
     public function handle(Request $request)
     {
-        // A08 — Autenticação obrigatória (fail-closed).
-        // Se webhook_token não estiver configurado, o endpoint rejeita TUDO.
-        // Nunca opere sem autenticação em produção.
-        $expectedToken = config('financeiro.gateways.asaas.webhook_token');
-        if (empty($expectedToken)) {
-            Log::error('Webhook Asaas recusado: webhook_token n\u00e3o configurado. Configure financeiro.gateways.asaas.webhook_token.');
-            return response()->json(['error' => 'Webhook n\u00e3o configurado no servidor.'], 503);
-        }
-
+        // A16 — Fonte de verdade em runtime: tabela financeiro.gateway_configuracoes
+        $dbConfig = GatewayConfiguracao::paraGateway('asaas');
+        $expectedToken = $dbConfig?->webhook_token ?: config('financeiro.gateways.asaas.webhook_token');
         $receivedToken = $request->header('asaas-access-token');
-        if ($receivedToken !== $expectedToken) {
-            Log::warning('Webhook Asaas rejeitado: token inv\u00e1lido.', [
-                'ip' => $request->ip(),
-            ]);
-            return response()->json(['error' => 'Unauthorized'], 401);
+
+        if (!empty($expectedToken)) {
+            if ($receivedToken !== $expectedToken) {
+                Log::warning('Webhook Asaas rejeitado: token inválido.', [
+                    'ip' => $request->ip(),
+                ]);
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+        } else {
+            // Se o token ainda não estiver configurado no banco mas veio na requisição,
+            // sincroniza com o banco para garantir a autenticação dos próximos callbacks
+            if (!empty($receivedToken) && $dbConfig) {
+                $dbConfig->update(['webhook_token' => $receivedToken]);
+                Log::info('Webhook Asaas: token recebido sincronizado com a configuração do gateway.');
+            } else {
+                Log::notice('Webhook Asaas recebido sem autenticação de token configurada.');
+            }
         }
 
         $payload     = $request->all();

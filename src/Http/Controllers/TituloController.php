@@ -20,7 +20,15 @@ class TituloController extends Controller
         $query = Titulo::with(['responsavel', 'cobrancaGateway']);
 
         if ($status) {
-            $query->where('status', $status);
+            if ($status === 'vencido') {
+                $query->vencidos();
+            } elseif ($status === 'pago') {
+                $query->where(function ($q) {
+                    $q->where('status', 'pago')->orWhere('valor_saldo', '<=', 0.005);
+                })->whereNotIn('status', ['cancelado', 'renegociado']);
+            } else {
+                $query->where('status', $status);
+            }
         }
 
         if ($competencia) {

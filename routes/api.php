@@ -12,8 +12,24 @@ use Illuminate\Support\Facades\Route;
 
 $apiMiddleware = config('financeiro.api_middleware', ['api']);
 
-Route::group(['prefix' => 'financeiro/webhooks', 'as' => 'financeiro.webhooks.', 'middleware' => $apiMiddleware, 'namespace' => 'iEducar\Financeiro\Http\Webhooks'], function () {
+// Suporta tanto /financeiro/webhooks/asaas (padrão) quanto /financeiro/webhook/asaas (legado/Asaas dashboard)
+foreach (['financeiro/webhooks', 'financeiro/webhook'] as $index => $prefix) {
+    $as = ($index === 0) ? 'financeiro.webhooks.' : 'financeiro.webhook.';
 
-    // Webhook Asaas (Notificações de Boleto, Pix e Cartão)
-    Route::post('asaas', 'AsaasWebhookController@handle')->name('asaas');
-});
+    Route::group(['prefix' => $prefix, 'as' => $as, 'middleware' => $apiMiddleware, 'namespace' => 'iEducar\Financeiro\Http\Webhooks'], function () {
+
+        // Webhook Asaas (Notificações de Boleto, Pix e Cartão)
+        Route::post('asaas', 'AsaasWebhookController@handle')->name('asaas');
+
+        // Healthcheck / Monitoramento do Webhook Asaas (GET/HEAD para testes)
+        Route::match(['get', 'head'], 'asaas', function () {
+            return response()->json([
+                'status'    => 'active',
+                'gateway'   => 'asaas',
+                'message'   => 'Endpoint de webhook Asaas operacional.',
+                'timestamp' => now()->toIso8601String(),
+            ]);
+        })->name('asaas.status');
+    });
+}
+

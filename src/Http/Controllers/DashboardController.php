@@ -13,9 +13,10 @@ class DashboardController extends Controller
     /**
      * Exibe o painel geral de indicadores financeiros
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\View\View
      */
-    public function index()
+    public function index(Request $request)
     {
         $kpis = [
             'recebido_mes' => 0.00,
@@ -25,10 +26,32 @@ class DashboardController extends Controller
             'taxa_inadimplencia' => 0.0,
         ];
 
-        $titulosRecentes = [];
+        $counts = [
+            'todos' => 0,
+            'pendentes' => 0,
+            'atrasados' => 0,
+            'pagos' => 0,
+        ];
 
+        $titulosRecentes = collect();
+        $filtro = $request->input('filtro', 'todos');
+
+        $hoje = Carbon::today()->toDateString();
         $inicioMes = Carbon::now()->startOfMonth()->toDateString();
         $fimMes = Carbon::now()->endOfMonth()->toDateString();
+
+        // 0. Auto-sanitização: assegura que títulos quitados com saldo zero estejam devidamente com status 'pago'
+        try {
+            Titulo::where('valor_saldo', '<=', 0.005)
+                ->whereIn('status', ['aberto', 'parcial', 'vencido'])
+                ->where(function ($q) {
+                    $q->where('valor_pago', '>', 0)
+                      ->orWhere('valor_nominal', '>', 0);
+                })
+                ->update(['status' => 'pago', 'valor_saldo' => 0.00]);
+        } catch (\Throwable $e) {
+            \Log::warning('Dashboard: Erro ao auto-sanitizar títulos quitados: ' . $e->getMessage());
+        }
 
         // 1. Recebido no mês (liquidações do mês não estornadas)
         try {
@@ -45,6 +68,7 @@ class DashboardController extends Controller
         try {
             $kpis['a_receber_mes'] = (float) Titulo::whereBetween('data_vencimento', [$inicioMes, $fimMes])
                 ->whereIn('status', ['aberto', 'parcial'])
+                ->where('valor_saldo', '>', 0.005)
                 ->sum('valor_saldo');
         } catch (\Throwable $e) {
             \Log::warning('Dashboard: Erro ao calcular a_receber_mes: ' . $e->getMessage());
@@ -52,7 +76,7 @@ class DashboardController extends Controller
 
         // 3. Inadimplência total (títulos vencidos acumulados)
         try {
-            $titulosVencidos = Titulo::vencidos()->get();
+            $titulosVencidos = Titulo::vencidos()->where('valor_saldo', '>', 0.005)->get();
             $kpis['total_inadimplente'] = (float) $titulosVencidos->sum('valor_saldo');
             $kpis['titulos_vencidos_count'] = (int) $titulosVencidos->count();
         } catch (\Throwable $e) {
@@ -74,17 +98,96 @@ class DashboardController extends Controller
             \Log::warning('Dashboard: Erro ao calcular taxa_inadimplencia: ' . $e->getMessage());
         }
 
-        // 5. Títulos recentes com movimentação operacional
+        // 5. Contadores dinâmicos para as abas/botões de filtro rápido
         try {
-            $titulosRecentes = Titulo::with(['responsavel'])
-                ->orderBy('data_vencimento', 'desc')
-                ->limit(10)
-                ->get();
+            $counts['atrasados'] = (int) Titulo::vencidos()->where('valor_saldo', '>', 0.005)->count();
+            $counts['pagos'] = (int) Titulo::where(function ($q) {
+                $q->where('status', 'pago')->orWhere('valor_saldo', '<=', 0.005);
+            })->whereNotIn('status', ['cancelado', 'renegociado'])->count();
+            $counts['pendentes'] = (int) Titulo::whereIn('status', ['aberto', 'parcial'])
+                ->where('data_vencimento', '>=', $hoje)
+                ->where('valor_saldo', '>', 0.005)
+                ->count();
+            $counts['todos'] = (int) Titulo::whereNotIn('status', ['cancelado'])->count();
+        } catch (\Throwable $e) {
+            \Log::warning('Dashboard: Erro ao calcular contadores de filtros: ' . $e->getMessage());
+        }
+
+        // 6. Listagem ordenada e priorizada de cobranças operacionais
+        try {
+            if ($filtro === 'atrasados') {
+                $titulosRecentes = Titulo::with(['responsavel'])
+                    ->vencidos()
+                    ->where('valor_saldo', '>', 0.005)
+                    ->orderBy('data_vencimento', 'asc')
+                    ->limit(50)
+                    ->get();
+            } elseif ($filtro === 'pagos') {
+                $titulosRecentes = Titulo::with(['responsavel'])
+                    ->where(function ($q) {
+                        $q->where('status', 'pago')->orWhere('valor_saldo', '<=', 0.005);
+                    })
+                    ->whereNotIn('status', ['cancelado', 'renegociado'])
+                    ->orderBy('updated_at', 'desc')
+                    ->orderBy('data_vencimento', 'desc')
+                    ->limit(50)
+                    ->get();
+            } elseif ($filtro === 'pendentes') {
+                $titulosRecentes = Titulo::with(['responsavel'])
+                    ->whereIn('status', ['aberto', 'parcial'])
+                    ->where('data_vencimento', '>=', $hoje)
+                    ->where('valor_saldo', '>', 0.005)
+                    ->orderBy('data_vencimento', 'asc')
+                    ->limit(50)
+                    ->get();
+            } else {
+                // Modo 'todos': Ordenação inteligente por prioridade operacional:
+                // 1º: Em atraso (vencidos em aberto) por vencimento asc
+                // 2º: A vencer (próximos vencimentos) por vencimento asc (mais próximos primeiro)
+                // 3º: Liquidados / Pagos por atualização recente
+                // 4º: Renegociados / outros
+                $titulosBrutos = Titulo::with(['responsavel'])
+                    ->whereNotIn('status', ['cancelado'])
+                    ->get();
+
+                $titulosRecentes = $titulosBrutos->sort(function ($a, $b) use ($hoje) {
+                    $aVencido = $a->isVencido() && (float) $a->valor_saldo > 0.005;
+                    $bVencido = $b->isVencido() && (float) $b->valor_saldo > 0.005;
+
+                    $aPago = $a->isLiquidado() || $a->status === 'pago';
+                    $bPago = $b->isLiquidado() || $b->status === 'pago';
+
+                    $aReneg = $a->status === 'renegociado';
+                    $bReneg = $b->status === 'renegociado';
+
+                    $getPrio = function ($vencido, $pago, $reneg) {
+                        if ($vencido) return 1; // Prioridade máxima: atrasados
+                        if (!$pago && !$reneg) return 2; // Pendentes a vencer
+                        if ($pago) return 3; // Quitados
+                        return 4; // Renegociados
+                    };
+
+                    $prioA = $getPrio($aVencido, $aPago, $aReneg);
+                    $prioB = $getPrio($bVencido, $bPago, $bReneg);
+
+                    if ($prioA !== $prioB) {
+                        return $prioA <=> $prioB;
+                    }
+
+                    if ($prioA === 3) {
+                        // Pagos: mais recentes primeiro
+                        return strcmp((string) $b->data_vencimento, (string) $a->data_vencimento);
+                    }
+
+                    // Atrasados e Pendentes: data de vencimento crescente (urgentes primeiro)
+                    return strcmp((string) $a->data_vencimento, (string) $b->data_vencimento);
+                })->take(50)->values();
+            }
         } catch (\Throwable $e) {
             \Log::warning('Dashboard: Erro ao buscar titulosRecentes: ' . $e->getMessage());
         }
 
-        return view('financeiro::dashboard.index', compact('kpis', 'titulosRecentes'));
+        return view('financeiro::dashboard.index', compact('kpis', 'titulosRecentes', 'counts', 'filtro'));
     }
 }
 
