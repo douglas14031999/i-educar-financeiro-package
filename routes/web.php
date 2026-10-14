@@ -36,13 +36,15 @@ Route::group(['prefix' => $prefix, 'as' => 'financeiro.', 'middleware' => $middl
     Route::resource('contratos', 'ContratoController');
     Route::post('contratos/{id}/gerar-titulos', 'ContratoController@gerarTitulos')->name('contratos.gerar-titulos');
     Route::post('contratos/{id}/cancelar', 'ContratoController@cancelar')->name('contratos.cancelar');
+    Route::get('contratos/{id}/imprimir-carne', 'ContratoController@imprimirCarne')->name('contratos.imprimir-carne');
 
     // 5. Títulos (Parcelas e Mensalidades)
     Route::get('titulos', 'TituloController@index')->name('titulos.index');
+    Route::match(['get', 'post'], 'titulos/imprimir-carne', 'TituloController@imprimirCarne')->name('titulos.imprimir-carne');
+    Route::post('titulos/emitir-lote-asaas', 'TituloController@emitirLoteAsaas')->name('titulos.emitir-lote-asaas');
     Route::get('titulos/{id}', 'TituloController@show')->name('titulos.show');
     Route::post('titulos/{id}/emitir-asaas', 'TituloController@emitirAsaas')->name('titulos.emitir-asaas');
     Route::post('titulos/{id}/sincronizar-asaas', 'TituloController@sincronizarStatus')->name('titulos.sincronizar-asaas');
-    Route::post('titulos/emitir-lote-asaas', 'TituloController@emitirLoteAsaas')->name('titulos.emitir-lote-asaas');
     Route::get('titulos/{id}/recibo-pdf', 'TituloController@imprimirRecibo')->name('titulos.recibo-pdf');
     Route::get('titulos/{id}/notificar-whatsapp', 'TituloController@notificarWhatsApp')->name('titulos.notificar-whatsapp');
 

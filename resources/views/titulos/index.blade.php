@@ -19,12 +19,26 @@
                 ['label' => 'Títulos']
             ],
             'actions' => '
-                <a href="' . route('financeiro.baixas.create') . '" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
-                    <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                    </svg>
-                    Baixar Título no Balcão
-                </a>
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="' . route('financeiro.baixas.create') . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;" title="Baixar pagamento em dinheiro, cartão ou cheque na secretaria">
+                        <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Baixa de Balcão (Caixa)
+                    </a>
+                    <a href="' . route('financeiro.contratos.create') . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;" title="Matricular e gerar parcelas">
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Novo Contrato
+                    </a>
+                    <a href="' . route('financeiro.titulos.imprimir-carne') . '" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;" title="Imprimir carnê das próximas parcelas">
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Imprimir Carnê Geral
+                    </a>
+                </div>
             '
         ])
 
@@ -75,8 +89,14 @@
             </form>
         </section>
 
+        <!-- Formulário Oculto de Ações em Lote -->
+        <form id="form-lote-acoes" method="post" action="{{ route('financeiro.titulos.emitir-lote-asaas') }}">
+            @csrf
+            <input type="hidden" name="titulo_ids" id="lote-titulo-ids" value="">
+        </form>
+
         <!-- Tabela de Listagem -->
-        <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="table-container">
+        <section class="bg-white shadow-xs border border-slate-200 overflow-hidden relative" data-purpose="table-container">
             <!-- Cabeçalho com Gradiente Petróleo -->
             <div class="bg-[#47728f] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
                 <div class="flex items-center gap-2">
@@ -97,6 +117,9 @@
                 <table class="w-full text-left border-collapse text-xs md:text-sm m-0 border-0" style="margin: 0;">
                     <thead>
                         <tr class="bg-slate-100/90 text-[11px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
+                            <th class="py-3 px-3 text-center" style="width: 40px;" scope="col">
+                                <input type="checkbox" id="check-todos-titulos" class="cursor-pointer rounded border-slate-300 text-brand-petroleum focus:ring-brand-petroleum" title="Selecionar todos os títulos da página">
+                            </th>
                             <th class="py-3 px-4" scope="col">Vencimento</th>
                             <th class="py-3 px-4 text-center" scope="col">Parcela</th>
                             <th class="py-3 px-4" scope="col">Responsável Financeiro</th>
@@ -118,8 +141,12 @@
                                 $isCancelado = $titulo->status === 'cancelado';
                                 $isAtrasado = !$isPago && !$isRenegociado && !$isCancelado && ($titulo->status === 'vencido' || $titulo->isVencido() || ($diasDiff < 0 && (float)$titulo->valor_saldo > 0.005));
                                 $bgClass = $isAtrasado ? 'hover:bg-rose-50/40 bg-rose-50/20' : ($isPago ? 'hover:bg-slate-50/80 bg-emerald-50/10' : 'hover:bg-slate-50/80');
+                                $valorSaldoNum = (float) ($titulo->valor_saldo > 0 ? $titulo->valor_saldo : $titulo->valor_nominal);
                             @endphp
-                            <tr class="{{ $bgClass }} transition-colors">
+                            <tr class="{{ $bgClass }} transition-colors" data-titulo-id="{{ $titulo->id }}">
+                                <td class="py-3 px-3 text-center">
+                                    <input type="checkbox" class="check-titulo-item cursor-pointer rounded border-slate-300 text-brand-petroleum focus:ring-brand-petroleum" value="{{ $titulo->id }}" data-valor="{{ $valorSaldoNum }}" data-pago="{{ $isPago ? '1' : '0' }}">
+                                </td>
                                 <td class="py-3 px-4 whitespace-nowrap font-medium {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
                                     {{ $dataVenc->format('d/m/Y') }}
                                     @if($isPago)
@@ -205,7 +232,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="py-8 text-center text-slate-500">
+                                <td colspan="8" class="py-8 text-center text-slate-500">
                                     <svg class="w-10 h-10 mx-auto text-slate-300 mb-3" width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                     </svg>
@@ -228,6 +255,117 @@
             </footer>
         </section>
 
+        <!-- Barra Flutuante de Ações em Lote (Sticky Bottom) -->
+        <div id="barra-acoes-lote" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#1e293b] text-white px-5 py-3 rounded-lg shadow-2xl border border-slate-700 flex items-center gap-4 transition-all duration-300 transform translate-y-24 opacity-0 pointer-events-none" style="min-width: 320px; max-width: 90vw;">
+            <div class="flex items-center gap-2">
+                <span id="contador-selecionados" class="bg-cyan-500 text-slate-900 font-extrabold text-xs px-2 py-0.5 rounded-full">0</span>
+                <span class="text-xs font-semibold text-slate-200">parcelas</span>
+                <span id="total-selecionados" class="text-xs font-bold text-emerald-400 border-l border-slate-600 pl-2">R$ 0,00</span>
+            </div>
+
+            <div class="flex items-center gap-2 ml-auto">
+                <button type="button" id="btn-imprimir-carne-lote" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded cursor-pointer transition">
+                    <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    Imprimir Carnê
+                </button>
+
+                <button type="button" id="btn-emitir-asaas-lote" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded cursor-pointer transition">
+                    <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    Emitir no Asaas
+                </button>
+
+                <button type="button" id="btn-desmarcar-todos" class="text-xs text-slate-400 hover:text-white px-2 py-1 underline transition cursor-pointer">
+                    Desmarcar
+                </button>
+            </div>
+        </div>
+
     </main>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const checkAll = document.getElementById('check-todos-titulos');
+    const itemChecks = document.querySelectorAll('.check-titulo-item');
+    const barraLote = document.getElementById('barra-acoes-lote');
+    const contadorSpan = document.getElementById('contador-selecionados');
+    const totalSpan = document.getElementById('total-selecionados');
+    const btnImprimir = document.getElementById('btn-imprimir-carne-lote');
+    const btnEmitirAsaas = document.getElementById('btn-emitir-asaas-lote');
+    const btnDesmarcar = document.getElementById('btn-desmarcar-todos');
+    const inputLoteIds = document.getElementById('lote-titulo-ids');
+    const formLote = document.getElementById('form-lote-acoes');
+
+    function atualizarEstadoLote() {
+        const selecionados = Array.from(itemChecks).filter(cb => cb.checked);
+        const count = selecionados.length;
+
+        if (count > 0) {
+            let total = 0;
+            const ids = [];
+            selecionados.forEach(cb => {
+                ids.push(cb.value);
+                total += parseFloat(cb.getAttribute('data-valor') || 0);
+            });
+
+            contadorSpan.textContent = count;
+            totalSpan.textContent = 'R$ ' + total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            inputLoteIds.value = ids.join(',');
+
+            barraLote.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+            barraLote.classList.add('translate-y-0', 'opacity-100');
+        } else {
+            barraLote.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+            barraLote.classList.remove('translate-y-0', 'opacity-100');
+            inputLoteIds.value = '';
+        }
+
+        if (checkAll) {
+            checkAll.checked = (count === itemChecks.length && count > 0);
+        }
+    }
+
+    if (checkAll) {
+        checkAll.addEventListener('change', function () {
+            itemChecks.forEach(cb => cb.checked = checkAll.checked);
+            atualizarEstadoLote();
+        });
+    }
+
+    itemChecks.forEach(cb => {
+        cb.addEventListener('change', atualizarEstadoLote);
+    });
+
+    if (btnDesmarcar) {
+        btnDesmarcar.addEventListener('click', function () {
+            if (checkAll) checkAll.checked = false;
+            itemChecks.forEach(cb => cb.checked = false);
+            atualizarEstadoLote();
+        });
+    }
+
+    if (btnImprimir) {
+        btnImprimir.addEventListener('click', function () {
+            const ids = inputLoteIds.value;
+            if (!ids) return;
+            const url = "{{ route('financeiro.titulos.imprimir-carne') }}?titulo_ids=" + encodeURIComponent(ids);
+            window.open(url, '_blank');
+        });
+    }
+
+    if (btnEmitirAsaas) {
+        btnEmitirAsaas.addEventListener('click', function () {
+            const ids = inputLoteIds.value;
+            if (!ids) return;
+            if (confirm('Deseja emitir no Asaas as ' + contadorSpan.textContent + ' cobranças selecionadas?')) {
+                formLote.submit();
+            }
+        });
+    }
+});
+</script>
 @endsection

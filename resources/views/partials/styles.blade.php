@@ -379,4 +379,103 @@
         background-color: #f8fafc;
         border-color: #e2e8f0;
     }
+
+    /* ========================================================
+       SUBMENU OFICIAL NATIVO I-EDUCAR (PADRÃO EXACTO DA VPS)
+       ======================================================== */
+    .ieducar-menu-container {
+        background-color: #47728f !important;
+        position: relative;
+        z-index: 1000;
+        width: 100%;
+        margin-bottom: 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    .ieducar-menu {
+        list-style: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex;
+        flex-wrap: wrap;
+        background-color: #47728f;
+    }
+    .ieducar-menu > li {
+        position: relative;
+        list-style: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .ieducar-menu > li > a {
+        display: block;
+        padding: 9px 18px;
+        color: #ffffff !important;
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none !important;
+        font-family: "Open Sans", Arial, sans-serif;
+        line-height: 1.4;
+        transition: background-color 0.15s ease, color 0.15s ease;
+        border-right: 1px solid rgba(255, 255, 255, 0.12);
+        white-space: nowrap;
+    }
+    .ieducar-menu > li > a:hover {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        color: #ffffff !important;
+    }
+    .ieducar-menu > li.ieducar-sidebar-menu-active > a,
+    .ieducar-menu > li > a.ieducar-sidebar-menu-active {
+        background-color: #c8dced !important;
+        color: #1b4c6b !important;
+        font-weight: 600;
+    }
+    .ieducar-menu > li:hover > .ieducar-sub-menu,
+    .ieducar-menu > li:focus-within > .ieducar-sub-menu {
+        display: block !important;
+    }
+    .ieducar-sub-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        min-width: 220px;
+        background-color: #ffffff !important;
+        border: 1px solid #d4dce2 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+        z-index: 99999 !important;
+        list-style: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .ieducar-sub-menu > li {
+        list-style: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-bottom: 1px solid #f0f2f5 !important;
+    }
+    .ieducar-sub-menu > li:last-child {
+        border-bottom: none !important;
+    }
+    .ieducar-sub-menu > li > a {
+        display: block !important;
+        padding: 8px 16px !important;
+        color: #334155 !important;
+        font-size: 12.5px !important;
+        font-family: "Open Sans", Arial, sans-serif !important;
+        text-decoration: none !important;
+        text-align: left !important;
+        background-color: #ffffff !important;
+        line-height: 1.4 !important;
+        white-space: nowrap;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+    .ieducar-sub-menu > li > a:hover {
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
+        font-weight: 500;
+    }
+    .ieducar-sub-menu > li > a.ieducar-sidebar-menu-active {
+        background-color: #e2edf6 !important;
+        color: #1b4c6b !important;
+        font-weight: 600 !important;
+    }
 </style>

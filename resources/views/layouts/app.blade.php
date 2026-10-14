@@ -21,9 +21,27 @@
         if (class_exists(\App\Menu::class)) {
             $rootMenu = \App\Menu::where('process', \iEducar\Financeiro\Constants\ProcessosFinanceiro::MENU_FINANCEIRO_RAIZ)->first()
                 ?: \App\Menu::where('title', 'Financeiro')->whereNull('parent_id')->first();
-            $root = $rootMenu ? $rootMenu->getKey() : null;
+            $root = $rootMenu ? $rootMenu->getKey() : 649;
         } else {
-            $root = null;
+            $root = 649;
+        }
+    }
+
+    if (!isset($mainmenu)) {
+        $mainmenu = $root ?? 649;
+    }
+
+    if (!isset($menuPaths)) {
+        $menuPaths = [];
+    }
+
+    if (!isset($currentMenu) || is_null($currentMenu)) {
+        if (class_exists(\App\Menu::class)) {
+            $currentMenu = \App\Menu::where('link', request()->getPathInfo())->first() 
+                ?: \App\Menu::where('id', $mainmenu)->first() 
+                ?: new \App\Menu();
+        } else {
+            $currentMenu = new \stdClass();
         }
     }
 
@@ -47,6 +65,9 @@
 @endpush
 
 @section('content')
+    @if(!View::exists('layout.default'))
+        @include('financeiro::partials.subnav')
+    @endif
     <div id="financeiro-module" class="open-sans" style="@yield('module-style', 'padding: 15px 20px;')">
         @include('financeiro::partials.alerts')
 

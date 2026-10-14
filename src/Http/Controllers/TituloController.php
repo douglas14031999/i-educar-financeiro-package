@@ -205,5 +205,75 @@ class TituloController extends Controller
 
         return redirect()->away($url);
     }
+
+    /**
+     * Emissão de Carnê Escolar para Impressão
+     */
+    public function imprimirCarne(Request $request)
+    {
+        $ids = $request->input('titulo_ids');
+        if (is_string($ids)) {
+            $ids = explode(',', $ids);
+        }
+        $ids = array_filter(array_map('intval', (array) $ids));
+
+        $contratoId = $request->input('contrato_id');
+
+        $query = Titulo::with(['responsavel', 'cobrancaGateway']);
+
+        if (!empty($ids)) {
+            $query->whereIn('id', $ids);
+        } elseif (!empty($contratoId)) {
+            $query->where('contrato_id', $contratoId);
+        } else {
+            $query->whereIn('status', ['aberto', 'parcial', 'vencido'])->limit(12);
+        }
+
+        $titulos = $query->orderBy('data_vencimento')->get();
+
+        return view('financeiro::titulos.carne', compact('titulos'));
+    }
+
+    /**
+     * Emissão em lote no Asaas para os títulos selecionados
+     */
+    public function emitirLoteAsaas(Request $request)
+    {
+        $ids = $request->input('titulo_ids');
+        if (is_string($ids)) {
+            $ids = explode(',', $ids);
+        }
+        $ids = array_filter(array_map('intval', (array) $ids));
+
+        if (empty($ids)) {
+            return redirect()->back()->with('warning', 'Nenhum título selecionado para emissão.');
+        }
+
+        $titulos = Titulo::with('cobrancaGateway')->whereIn('id', $ids)->get();
+        $sucessos = 0;
+        $erros = 0;
+
+        /** @var \iEducar\Financeiro\Services\AsaasIntegrationService $asaasService */
+        $asaasService = app(\iEducar\Financeiro\Services\AsaasIntegrationService::class);
+
+        foreach ($titulos as $titulo) {
+            try {
+                if (!$titulo->cobrancaGateway || empty($titulo->cobrancaGateway->gateway_charge_id)) {
+                    $asaasService->emitirCobrancaTitulo($titulo);
+                    $sucessos++;
+                }
+            } catch (\Throwable $e) {
+                $erros++;
+            }
+        }
+
+        $msg = "Emissão em lote: {$sucessos} cobrança(s) emitida(s) com sucesso.";
+        if ($erros > 0) {
+            $msg .= " Houve erro ou ignorado em {$erros} título(s).";
+            return redirect()->back()->with('warning', $msg);
+        }
+
+        return redirect()->back()->with('success', $msg);
+    }
 }
 

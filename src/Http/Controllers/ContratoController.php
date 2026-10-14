@@ -175,4 +175,15 @@ class ContratoController extends Controller
         return redirect()->route('financeiro.contratos.show', $contrato->id)
             ->with('success', "{$gerados} título(s) gerado(s) com sucesso para o contrato {$contrato->numero_contrato}.");
     }
+
+    /**
+     * Emissão de Carnê Escolar do Contrato
+     */
+    public function imprimirCarne($id)
+    {
+        $contrato = Contrato::with(['titulos.responsavel', 'titulos.cobrancaGateway'])->findOrFail($id);
+        $titulos = $contrato->titulos()->orderBy('data_vencimento')->get();
+
+        return view('financeiro::titulos.carne', compact('titulos', 'contrato'));
+    }
 }
