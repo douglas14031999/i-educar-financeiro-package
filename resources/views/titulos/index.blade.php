@@ -253,7 +253,7 @@
                                     </span>
                                     {{ $titulo->observacoes ?? ucfirst($titulo->tipo) }}
                                 </td>
-                                <td class="py-3 px-4 text-right font-bold {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
+                                <td class="py-3 px-4 text-right font-bold col-saldo {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
                                     R$ {{ number_format($isPago ? $titulo->valor_nominal : $titulo->valor_saldo, 2, ',', '.') }}
                                     @if($isPago)
                                         <span class="block text-[10px] font-normal text-emerald-700">Quitado</span>
@@ -261,7 +261,7 @@
                                         <span class="block text-[10px] font-normal text-cyan-700">Nominal: R$ {{ number_format($titulo->valor_nominal, 2, ',', '.') }}</span>
                                     @endif
                                 </td>
-                                <td class="py-3 px-4 text-center whitespace-nowrap">
+                                <td class="py-3 px-4 text-center whitespace-nowrap col-status">
                                     @if($isPago)
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Liquidado</span>
                                     @elseif($titulo->status === 'parcial')

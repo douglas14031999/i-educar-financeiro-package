@@ -142,6 +142,9 @@ class BaixaTituloService
 
             event(new \iEducar\Financeiro\Events\TituloPago($tituloLocked, $pagamento));
 
+            // Dispara notificacao SSE em tempo real para as telas ativas
+            \iEducar\Financeiro\Services\RealtimeEventService::dispararPagamentoConfirmado($tituloLocked, $pagamento, $origem);
+
             return $pagamento;
         });
     }

@@ -116,6 +116,9 @@ Route::group(['prefix' => $prefix, 'as' => 'financeiro.', 'middleware' => $middl
     Route::get('api/titulos/{id}/calculo', 'BaixaManualController@apiCalcular')
         ->name('api.titulos.calculo')
         ->middleware('financeiro.can:MENU_BAIXA_MANUAL,visualiza');
+    Route::get('api/stream', 'RealtimeStreamController@stream')
+        ->name('api.stream')
+        ->middleware('financeiro.can:MENU_DASHBOARD,visualiza');
 
     // 7. Renegociação de Dívidas e Acordos
     Route::get('renegociacao', 'RenegociacaoController@index')

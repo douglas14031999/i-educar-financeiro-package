@@ -15,33 +15,31 @@ class Fase5IndicesEChecks extends Migration
         $isPgsql = DB::getDriverName() === 'pgsql';
 
         // 1. Criação de índices de performance adicionais (BUG-038 / M08)
-        if (Schema::hasTable('financeiro.titulos')) {
-            Schema::table('financeiro.titulos', function (Blueprint $table) {
-                // Índices para buscas operacionais e dashboard
-                try {
+        if ($isPgsql) {
+            DB::statement("CREATE INDEX IF NOT EXISTS idx_titulos_status_vencimento ON financeiro.titulos (status, data_vencimento);");
+            DB::statement("CREATE INDEX IF NOT EXISTS idx_titulos_resp_status ON financeiro.titulos (responsavel_financeiro_id, status);");
+            DB::statement("CREATE INDEX IF NOT EXISTS idx_titulos_aluno_id ON financeiro.titulos (aluno_id);");
+            DB::statement("CREATE INDEX IF NOT EXISTS idx_titulos_contrato_parcela ON financeiro.titulos (contrato_id, numero_parcela);");
+            if (Schema::hasTable('financeiro.webhook_events')) {
+                DB::statement("CREATE INDEX IF NOT EXISTS idx_webhook_proc_created ON financeiro.webhook_events (processado, created_at);");
+            }
+        } elseif (Schema::hasTable('financeiro.titulos')) {
+            try {
+                Schema::table('financeiro.titulos', function (Blueprint $table) {
                     $table->index(['status', 'data_vencimento'], 'idx_titulos_status_vencimento');
-                } catch (\Throwable $e) {}
-
-                try {
                     $table->index(['responsavel_financeiro_id', 'status'], 'idx_titulos_resp_status');
-                } catch (\Throwable $e) {}
-
-                try {
                     $table->index('aluno_id', 'idx_titulos_aluno_id');
-                } catch (\Throwable $e) {}
-
-                try {
                     $table->index(['contrato_id', 'numero_parcela'], 'idx_titulos_contrato_parcela');
-                } catch (\Throwable $e) {}
-            });
-        }
+                });
+            } catch (\Throwable $e) {}
 
-        if (Schema::hasTable('financeiro.webhook_events')) {
-            Schema::table('financeiro.webhook_events', function (Blueprint $table) {
+            if (Schema::hasTable('financeiro.webhook_events')) {
                 try {
-                    $table->index(['processado', 'created_at'], 'idx_webhook_proc_created');
+                    Schema::table('financeiro.webhook_events', function (Blueprint $table) {
+                        $table->index(['processado', 'created_at'], 'idx_webhook_proc_created');
+                    });
                 } catch (\Throwable $e) {}
-            });
+            }
         }
 
         // 2. Constraints de integridade (CHECKs) no PostgreSQL

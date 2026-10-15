@@ -89,6 +89,7 @@
     @endif
     <div id="financeiro-module" class="open-sans" style="@yield('module-style', 'padding: 15px 20px;')">
         @include('financeiro::partials.alerts')
+        @include('financeiro::partials.realtime')
 
         @yield('financeiro-content')
     </div>

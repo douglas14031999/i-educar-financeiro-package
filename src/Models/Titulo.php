@@ -79,6 +79,11 @@ class Titulo extends Model
         return $this->belongsTo(ResponsavelFinanceiro::class, 'responsavel_financeiro_id');
     }
 
+    public function responsavelFinanceiro()
+    {
+        return $this->responsavel();
+    }
+
     public function pagamentos()
     {
         return $this->hasMany(Pagamento::class, 'titulo_id')->orderBy('data_pagamento', 'desc');

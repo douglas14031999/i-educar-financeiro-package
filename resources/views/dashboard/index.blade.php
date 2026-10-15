@@ -45,7 +45,7 @@
                 </div>
                 <div>
                     <div class="flex items-baseline gap-2">
-                        <span class="text-2xl font-bold tracking-tight text-slate-900">R$ {{ number_format($kpis['recebido_mes'] ?? 0, 2, ',', '.') }}</span>
+                        <span id="kpi-total-recebido" class="text-2xl font-bold tracking-tight text-slate-900">R$ {{ number_format($kpis['recebido_mes'] ?? 0, 2, ',', '.') }}</span>
                     </div>
                     <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">Liquidações via Asaas, Pix e Caixa</p>
                 </div>

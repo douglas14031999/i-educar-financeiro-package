@@ -10,7 +10,7 @@
 
 @section('financeiro-content')
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
-    <main class="w-full p-4 md:p-6 space-y-6" data-purpose="titulo-details-container">
+    <main class="w-full p-4 md:p-6 space-y-6" data-purpose="titulo-details-container" data-page-titulo-id="{{ $titulo->id }}">
         
         @php
             $tituloActions = '
@@ -72,6 +72,8 @@
             'actions' => $tituloActions
         ])
 
+        <div id="titulo-recibo-instantaneo" style="display:none;"></div>
+
         <!-- Cards de Resumo Financeiro -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-purpose="summary-cards">
             <article class="bg-white shadow-xs border border-slate-200 p-4 relative overflow-hidden flex flex-col justify-between">
@@ -96,7 +98,7 @@
                 <div class="absolute top-0 inset-x-0 h-1 {{ $titulo->valor_saldo > 0 ? ($titulo->isVencido() ? 'bg-rose-500' : 'bg-cyan-600') : 'bg-emerald-600' }}"></div>
                 <span class="text-[11px] font-bold tracking-wider uppercase text-slate-500 mb-1">Saldo Devedor Atual</span>
                 <div>
-                    <span class="text-2xl font-bold {{ $titulo->valor_saldo > 0 ? ($titulo->isVencido() ? 'text-rose-700' : 'text-cyan-700') : 'text-slate-900' }}">
+                    <span class="text-2xl font-bold titulo-saldo-valor {{ $titulo->valor_saldo > 0 ? ($titulo->isVencido() ? 'text-rose-700' : 'text-cyan-700') : 'text-slate-900' }}">
                         R$ {{ number_format($titulo->valor_saldo, 2, ',', '.') }}
                     </span>
                     <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">
@@ -111,15 +113,15 @@
                 <div>
                     <div class="flex items-center gap-2">
                         @if($titulo->status === 'pago')
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 titulo-status-badge">
                                 Liquidado
                             </span>
                         @elseif($titulo->isVencido())
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 titulo-status-badge">
                                 Vencido ({{ $titulo->dias_atraso }}d)
                             </span>
                         @else
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 titulo-status-badge">
                                 {{ ucfirst($titulo->status) }}
                             </span>
                         @endif
