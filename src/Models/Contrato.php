@@ -27,6 +27,9 @@ class Contrato extends Model
         'dia_vencimento',
         'status',
         'motivo_cancelamento',
+        'plano_snapshot',
+        'cancelado_em',
+        'cancelado_por',
     ];
 
     protected $casts = [
@@ -41,6 +44,9 @@ class Contrato extends Model
         'dia_vencimento' => 'integer',
         'data_inicio' => 'date',
         'data_termino' => 'date',
+        'plano_snapshot' => 'array',
+        'cancelado_em' => 'datetime',
+        'cancelado_por' => 'integer',
     ];
 
     public function responsavel()

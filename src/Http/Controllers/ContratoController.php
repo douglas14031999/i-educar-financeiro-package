@@ -47,13 +47,23 @@ class ContratoController extends Controller
     /**
      * Formulário de Criação de Contrato
      */
-    public function create()
+    public function create(Request $request)
     {
         $anoAtual = date('Y');
         $planos = PlanoPagamento::where('ano_letivo', $anoAtual)->where('ativo', true)->get();
         $responsaveis = ResponsavelFinanceiro::where('ativo', true)->orderBy('nome')->limit(100)->get();
 
-        return view('financeiro::contratos.create', compact('planos', 'responsaveis', 'anoAtual'));
+        $preResponsavelId = $request->input('responsavel_id') ? (int) $request->input('responsavel_id') : null;
+        $preAlunoId = $request->input('aluno_id') ? (int) $request->input('aluno_id') : null;
+
+        if ($preResponsavelId && !$preAlunoId) {
+            $vinculo = \iEducar\Financeiro\Models\AlunoResponsavel::where('responsavel_financeiro_id', $preResponsavelId)->first();
+            if ($vinculo) {
+                $preAlunoId = $vinculo->aluno_id;
+            }
+        }
+
+        return view('financeiro::contratos.create', compact('planos', 'responsaveis', 'anoAtual', 'preResponsavelId', 'preAlunoId'));
     }
 
     /**
@@ -82,14 +92,12 @@ class ContratoController extends Controller
         }
     }
 
-    /**
-     * Exibição do Contrato e Grade de Parcelas
-     */
     public function show($id)
     {
         $contrato = Contrato::with(['responsavel', 'plano', 'titulos.cobrancaGateway'])->findOrFail($id);
+        $temTitulosVencidos = $contrato->titulos->contains(fn($t) => $t->isVencido());
 
-        return view('financeiro::contratos.show', compact('contrato'));
+        return view('financeiro::contratos.show', compact('contrato', 'temTitulosVencidos'));
     }
 
     /**
@@ -232,26 +240,12 @@ class ContratoController extends Controller
         }
 
         try {
-            /** @var \iEducar\Financeiro\Gateways\GatewayManager $manager */
-            $manager = app(\iEducar\Financeiro\Gateways\GatewayManager::class);
-            /** @var \iEducar\Financeiro\Gateways\Drivers\AsaasGateway $gateway */
-            $gateway = $manager->driver('asaas');
-
-            $resultado = $gateway->criarInstallment($contrato, $titulos->all());
-            $installmentId = $resultado['installment_id'];
-
-            \iEducar\Financeiro\Models\CobrancaGateway::create([
-                'contrato_id'      => $contrato->id,
-                'titulo_id'        => $titulos->first()->id,
-                'gateway'          => 'asaas',
-                'installment_id'   => $installmentId,
-                'carne_url'        => $resultado['carne_url'] ?? null,
-                'status_externo'   => 'PENDING',
-                'payload_resposta' => $resultado['payload_resposta'] ?? [],
-            ]);
+            /** @var \iEducar\Financeiro\Services\CarneService $carneService */
+            $carneService = app(\iEducar\Financeiro\Services\CarneService::class);
+            $carne = $carneService->gerar($contrato, $titulos->all(), auth()->id());
 
             return redirect()->route('financeiro.contratos.imprimir-carne', $contrato->id)
-                ->with('success', 'Carnê gerado com sucesso no Asaas!');
+                ->with('success', "Carnê oficial gerado com sucesso no Asaas com {$carne->qtd_parcelas} parcelas!");
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Erro ao emitir carnê no Asaas', [
                 'contrato_id' => $contrato->id,
@@ -281,5 +275,48 @@ class ContratoController extends Controller
 
         return redirect()->route('financeiro.contratos.imprimir-carne', $contrato->id)
             ->with('info', 'Carnê Asaas não possui link externo direto. Redirecionado para impressão local.');
+    }
+
+    /**
+     * Tela de acompanhamento de matrículas do i-Educar sem contrato financeiro gerado (BUG-014 / FEAT-09)
+     */
+    public function matriculasSemContrato(Request $request)
+    {
+        $anoLetivo = (int) $request->input('ano_letivo', date('Y'));
+
+        $matriculasComContrato = Contrato::where('ano_letivo', $anoLetivo)
+            ->whereNotIn('status', ['cancelado'])
+            ->pluck('matricula_id')
+            ->filter()
+            ->unique()
+            ->toArray();
+
+        $pendencias = collect();
+
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('pmieducar.matricula')) {
+                $query = \Illuminate\Support\Facades\DB::table('pmieducar.matricula')
+                    ->where('matricula.ano', $anoLetivo)
+                    ->where('matricula.ativo', 1);
+
+                if (!empty($matriculasComContrato)) {
+                    $query->whereNotIn('matricula.cod_matricula', $matriculasComContrato);
+                }
+
+                if (\Illuminate\Support\Facades\Schema::hasTable('cadastro.pessoa') && \Illuminate\Support\Facades\Schema::hasTable('pmieducar.aluno')) {
+                    $query->leftJoin('pmieducar.aluno', 'matricula.ref_cod_aluno', '=', 'aluno.cod_aluno')
+                          ->leftJoin('cadastro.pessoa', 'aluno.ref_idpes', '=', 'pessoa.idpes')
+                          ->select('matricula.cod_matricula as matricula_id', 'matricula.ref_cod_aluno as aluno_id', 'matricula.ano as ano_letivo', 'pessoa.nome as aluno_nome');
+                } else {
+                    $query->select('matricula.cod_matricula as matricula_id', 'matricula.ref_cod_aluno as aluno_id', 'matricula.ano as ano_letivo');
+                }
+
+                $pendencias = $query->limit(50)->get();
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Erro ao consultar matrículas sem contrato: ' . $e->getMessage());
+        }
+
+        return view('financeiro::contratos.matriculas-sem-contrato', compact('pendencias', 'anoLetivo'));
     }
 }

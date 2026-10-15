@@ -50,6 +50,12 @@
                     </svg>
                     <span>Copiar URL</span>
                 </button>
+                <button type="button" onclick="registrarWebhookAsaas();" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 btn-ieducar-action btn-ieducar-green" id="btn-registrar-webhook">
+                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    <span>Registrar Webhook no Asaas</span>
+                </button>
             </div>
         </article>
 
@@ -87,17 +93,25 @@
                     </div>
 
                     <div class="md:col-span-8">
-                        <label for="api_key" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                            API Key (Token de Acesso Asaas) <span class="text-rose-500">*</span>
-                        </label>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="api_key" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                                API Key (Token de Acesso Asaas) @if(empty($gatewayConfig['has_api_key'])) <span class="text-rose-500">*</span> @endif
+                            </label>
+                            @if(!empty($gatewayConfig['has_api_key']))
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-mono font-medium text-emerald-700 bg-emerald-50 border border-emerald-200">
+                                    <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                                    Configurada: {{ $gatewayConfig['api_key_mascarada'] }}
+                                </span>
+                            @endif
+                        </div>
                         <div class="relative">
-                            <input type="password" name="api_key" id="api_key" value="{{ old('api_key', $gatewayConfig['api_key'] ?? '') }}" class="w-full px-3 py-2 bg-white border border-slate-300 font-mono text-sm text-slate-800 focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum pr-24" placeholder="$aact_YTU5YTE0M2M6N2Z..." required>
+                            <input type="password" name="api_key" id="api_key" value="" class="w-full px-3 py-2 bg-white border border-slate-300 font-mono text-sm text-slate-800 focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum pr-24" placeholder="{{ !empty($gatewayConfig['has_api_key']) ? 'Deixe em branco para manter a chave atual criptografada' : '$aact_YTU5YTE0M2M6N2Z...' }}" {{ empty($gatewayConfig['has_api_key']) ? 'required' : '' }}>
                             <button type="button" onclick="alternarVisibilidadeChave();" class="absolute right-2 top-1.5 px-2.5 py-1 text-xs text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition">
                                 Mostrar
                             </button>
                         </div>
                         <p class="text-[11px] text-slate-500 mt-1" style="margin: 4px 0 0 0;">
-                            Localizada no painel do Asaas em <em>Menu &raquo; Configurações da Conta &raquo; Integrações &raquo; Chaves de API</em>
+                            Localizada no painel do Asaas em <em>Menu &raquo; Configurações da Conta &raquo; Integrações &raquo; Chaves de API</em>. A chave é salva criptografada (AES-256) com sua <code>APP_KEY</code>.
                         </p>
                     </div>
 
@@ -201,6 +215,51 @@
             btn.disabled = false;
             btn.innerHTML = originalHtml;
             alert('Erro ao requisitar teste de conexão com o servidor.');
+        });
+    }
+
+    function registrarWebhookAsaas() {
+        var btn = document.getElementById('btn-registrar-webhook');
+        btn.disabled = true;
+        var originalText = btn.innerHTML;
+        btn.innerHTML = 'Registrando...';
+
+        var apiKey = document.getElementById('api_key').value;
+        var webhookToken = document.getElementById('webhook_token').value;
+        var env = document.getElementById('environment').value;
+
+        fetch('{{ route("financeiro.configuracoes.gateway.registrar-webhook") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                api_key: apiKey,
+                webhook_token: webhookToken,
+                environment: env
+            })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+
+            var box = document.getElementById('box-resultado-conexao');
+            box.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-300', 'bg-rose-50', 'text-rose-800', 'border-rose-300');
+
+            if (data.sucesso) {
+                box.classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-300');
+                box.innerHTML = '<strong>Webhook Registrado!</strong> ' + (data.mensagem || 'Webhook configurado com sucesso no Asaas.');
+            } else {
+                box.classList.add('bg-rose-50', 'text-rose-800', 'border-rose-300');
+                box.innerHTML = '<strong>Falha no registro:</strong> ' + (data.mensagem || 'Não foi possível registrar o webhook no Asaas.');
+            }
+        })
+        .catch(function(err) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            alert('Erro ao requisitar registro de webhook junto ao servidor.');
         });
     }
 </script>

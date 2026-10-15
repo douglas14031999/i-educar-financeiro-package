@@ -7,12 +7,13 @@ use iEducar\Financeiro\Jobs\EnviarNotificacaoCobrancaJob;
 use iEducar\Financeiro\Models\ReguaCobrancaRegra;
 use iEducar\Financeiro\Models\ReguaEnvioLog;
 use iEducar\Financeiro\Models\Titulo;
+use iEducar\Financeiro\Support\AlunoLookup;
 use Illuminate\Support\Facades\Log;
 
 class ReguaCobrancaService
 {
     /**
-     * Processa todas as regras ativas da régua de cobrança
+     * Processa todas as regras ativas da régua de cobrança respeitando janela de tolerância
      *
      * @param int|null $escolaId
      * @return array Resumo do processamento
@@ -20,6 +21,19 @@ class ReguaCobrancaService
     public function processar(?int $escolaId = null): array
     {
         $hoje = Carbon::today();
+        $horaAtual = (int) now()->format('H');
+
+        // BUG-027.10: Respeitar horário comercial (07h às 22h)
+        if ($horaAtual >= 22 || $horaAtual < 7) {
+            Log::info("Processamento da régua ignorado: execução fora do horário comercial ({$horaAtual}h).");
+            return [
+                'total_regras' => 0,
+                'total_disparados' => 0,
+                'total_ignorados' => 0,
+                'motivo' => 'Fora do horário comercial permitido (07h às 22h)',
+            ];
+        }
+
         $queryRegras = ReguaCobrancaRegra::ativas();
 
         if ($escolaId) {
@@ -29,26 +43,30 @@ class ReguaCobrancaService
         $regras = $queryRegras->get();
         $totalDisparados = 0;
         $totalIgnorados = 0;
+        $diasTolerancia = (int) config('financeiro.politicas.dias_tolerancia', 2);
 
         foreach ($regras as $regra) {
-            $dias = $regra->dias_gatilho;
+            $dias = (int) $regra->dias_gatilho;
 
-            // Calcula a data de vencimento alvo
+            // BUG-027.7: Janela de tolerância para cobrir eventuais falhas do scheduler
+            // Se dias < 0 (antes do vencimento): janela de hoje até hoje + tolerância
+            // Se dias >= 0 (após vencimento): janela de (alvo - tolerância) até alvo
             if ($dias < 0) {
-                // Dias antes do vencimento (Ex: -7 -> vence daqui a 7 dias)
-                $dataAlvo = (clone $hoje)->addDays(abs($dias))->format('Y-m-d');
+                $dataAlvoInicio = (clone $hoje)->addDays(abs($dias))->format('Y-m-d');
+                $dataAlvoFim    = (clone $hoje)->addDays(abs($dias) + $diasTolerancia)->format('Y-m-d');
             } elseif ($dias === 0) {
-                // No vencimento (Hoje)
-                $dataAlvo = $hoje->format('Y-m-d');
+                $dataAlvoInicio = (clone $hoje)->subDays($diasTolerancia)->format('Y-m-d');
+                $dataAlvoFim    = $hoje->format('Y-m-d');
             } else {
-                // Dias após o vencimento (Ex: 3 -> venceu há 3 dias)
-                $dataAlvo = (clone $hoje)->subDays($dias)->format('Y-m-d');
+                $dataAlvoInicio = (clone $hoje)->subDays($dias + $diasTolerancia)->format('Y-m-d');
+                $dataAlvoFim    = (clone $hoje)->subDays($dias)->format('Y-m-d');
             }
 
-            // Busca títulos não liquidados com a data alvo
+            // Busca títulos não liquidados dentro da janela de disparo
             $queryTitulos = Titulo::with(['responsavel', 'cobrancaGateway'])
                 ->whereIn('status', ['aberto', 'parcial', 'vencido'])
-                ->whereDate('data_vencimento', $dataAlvo);
+                ->where('valor_saldo', '>', 0.005)
+                ->whereBetween('data_vencimento', [$dataAlvoInicio, $dataAlvoFim]);
 
             if ($regra->escola_id) {
                 $queryTitulos->where('escola_id', $regra->escola_id);
@@ -57,15 +75,16 @@ class ReguaCobrancaService
             }
 
             $titulos = $queryTitulos->get();
+            AlunoLookup::carregarParaTitulos($titulos);
 
             foreach ($titulos as $titulo) {
-                // Verifica se já foi disparada notificação para esta regra e título hoje
-                $jaEnviadoHoje = ReguaEnvioLog::where('regra_id', $regra->id)
+                // BUG-027.6: Considera já enviado apenas se houve envio com SUCESSO prévio para esta regra e título
+                $jaEnviadoComSucesso = ReguaEnvioLog::where('regra_id', $regra->id)
                     ->where('titulo_id', $titulo->id)
-                    ->whereDate('enviado_em', $hoje->format('Y-m-d'))
+                    ->where('sucesso', true)
                     ->exists();
 
-                if ($jaEnviadoHoje) {
+                if ($jaEnviadoComSucesso) {
                     $totalIgnorados++;
                     continue;
                 }
@@ -76,7 +95,7 @@ class ReguaCobrancaService
             }
         }
 
-        Log::info("Processamento da régua finalizado: {$totalDisparados} disparos agendados, {$totalIgnorados} ignorados por duplicidade no dia.");
+        Log::info("Processamento da régua finalizado: {$totalDisparados} disparos agendados, {$totalIgnorados} ignorados por envio anterior.");
 
         return [
             'total_regras' => $regras->count(),

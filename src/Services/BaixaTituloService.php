@@ -27,13 +27,21 @@ class BaixaTituloService
     public function realizarBaixa(Titulo $titulo, array $dados): Pagamento
     {
         return DB::transaction(function () use ($titulo, $dados) {
+            // Idempotência por chave
+            if (!empty($dados['idempotency_key'])) {
+                $pagamentoExistente = Pagamento::where('idempotency_key', $dados['idempotency_key'])->first();
+                if ($pagamentoExistente) {
+                    return $pagamentoExistente;
+                }
+            }
+
             // A04 — Relê o título com bloqueio pessimista para evitar race condition.
             // Qualquer baixa concorrente aguardará até o fim desta transação.
             /** @var Titulo $tituloLocked */
             $tituloLocked = Titulo::lockForUpdate()->findOrFail($titulo->id);
 
             if (!$tituloLocked->isElegivelBaixa()) {
-                throw new InvalidArgumentException(sprintf(
+                throw new \iEducar\Financeiro\Exceptions\TituloNaoBaixavelException(sprintf(
                     'Não é possível dar baixa em um título com status "%s".',
                     $tituloLocked->status
                 ));
@@ -51,6 +59,7 @@ class BaixaTituloService
             $origem            = $dados['origem_baixa'] ?? 'manual';
             $forma             = $dados['forma_pagamento'] ?? 'dinheiro';
             $usuarioId         = $dados['usuario_id'] ?? null;
+            $devolverTroco     = !empty($dados['devolver_troco']);
 
             // Valor efetivo que amortiza a dívida
             // Fórmula: o que de fato abate o principal = pagamento + desconto − encargos
@@ -59,20 +68,26 @@ class BaixaTituloService
                 2
             );
 
-            $saldoAtual   = (float) $tituloLocked->valor_saldo;
+            $saldoAtual    = (float) $tituloLocked->valor_saldo;
             $creditoGerado = 0.00;
+            $trocoDevolvido = 0.00;
 
-            // A05 — Pagamento excedente: gera crédito identificado, nunca desaparece
+            // A05 — Pagamento excedente: gera crédito identificado ou devolve troco
             if ($amortizacao > $saldoAtual + 0.001) {
-                $creditoGerado = round($amortizacao - $saldoAtual, 2);
-                $amortizacao   = $saldoAtual; // Amortiza apenas o que há de saldo
+                $excedente = round($amortizacao - $saldoAtual, 2);
+                $amortizacao = $saldoAtual; // Amortiza apenas o que há de saldo
+
+                if ($devolverTroco) {
+                    $trocoDevolvido = $excedente;
+                } else {
+                    $creditoGerado = $excedente;
+                }
             }
 
             $novoSaldo = round($saldoAtual - $amortizacao, 2);
 
             // A06 — Saldo de 1 centavo NÃO é zerado silenciosamente.
             // Só marca como 'pago' se o saldo for verdadeiramente zero (< 0.005 após arredondamento).
-            // Ajustes de centavo devem ser feitos por movimento explícito de ajuste.
             $titulo_pago = ($novoSaldo < 0.005);
             $novoSaldo   = $titulo_pago ? 0.00 : $novoSaldo;
 
@@ -86,20 +101,23 @@ class BaixaTituloService
             )));
 
             $pagamento = Pagamento::create([
-                'titulo_id'              => $tituloLocked->id,
-                'forma_pagamento'        => $forma,
-                'data_pagamento'         => $dataPagamento,
-                'data_compensacao'       => $dataPagamento,
-                'valor_pago'             => $valorPago,
-                'valor_amortizado'       => $amortizacao,
-                'valor_juros'            => $valorJuros,
-                'valor_multa'            => $valorMulta,
+                'titulo_id'                => $tituloLocked->id,
+                'forma_pagamento'          => $forma,
+                'data_pagamento'           => $dataPagamento,
+                'data_compensacao'         => $dataPagamento,
+                'valor_pago'               => $valorPago,
+                'valor_amortizado'         => $amortizacao,
+                'valor_juros'              => $valorJuros,
+                'valor_multa'              => $valorMulta,
                 'valor_desconto_concedido' => $descontoConcedido,
-                'valor_credito_gerado'   => $creditoGerado,
-                'origem_baixa'           => $origem,
-                'usuario_id'             => $usuarioId,
-                'comprovante_hash'       => substr($comprovanteHash, 0, 32),
-                'estornado'              => false,
+                'valor_credito_gerado'     => $creditoGerado,
+                'troco'                    => $trocoDevolvido,
+                'origem_baixa'             => $origem,
+                'usuario_id'               => $usuarioId,
+                'idempotency_key'          => $dados['idempotency_key'] ?? null,
+                'lote_baixa_uuid'          => $dados['lote_baixa_uuid'] ?? null,
+                'comprovante_hash'         => substr($comprovanteHash, 0, 32),
+                'estornado'                => false,
             ]);
 
             // A05 — Registra crédito do responsável se houver excedente
@@ -199,6 +217,66 @@ class BaixaTituloService
                 'data_estorno'             => Carbon::now(),
                 'estornado_por_usuario_id' => $usuarioId,
             ]);
+        });
+    }
+
+    /**
+     * Aplica crédito disponível de um responsável financeiro para amortizar/liquidar um título (BUG-004).
+     *
+     * @param  Titulo             $titulo
+     * @param  CreditoResponsavel $credito
+     * @param  int|null           $usuarioId
+     * @return Pagamento
+     */
+    public function aplicarCredito(Titulo $titulo, CreditoResponsavel $credito, ?int $usuarioId = null): Pagamento
+    {
+        return DB::transaction(function () use ($titulo, $credito, $usuarioId) {
+            /** @var CreditoResponsavel $creditoLocked */
+            $creditoLocked = CreditoResponsavel::lockForUpdate()->findOrFail($credito->id);
+
+            if ($creditoLocked->utilizado || $creditoLocked->cancelado) {
+                throw new InvalidArgumentException('Este crédito não está disponível para utilização.');
+            }
+
+            if ((int) $creditoLocked->responsavel_financeiro_id !== (int) $titulo->responsavel_financeiro_id) {
+                throw new InvalidArgumentException('O crédito selecionado pertence a outro responsável financeiro.');
+            }
+
+            $valorDisponivel = (float) $creditoLocked->valor;
+            $saldoTitulo     = (float) $titulo->valor_saldo;
+
+            if ($valorDisponivel <= 0) {
+                throw new InvalidArgumentException('O valor do crédito deve ser superior a zero.');
+            }
+
+            $valorAbater = round(min($valorDisponivel, $saldoTitulo), 2);
+
+            $pagamento = $this->realizarBaixa($titulo, [
+                'valor_pago'       => $valorAbater,
+                'forma_pagamento'  => 'credito_saldo',
+                'origem_baixa'     => 'aplicacao_credito',
+                'usuario_id'       => $usuarioId,
+                'data_pagamento'   => Carbon::today(),
+            ]);
+
+            $creditoLocked->utilizado = true;
+            $creditoLocked->save();
+
+            // Se sobrou saldo no crédito, cria um novo crédito residual
+            $saldoRestante = round($valorDisponivel - $valorAbater, 2);
+            if ($saldoRestante > 0.005) {
+                CreditoResponsavel::create([
+                    'responsavel_financeiro_id' => $creditoLocked->responsavel_financeiro_id,
+                    'pagamento_id'              => $creditoLocked->pagamento_id,
+                    'valor'                     => $saldoRestante,
+                    'origem'                    => 'residuo_credito',
+                    'descricao'                 => "Saldo remanescente após abatimento no título #{$titulo->id}",
+                    'utilizado'                 => false,
+                    'cancelado'                 => false,
+                ]);
+            }
+
+            return $pagamento;
         });
     }
 }

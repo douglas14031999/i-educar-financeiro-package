@@ -20,6 +20,9 @@ class CobrancaGateway extends Model
         'link_boleto_pdf',
         'link_pagamento',
         'carne_url',
+        'carne_id',
+        'ativa',
+        'cancelada_em',
         'pix_copia_cola',
         'pix_qr_code_base64',
         'payload_requisicao',
@@ -29,6 +32,9 @@ class CobrancaGateway extends Model
     protected $casts = [
         'titulo_id'        => 'integer',
         'contrato_id'      => 'integer',
+        'carne_id'         => 'integer',
+        'ativa'            => 'boolean',
+        'cancelada_em'     => 'datetime',
         'payload_requisicao' => 'array',
         'payload_resposta'   => 'array',
     ];
@@ -41,5 +47,10 @@ class CobrancaGateway extends Model
     public function contrato()
     {
         return $this->belongsTo(Contrato::class, 'contrato_id');
+    }
+
+    public function carne()
+    {
+        return $this->belongsTo(CarneGateway::class, 'carne_id');
     }
 }

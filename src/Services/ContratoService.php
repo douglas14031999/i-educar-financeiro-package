@@ -77,6 +77,18 @@ class ContratoService
                         "A matrícula #{$matriculaId} é do ano letivo {$matriculaRow->ano}, incompatível com o ano {$anoLetivo} do contrato."
                     );
                 }
+
+                // BUG-023: Bloqueio de duplicidade de contratos ativos para a mesma matrícula no ano letivo
+                $contratoExistente = Contrato::where('matricula_id', $matriculaId)
+                    ->where('ano_letivo', $anoLetivo)
+                    ->where('status', '!=', 'cancelado')
+                    ->exists();
+
+                if ($contratoExistente) {
+                    throw new InvalidArgumentException(
+                        "Já existe um contrato ativo para a matrícula #{$matriculaId} no ano letivo {$anoLetivo}."
+                    );
+                }
             }
 
             if (!$escolaId) {
@@ -134,6 +146,17 @@ class ContratoService
 
             $descontoTotal = (float) ($dados['valor_total_descontos'] ?? ($dados['valor_desconto'] ?? 0.00));
             $valorBruto    = (float) $plano->valor_total;
+
+            if ($descontoTotal < 0.00 || $descontoTotal > $valorBruto) {
+                throw new InvalidArgumentException(
+                    sprintf(
+                        'O valor de desconto total (R$ %.2f) deve ser entre R$ 0,00 e o valor bruto do contrato (R$ %.2f).',
+                        $descontoTotal,
+                        $valorBruto
+                    )
+                );
+            }
+
             $valorLiquido  = max(0.0, round($valorBruto - $descontoTotal, 2));
 
             // A01 — Taxa de desconto proporcional aplicada a cada item
@@ -141,9 +164,6 @@ class ContratoService
 
             // -------------------------------------------------------------------
             // A29 — número do contrato: retry até 5x para escapar de gaps
-            // Sequências PostgreSQL não fazem rollback: um nextval consumido em
-            // uma transação abortada gera um "buraco" que causa 23505 na retentativa.
-            // O loop consome até 5 nextvals até encontrar um número livre.
             // -------------------------------------------------------------------
             $numeroContrato = null;
             for ($tentativa = 0; $tentativa < 5; $tentativa++) {
@@ -165,6 +185,25 @@ class ContratoService
             $dataInicio     = Carbon::parse($dados['data_inicio'] ?? "{$anoLetivo}-01-01");
             $dataTermino    = Carbon::parse($dados['data_termino'] ?? "{$anoLetivo}-12-31");
 
+            if ($dataInicio->gt($dataTermino)) {
+                throw new InvalidArgumentException(
+                    "A data de início ({$dataInicio->format('d/m/Y')}) não pode ser posterior à data de término ({$dataTermino->format('d/m/Y')})."
+                );
+            }
+
+            $planoSnapshot = [
+                'id'          => $plano->id,
+                'nome'        => $plano->nome,
+                'valor_total' => (float) $plano->valor_total,
+                'itens'       => $plano->itens->map(fn($item) => [
+                    'tipo_item'       => $item->tipo_item,
+                    'numero_parcela'  => (int) $item->numero_parcela,
+                    'mes_competencia' => (int) $item->mes_competencia,
+                    'valor'           => (float) $item->valor,
+                    'descricao'       => $item->descricao,
+                ])->toArray(),
+            ];
+
             $contrato = Contrato::create([
                 'numero_contrato'           => $numeroContrato,
                 'matricula_id'              => $matriculaId,
@@ -180,6 +219,7 @@ class ContratoService
                 'dia_vencimento'            => $diaVencimento,
                 'escola_id'                 => $escolaId,
                 'status'                    => 'ativo',
+                'plano_snapshot'            => $planoSnapshot,
             ]);
 
             $totalParcelas = $plano->itens->where('numero_parcela', '>', 0)->count();
@@ -289,7 +329,7 @@ class ContratoService
      * cancela apenas parcelas futuras não vencidas; mantém vencidas em cobrança.
      *
      * A24 — Após cancelamento local, enfileira Job para cancelar cobranças no Asaas.
-     * O Job é assíncrono: sem timeout na request do usuário + retentativas automáticas.
+     * BUG-023: Validação de já cancelado, lockForUpdate e registro de cancelado_em/cancelado_por.
      *
      * @param  Contrato $contrato
      * @param  string   $motivo
@@ -297,21 +337,26 @@ class ContratoService
      */
     public function cancelarContrato(Contrato $contrato, string $motivo): void
     {
-        // Coleta IDs de cobranças ativas ANTES do update (para enfileirar após commit)
-        $titulosComCobranca = Titulo::where('contrato_id', $contrato->id)
-            ->where('status', 'aberto')
-            ->where('data_vencimento', '>', Carbon::today())
-            ->with('cobrancaGateway')
-            ->get();
+        $contratoId = $contrato->id;
 
-        DB::transaction(function () use ($contrato, $motivo, $titulosComCobranca) {
-            $contrato->update([
+        $titulosComCobranca = DB::transaction(function () use ($contratoId, $motivo) {
+            /** @var Contrato $contratoLocked */
+            $contratoLocked = Contrato::lockForUpdate()->findOrFail($contratoId);
+
+            if ($contratoLocked->status === 'cancelado') {
+                throw new InvalidArgumentException('Este contrato já se encontra cancelado.');
+            }
+
+            $contratoLocked->update([
                 'status'              => 'cancelado',
                 'motivo_cancelamento' => $motivo,
+                'cancelado_em'        => Carbon::now(),
+                'cancelado_por'       => auth()->id() ?? null,
             ]);
 
-            Titulo::where('contrato_id', $contrato->id)
-                ->where('status', 'aberto')
+            // Cancela títulos futuros ainda abertos ou parciais
+            Titulo::where('contrato_id', $contratoLocked->id)
+                ->whereIn('status', ['aberto', 'parcial'])
                 ->where('data_vencimento', '>', Carbon::today())
                 ->update([
                     'status'      => 'cancelado',
@@ -319,10 +364,36 @@ class ContratoService
                         "COALESCE(observacoes, '') || ' [Cancelado por rescisão contratual]'"
                     ),
                 ]);
+
+            // Cancela carnês de gateway ativos deste contrato
+            \iEducar\Financeiro\Models\CarneGateway::where('contrato_id', $contratoLocked->id)
+                ->where('status', 'ativo')
+                ->update([
+                    'status'        => 'cancelado',
+                    'cancelado_em'  => Carbon::now(),
+                    'cancelado_por' => auth()->id() ?? null,
+                ]);
+
+            // Invalida cobranças locais ativas vinculadas aos títulos cancelados
+            $canceladosIds = Titulo::where('contrato_id', $contratoLocked->id)
+                ->where('status', 'cancelado')
+                ->pluck('id');
+
+            CobrancaGateway::whereIn('titulo_id', $canceladosIds)
+                ->where('ativa', true)
+                ->update([
+                    'ativa'        => false,
+                    'cancelada_em' => Carbon::now(),
+                ]);
+
+            return Titulo::where('contrato_id', $contratoLocked->id)
+                ->where('status', 'cancelado')
+                ->where('data_vencimento', '>', Carbon::today())
+                ->with('cobrancaGateway')
+                ->get();
         });
 
         // A24 — Enfileira cancelamento externo para cada cobrança ativa no Asaas.
-        // Fora da transação: falha no gateway não reverte o cancelamento local.
         foreach ($titulosComCobranca as $titulo) {
             $cobranca = $titulo->cobrancaGateway;
             if ($cobranca && !in_array($cobranca->status_externo, ['CANCELLED', 'DELETED', 'REFUNDED', 'RECEIVED', 'CONFIRMED'])) {
@@ -332,9 +403,17 @@ class ContratoService
     }
 
     /**
+     * Alias para regenerarTitulosFaltantes (compatibilidade PRD BUG-023).
+     */
+    public function gerarTitulosFaltantes(int|Contrato $contrato): int
+    {
+        return $this->regenerarTitulosFaltantes($contrato);
+    }
+
+    /**
      * Regenera parcelas faltantes de um contrato preservando as condições financeiras
-     * originais (rateio de responsáveis e taxa de desconto contratual).
-     * (FIN-005)
+     * originais (rateio de responsáveis, snapshot do plano e taxa de desconto contratual).
+     * (FIN-005 / BUG-023)
      *
      * @param int|Contrato $contrato
      * @return int Quantidade de novos títulos gerados
@@ -351,9 +430,24 @@ class ContratoService
                 throw new InvalidArgumentException('Não é possível gerar títulos para um contrato cancelado.');
             }
 
-            $plano = $contratoLocked->plano;
-            if (!$plano || $plano->itens->isEmpty()) {
-                throw new InvalidArgumentException('O plano de pagamento associado não possui itens configurados.');
+            // Prioriza itens do snapshot contratual se existirem; caso contrário, recorre ao plano atual
+            $itensSnapshot = $contratoLocked->plano_snapshot['itens'] ?? null;
+            if (!empty($itensSnapshot)) {
+                $itens = collect($itensSnapshot)->map(function ($it) {
+                    return (object) [
+                        'tipo_item'       => $it['tipo_item'] ?? 'mensalidade',
+                        'numero_parcela'  => (int) ($it['numero_parcela'] ?? 1),
+                        'mes_competencia' => (int) ($it['mes_competencia'] ?? 1),
+                        'valor'           => (float) ($it['valor'] ?? 0.0),
+                        'descricao'       => $it['descricao'] ?? 'Mensalidade Escolar',
+                    ];
+                });
+            } else {
+                $plano = $contratoLocked->plano;
+                if (!$plano || $plano->itens->isEmpty()) {
+                    throw new InvalidArgumentException('O plano de pagamento associado não possui itens configurados.');
+                }
+                $itens = $plano->itens;
             }
 
             $alunoId = $contratoLocked->aluno_id;
@@ -381,7 +475,7 @@ class ContratoService
             $descontoTotal = (float) $contratoLocked->valor_total_descontos;
             $taxaDesconto  = ($valorBruto > 0) ? ($descontoTotal / $valorBruto) : 0.0;
 
-            $totalParcelas = $plano->itens->where('numero_parcela', '>', 0)->count() ?: 1;
+            $totalParcelas = $itens->where('numero_parcela', '>', 0)->count() ?: 1;
 
             // Bloqueia e consulta títulos já existentes para este contrato
             $titulosExistentes = Titulo::where('contrato_id', $contratoLocked->id)
@@ -390,7 +484,7 @@ class ContratoService
 
             $gerados = 0;
 
-            foreach ($plano->itens as $item) {
+            foreach ($itens as $item) {
                 $anosAdicionais = ($item->numero_parcela > 0) ? intdiv($item->numero_parcela - 1, 12) : 0;
                 $anoEfetivo     = $anoLetivo + $anosAdicionais;
                 $mesComp        = str_pad($item->mes_competencia, 2, '0', STR_PAD_LEFT);

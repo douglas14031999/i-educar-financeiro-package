@@ -288,12 +288,65 @@ class AsaasGateway implements GatewayInterface
     }
 
     /**
-     * Cancela cobrança no Asaas
+     * Cancela cobrança no Asaas de forma idempotente (404 é considerado sucesso)
      */
     public function cancelarCobranca(string $gatewayChargeId): bool
     {
-        $response = $this->client()->delete("{$this->baseUrl}/payments/{$gatewayChargeId}");
-        return $response->successful();
+        try {
+            $response = $this->client()->delete("{$this->baseUrl}/payments/{$gatewayChargeId}");
+            return $response->successful() || $response->status() === 404;
+        } catch (\Throwable $e) {
+            Log::error("Erro ao cancelar cobrança Asaas {$gatewayChargeId}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Cancela um parcelamento completo (carnê) no Asaas
+     */
+    public function cancelarParcelamento(string $installmentId): bool
+    {
+        try {
+            $response = $this->client()->delete("{$this->baseUrl}/installments/{$installmentId}");
+            return $response->successful() || $response->status() === 404;
+        } catch (\Throwable $e) {
+            Log::error("Erro ao cancelar parcelamento Asaas {$installmentId}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Lista todas as cobranças individuais geradas por um parcelamento no Asaas
+     */
+    public function listarPagamentosDoParcelamento(string $installmentId): array
+    {
+        try {
+            $response = $this->client()->get("{$this->baseUrl}/installments/{$installmentId}/payments");
+            if ($response->successful()) {
+                return $response->json('data') ?? [];
+            }
+        } catch (\Throwable $e) {
+            Log::error("Erro ao listar pagamentos do parcelamento {$installmentId}: " . $e->getMessage());
+        }
+        return [];
+    }
+
+    /**
+     * Baixa o conteúdo binário do PDF do carnê oficial gerado pelo Asaas
+     */
+    public function baixarCarnePdf(string $installmentId): ?string
+    {
+        try {
+            $url = "{$this->baseUrl}/installments/{$installmentId}/paymentBook";
+            $response = $this->client()->timeout(30)->get($url);
+
+            if ($response->successful()) {
+                return $response->body();
+            }
+        } catch (\Throwable $e) {
+            Log::error("Erro ao baixar PDF do carnê {$installmentId}: " . $e->getMessage());
+        }
+        return null;
     }
 
     // -------------------------------------------------------------------------
@@ -385,16 +438,21 @@ class AsaasGateway implements GatewayInterface
         // Obtém a URL do carnê PDF
         $carneUrl = $this->gerarCarneUrl($installmentId);
 
+        // Lista as cobranças individuais geradas para o parcelamento
+        $payments = $this->listarPagamentosDoParcelamento($installmentId);
+
         Log::info("AsaasGateway::criarInstallment — installment {$installmentId} criado para contrato {$contrato->numero_contrato}", [
-            'carne_url'     => $carneUrl,
+            'carne_url'      => $carneUrl,
             'total_parcelas' => $totalParcelas,
+            'total_payments' => count($payments),
         ]);
 
         return [
-            'installment_id' => $installmentId,
-            'carne_url'      => $carneUrl,
-            'total_parcelas' => $totalParcelas,
-            'valor_total'    => $valorTotal,
+            'installment_id'   => $installmentId,
+            'carne_url'        => $carneUrl,
+            'total_parcelas'   => $totalParcelas,
+            'valor_total'      => $valorTotal,
+            'payments'         => $payments,
             'payload_resposta' => $dados,
         ];
     }
@@ -447,30 +505,54 @@ class AsaasGateway implements GatewayInterface
     }
 
     /**
-     * Faz streaming do binário PDF do carnê do Asaas para o cliente HTTP.
-     * Retorna o conteúdo binário do PDF ou null se indisponível.
-     *
-     * @param  string  $installmentId
-     * @return string|null  Binário do PDF
+     * Registra ou atualiza as configurações de Webhook no Asaas (POST /webhook)
      */
-    public function baixarCarnePdf(string $installmentId): ?string
+    public function registrarWebhook(string $url, string $token, array $events = []): array
     {
+        if (empty($this->apiKey)) {
+            return ['sucesso' => false, 'mensagem' => 'A API Key do Asaas não foi informada.'];
+        }
+
         try {
-            $response = $this->client()->get("{$this->baseUrl}/installments/{$installmentId}/paymentBook");
+            $payload = [
+                'name'        => 'i-Educar Webhook',
+                'url'         => $url,
+                'email'       => config('mail.from.address', 'financeiro@escola.local'),
+                'enabled'     => true,
+                'interrupted' => false,
+                'apiVersion'  => 3,
+                'authToken'   => $token,
+                'sendType'    => 'SEQUENTIALLY',
+                'events'      => !empty($events) ? $events : [
+                    'PAYMENT_RECEIVED',
+                    'PAYMENT_CONFIRMED',
+                    'PAYMENT_OVERDUE',
+                    'PAYMENT_DELETED',
+                    'PAYMENT_RESTORED',
+                    'PAYMENT_REFUNDED',
+                    'PAYMENT_CHARGEBACK_REQUESTED',
+                ],
+            ];
+
+            $response = $this->client()->post("{$this->baseUrl}/webhook", $payload);
 
             if ($response->successful()) {
-                return $response->body();
+                return [
+                    'sucesso'  => true,
+                    'mensagem' => 'Webhook registrado com sucesso no Asaas!',
+                    'dados'    => $response->json(),
+                ];
             }
 
-            Log::warning("AsaasGateway::baixarCarnePdf — falha para installment {$installmentId}", [
-                'status' => $response->status(),
-                'body'   => $response->body(),
-            ]);
-
-            return null;
+            return [
+                'sucesso'  => false,
+                'mensagem' => 'Erro retornado pelo Asaas ao registrar webhook: ' . ($response->json('errors.0.description') ?? $response->body()),
+            ];
         } catch (\Throwable $e) {
-            Log::error("AsaasGateway::baixarCarnePdf — erro: " . $e->getMessage());
-            return null;
+            return [
+                'sucesso'  => false,
+                'mensagem' => 'Falha de comunicação ao registrar webhook no Asaas: ' . $e->getMessage(),
+            ];
         }
     }
 }

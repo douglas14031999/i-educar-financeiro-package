@@ -1,83 +1,84 @@
 # Módulo Financeiro para o i-Educar (Escolas Privadas e Comunitárias)
 
-[![Latest Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/douglas14031999/i-educar-financeiro-package)
+[![Latest Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/douglas14031999/i-educar-financeiro-package)
 [![License: GPL-2.0](https://img.shields.io/badge/License-GPL%202.0-green.svg)](LICENSE)
-[![PHP Version](https://img.shields.io/badge/PHP-%3E%3D7.4%20%7C%208.x-purple.svg)](composer.json)
-[![Laravel Compatible](https://img.shields.io/badge/Laravel-8%20%7C%209%20%7C%2010%20%7C%2011-red.svg)](composer.json)
+[![PHP Version](https://img.shields.io/badge/PHP-%3E%3D8.3-blue.svg)](composer.json)
+[![Laravel Compatible](https://img.shields.io/badge/Laravel-12.x-red.svg)](composer.json)
+[![Tests Passing](https://img.shields.io/badge/tests-51%20passed-brightgreen.svg)](tests)
 
-Pacote oficial e desacoplado desenvolvido para adicionar gestão financeira profissional ao **i-Educar 2.10**, atendendo escolas privadas, conveniadas e comunitárias.
+Pacote oficial e desacoplado desenvolvido para adicionar gestão financeira profissional e robusta ao **i-Educar 2.10**, atendendo escolas privadas, conveniadas e comunitárias.
 
 O pacote se integra de forma **Plug-and-Play** ao i-Educar:
-- **Zero Redundância Pedagógica**: Reutiliza 100% dos dados já cadastrados no i-Educar (Alunos, Matrículas, Turmas, Séries e Escolas).
-- **Isolamento de Banco**: Opera em schema PostgreSQL dedicado (`financeiro.*`), mantendo a integridade do banco do i-Educar.
-- **Design System Moderno & Full-Width**: 100% das telas remodeladas no padrão visual oficial Azul i-Educar (`#47728f`) e Esmeralda (`#059669`), com tipografia Inter, layout fluido em tela cheia (sem margens artificiais ou recortes), badges de status em pílulas, ícones SVG otimizados e CSS estático escopado (sem dependência de CDN externa em tempo de execução, garantindo zero conflitos com o Prototype.js nativo do i-Educar).
+- **Zero Redundância Pedagógica**: Reutiliza 100% dos dados já cadastrados no i-Educar (Alunos, Matrículas, Turmas, Séries e Escolas) via queries em lote e cache em memória (`AlunoLookup`) eliminando problemas de N+1 queries.
+- **Isolamento e Segurança de Dados**: Opera em schema PostgreSQL dedicado (`financeiro.*`), mantendo a integridade estrita do banco do i-Educar.
+- **RBAC Estrito por Processo Financeiro**: Controle granular de acesso baseado no middleware `financeiro.can:{processo},{acao}` integrado aos menus e perfis do i-Educar.
+- **Criptografia de Credenciais**: API Keys do Asaas cifradas com algoritmo AES-256-GCM (`encrypted`).
+- **Design System Nativo do i-Educar**: 100% das telas no padrão visual oficial Azul i-Educar (`#47728f`) e Esmeralda (`#059669`), com tipografia do sistema (sem CDN externa em tempo de execução, garantindo conformidade com a LGPD e redes isoladas).
 
 ---
 
 ## 🎯 Principais Funcionalidades
 
-1. **Responsáveis Financeiros e Rateio**:
+1. **Responsáveis Financeiros e Rateio Proporcional**:
    - Vínculo de responsáveis com múltiplos alunos.
-   - Suporte a rateio proporcional de custos entre pais separados (ex: 50%/50% com carnês independentes).
+   - Suporte a rateio proporcional de custos (ex: 50%/50% com carnês e títulos independentes calculados via algoritmo *Largest Remainder*).
+   - Gestão de crédito automático por pagamento a maior (`creditos_responsaveis`).
 
 2. **Planos de Pagamento e Motor de Contratos**:
-   - Tabela de preços por curso, série e ano letivo.
-   - Geração automática de carnês de mensalidades atômicas com tratamento de centavos.
-   - Conexão nativa com a matrícula do i-Educar (ao matricular gera contrato; ao cancelar matrícula cancela apenas parcelas futuras não vencidas).
+   - Tabela de preços por curso, série e ano letivo com congelamento de *snapshot* no contrato.
+   - Geração atômica de carnês de mensalidades com controle de centavos.
+   - Conexão nativa com a matrícula do i-Educar (`MatriculaCriada`, `MatriculaCancelada`) e tela dedicada "Matrículas sem Contrato".
+   - Trava de duplicidade com índice único parcial por matrícula e ano letivo.
 
-3. **Gateway de Pagamento Asaas (Boleto & Pix Dinâmico)**:
-   - Emissão de Boletos Híbridos com QR Code Pix embutido e Pix Copia-e-Cola.
-   - Webhook com **tabela de idempotência** (risco zero de duplicidade de baixa).
-   - Consulta e sincronização de status em tempo real com 1 clique.
+3. **Gateway de Pagamento Asaas v3 (Boletos Híbridos & Carnê Oficial)**:
+   - Emissão de Boletos Híbridos com QR Code Pix dinâmico e Pix Copia-e-Cola.
+   - Carnês oficiais do Asaas via endpoint `/installments/{id}/paymentBook`.
+   - Webhook blindado com validação estrita via `hash_equals`, rate limiting e tabela de idempotência (`webhook_events`).
+   - Sincronização em massa com controle de taxa de requisições.
 
-4. **Baixa de Balcão e Recibos Digitais**:
-   - Baixa presencial com cálculo automático de juros (1% a.m.) e multa (2%).
-   - Impressão de recibo oficial de pagamento com autenticação criptográfica SHA-256.
+4. **Caixa Ágil de Balcão e Recibos Digitais**:
+   - Busca incremental rápida por aluno, responsável, CPF ou contrato (`api/titulos/buscar`).
+   - Recálculo dinâmico de juros, multas e troco em tempo real (`api/titulos/{id}/calculo`).
+   - Baixa multilíquida com proteção contra duplo envio via `idempotency_key`.
+   - Recibos oficiais com autenticação criptográfica SHA-256 e endpoint público de validação (`/financeiro/verificar/{hash}`).
 
 5. **Régua de Cobrança e Gestão de Inadimplência**:
-   - Gatilhos automáticos (D-7, D-3, D0, D+3, D+10) via WhatsApp e E-mail.
-   - Botão de envio rápido via WhatsApp direto da secretaria.
-   - Painel de Inadimplência por faixas de atraso (Aging: 1-30, 31-60, 61-90, >90 dias - PCLD).
-   - Bloqueio de rematrícula de inadimplentes com respaldo no **Artigo 5º da Lei Federal nº 9.870/1999**.
+   - Régua com canais plugáveis (`MailCanal`, `WhatsAppLinkCanal`, `AsaasNotificacaoCanal`).
+   - Janela de tolerância retroativa e respeito estrito ao horário comercial (07h às 22h).
+   - Painel de Inadimplência por faixas de atraso (Aging List: 1-30, 31-60, 61-90, >90 dias - PCLD).
+   - Bloqueio consultivo de rematrícula de inadimplentes com respaldo no **Artigo 5º da Lei Federal nº 9.870/1999** via API `FinanceiroInadimplencia`.
 
 6. **Renegociação de Dívidas e Acordos**:
-   - Simulador de propostas com concessão de desconto e novação de dívida.
-   - Emissão do Instrumento Particular de Confissão de Dívida pronto para assinatura.
+   - Transação atômica com pessimistic locking (`lockForUpdate`) e validação anti-tampering por hash.
+   - Concessão de descontos com teto, parcelamento e cancelamento de cobranças Asaas originais.
+   - Emissão do Termo de Acordo e Confissão de Dívida.
 
-7. **Contas a Pagar e Fluxo de Caixa**:
-   - Controle de despesas da escola por centro de custo e plano de contas contábil.
-   - Demonstrativo mensal de entradas realizadas vs despesas pagas.
+7. **Contas a Pagar e Conciliação Bancária**:
+   - Liquidação de despesas com atualização em tempo real de `contas_bancarias.saldo_atual`.
+   - Extrato automatizado de lançamentos em `movimentacoes_conta`.
+   - Suporte a estorno com recomposição de saldo bancário.
 
-8. **Relatórios Fiscais e Integração NFS-e**:
-   - **DRE Escolar**: Demonstração do Resultado do Exercício.
-   - **Informe de IRPF**: Declaração de pagamentos com autenticação digital para imposto de renda.
-   - **Quitação Anual**: Declaração obrigatória conforme a **Lei Federal nº 12.007/2009**.
-   - **Evento `TituloPago`**: Payload padronizado para integração com emissores de NFS-e (Focus NFe, PlugNotas).
+8. **Relatórios Fiscais, DRE e Exportações**:
+   - **DRE Escolar**: Regime de Caixa e Competência com fórmulas contábeis estritas (separação de receita bruta, deduções e encargos).
+   - **Fluxo de Caixa**: Visão detalhada de realizado vs previsto para os 12 meses do ano.
+   - **Informe de IRPF**: Declaração anual com identificação e CPF do aluno.
+   - **Quitação Anual**: Certidão oficial em cumprimento à **Lei Federal nº 12.007/2009** com código verificador SHA-256.
+   - **Exportações Nativas em CSV**: Todos os relatórios possuem exportação direta com codificação UTF-8 (BOM).
 
----
-
-## 🚀 Instalação Plug-and-Play
-
-### Opção 1: Instalação Automática em 1 Comando (Recomendado)
-
-Na pasta raiz da sua instalação do **i-Educar**, execute o comando abaixo:
-
-```bash
-curl -sSL https://raw.githubusercontent.com/douglas14031999/i-educar-financeiro-package/main/install.sh | bash
-```
-
-> **O que o script faz sozinho:**
-> - Detecta o ambiente do i-Educar;
-> - Configura o repositório VCS no `composer.json`;
-> - Baixa e instala o pacote via Composer;
-> - Publica as configurações (`config/financeiro.php`);
-> - Executa as migrations do schema `financeiro.*` e insere os menus no i-Educar;
-> - Roda o seeder do plano de contas padrão escolar;
-> - Limpa e otimiza os caches da aplicação.
+9. **Painel de Processamentos e Pendências**:
+   - Monitoramento de lotes assíncronos e divergências de webhooks com resolução em 1 clique.
 
 ---
 
-### Opção 2: Instalação Manual via Composer
+## 🚀 Instalação e Configuração
+
+### Requisitos Mínimos
+- **PHP**: ≥ 8.3 (extensões: `pdo_pgsql`, `bcmath`, `curl`, `json`)
+- **Laravel**: 12.x
+- **Banco de Dados**: PostgreSQL 12+ (com schema `financeiro`)
+- **i-Educar**: Versão 2.10
+
+### Instalação via Composer
 
 1. Adicione o repositório no `composer.json` do seu i-Educar:
 ```json
@@ -94,61 +95,66 @@ curl -sSL https://raw.githubusercontent.com/douglas14031999/i-educar-financeiro-
 composer require douglas14031999/i-educar-financeiro-package
 ```
 
-
-### 3. Rodar as Migrações do Banco de Dados
-
+3. Execute as migrações:
 ```bash
 php artisan migrate
 ```
 
-O comando irá:
-1. Criar o schema `financeiro.*` no PostgreSQL.
-2. Criar todas as tabelas com relacionamentos com `pmieducar.*`.
-3. Inserir o menu **"Financeiro"** e seus 10 submenus na tabela nativa de menus do i-Educar.
-
-### 4. (Opcional) Publicar as Configurações
-
+4. (Opcional) Publique as configurações e traduções:
 ```bash
 php artisan vendor:publish --tag=financeiro-config
+php artisan vendor:publish --tag=financeiro-translations
 ```
-
-Um arquivo `config/financeiro.php` será criado permitindo ajustar políticas de juros, multa, token do Asaas e canais de régua.
 
 ---
 
 ## ⚙️ Configuração do Gateway Asaas
 
-1. Acesse o i-Educar com seu usuário administrador.
-2. No menu lateral, clique em **Financeiro > Configurações do Gateway**.
-3. Insira sua **API Key do Asaas** (Sandbox ou Produção) e clique no botão **Testar Conexão**.
+1. Acesse o i-Educar com perfil administrativo financeiro.
+2. Acesse **Financeiro > Configurações > Gateway**.
+3. Informe a **API Key** e o **Webhook Token** do Asaas (Sandbox ou Produção) e clique em **Testar Conexão**.
 4. Configure a URL do Webhook no painel do Asaas:
-   - URL: `https://seu-ieducar.com.br/financeiro/webhooks/asaas`
-   - Eventos: `PAYMENT_RECEIVED`, `PAYMENT_CONFIRMED`, `PAYMENT_DELETED`.
+   - **URL**: `https://seu-ieducar.com.br/financeiro/webhooks/asaas`
+   - **Eventos Recomendados**: `PAYMENT_RECEIVED`, `PAYMENT_CONFIRMED`, `PAYMENT_OVERDUE`, `PAYMENT_DELETED`, `PAYMENT_REFUNDED`, `PAYMENT_UPDATED`.
 
 ---
 
-## ⏰ Rotina Automática da Régua de Cobrança
+## ⏰ Rotinas Automatizadas (Laravel Scheduler)
 
-No agendador de tarefas do servidor (`crontab`), adicione a execução diária do comando da régua:
+O pacote registra nativamente todas as rotinas no agendador do Laravel. No `crontab` do servidor, mantenha apenas a chamada padrão do Laravel:
 
 ```bash
-0 8 * * * cd /caminho/do/ieducar && php artisan financeiro:processar-regua >> /dev/null 2>&1
+* * * * * cd /caminho/do/ieducar && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-O comando avaliará os vencimentos e agendará as notificações por WhatsApp/E-mail conforme as regras ativas.
+**Rotinas executadas automaticamente:**
+- `financeiro:processar-regua` (Diário às 08:00) — Processa réguas ativas.
+- `financeiro:sincronizar-asaas` (A cada 1 hora) — Concilia títulos pendentes.
+- `financeiro:atualizar-status` (Diário às 00:10) — Atualiza títulos vencidos.
+- `financeiro:reprocessar-webhooks` (A cada 5 minutos) — Reprocessa webhooks pendentes.
 
 ---
 
-## 🧪 Executando os Testes
+## 🧪 Bateria de Testes Automatizados e Homologação
 
-O pacote acompanha suíte completa de testes unitários:
+O pacote inclui uma suíte completa de testes de regressão, conformidade com o PRD e homologação E2E:
 
 ```bash
-vendor/bin/phpunit
+# Execução completa da suíte de testes (84 testes, 599 asserções)
+php vendor/phpunit/phpunit/phpunit
+
+# Testes de conformidade e integridade com o PRD
+php vendor/phpunit/phpunit/phpunit tests/Feature/PrdComplianceTest.php
+
+# Homologação ponta a ponta (Checklist TC-01 a TC-14 Sandbox Asaas)
+php vendor/phpunit/phpunit/phpunit tests/Feature/HomologacaoE2ETest.php
 ```
+
+Consulte o relatório oficial de homologação com evidências detalhadas em:  
+👉 [docs/HOMOLOGACAO-EVIDENCIAS.md](docs/HOMOLOGACAO-EVIDENCIAS.md)
 
 ---
 
 ## 📄 Licença
 
-Este pacote é um software livre distribuído sob os termos da licença [GNU General Public License v2.0 (GPL-2.0)](LICENSE), em total conformidade com o projeto **i-Educar**.
+Distribuído sob os termos da licença [GNU General Public License v2.0 (GPL-2.0)](LICENSE), em total conformidade com o ecossistema **i-Educar**.

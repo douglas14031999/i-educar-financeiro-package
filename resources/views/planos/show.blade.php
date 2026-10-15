@@ -12,6 +12,47 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="planos-show-container">
         
+        @php
+            $actionsHtml = '<div class="flex flex-wrap items-center gap-2">';
+
+            if (empty($possuiContratos)) {
+                $actionsHtml .= '
+                    <a href="' . route('financeiro.planos.edit', $plano->id) . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;" title="Editar valores e condições deste plano">
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Editar Plano
+                    </a>';
+            }
+
+            $actionsHtml .= '
+                <button type="button" onclick="document.getElementById(\'modal-copiar-plano\').style.display=\'flex\';" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-green" title="Copiar este plano para um novo ano letivo (FEAT-08)">
+                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    Copiar Plano
+                </button>
+
+                <form method="post" action="' . route('financeiro.planos.destroy', $plano->id) . '" onsubmit="return confirm(\'Deseja realmente excluir este plano de cobrança?\');" style="display: inline;">
+                    ' . csrf_field() . '
+                    ' . method_field('DELETE') . '
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-danger" ' . (!empty($possuiContratos) ? 'disabled title="Não é possível excluir plano com contratos vinculados"' : '') . '>
+                        <svg class="w-4 h-4 text-red-600" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Excluir
+                    </button>
+                </form>
+
+                <a href="' . route('financeiro.planos.index') . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
+                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    Voltar
+                </a>
+            </div>';
+        @endphp
+
         @include('financeiro::partials.page-header', [
             'title' => $plano->nome,
             'subtitle' => 'Ano ' . $plano->ano_letivo . ' • Escola #' . $plano->escola_id . ' • ' . $plano->qtd_parcelas . ' parcelas mensais • Total R$ ' . number_format($plano->valor_total, 2, ',', '.'),
@@ -19,24 +60,7 @@
                 ['label' => 'Planos de Cobrança', 'url' => route('financeiro.planos.index')],
                 ['label' => $plano->nome]
             ],
-            'actions' => '
-                <form method="post" action="' . route('financeiro.planos.destroy', $plano->id) . '" onsubmit="return confirm(\'Deseja realmente excluir este plano de cobrança?\');" style="display: inline;">
-                    ' . csrf_field() . '
-                    ' . method_field('DELETE') . '
-                    <button type="submit" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-danger">
-                        <svg class="w-4 h-4 text-red-600" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                        Excluir Plano
-                    </button>
-                </form>
-                <a href="' . route('financeiro.planos.index') . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
-                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                    </svg>
-                    Voltar
-                </a>
-            '
+            'actions' => $actionsHtml
         ])
 
         <!-- Especificações do Plano -->
@@ -171,5 +195,48 @@
         </section>
 
     </main>
+
+    <!-- Modal Copiar Plano (FEAT-08) -->
+    <div id="modal-copiar-plano" style="display: none;" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-none border border-slate-300 shadow-xl max-w-md w-full overflow-hidden">
+            <div class="bg-[#47728f] px-5 py-3.5 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    <h3 class="text-sm font-semibold tracking-wide text-white" style="margin: 0;">
+                        Copiar Plano de Pagamento
+                    </h3>
+                </div>
+                <button type="button" onclick="document.getElementById('modal-copiar-plano').style.display='none';" class="text-white hover:text-slate-200 text-lg font-bold leading-none">&times;</button>
+            </div>
+            <form method="POST" action="{{ route('financeiro.planos.copiar', $plano->id) }}" class="p-6 space-y-4">
+                @csrf
+                <p class="text-xs text-slate-600">
+                    Cria uma cópia idêntica deste plano e de suas parcelas para outro ano letivo, permitindo reaproveitamento rápido da tabela de preços.
+                </p>
+                <div>
+                    <label for="novo_ano_letivo" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                        Novo Ano Letivo <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" name="novo_ano_letivo" id="novo_ano_letivo" value="{{ $plano->ano_letivo + 1 }}" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum">
+                </div>
+                <div>
+                    <label for="novo_nome" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                        Nome do Novo Plano <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="novo_nome" id="novo_nome" value="{{ $plano->nome }} ({{ $plano->ano_letivo + 1 }})" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum">
+                </div>
+                <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+                    <button type="button" onclick="document.getElementById('modal-copiar-plano').style.display='none';" class="px-4 py-2 btn-ieducar-action btn-ieducar-outline">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 btn-ieducar-action btn-ieducar-green">
+                        Confirmar Cópia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 @endsection

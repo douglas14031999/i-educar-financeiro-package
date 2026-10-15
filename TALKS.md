@@ -89,3 +89,20 @@
 - [ ] **5.3** Verificar no painel do Asaas Sandbox que o installment foi criado com as parcelas corretas.
 - [ ] **5.4** Testar a rota de regeneração `/financeiro/contratos/{id}/carne-asaas` após alteração de valores.
 - [ ] **5.5** Validar fallback HTML quando gateway estiver desabilitado ou sem API key.
+
+---
+
+### 📅 Sessão 4 — 15/10/2026: Auditoria Profunda, Correções Estruturais e Novo TASKS.md
+
+- **Objetivo:** Superar a auditoria técnica de `PRD-CORRECOES-MODULO-FINANCEIRO.md`, estruturar um novo `TASKS.md` definitivo com rastreamento integral (Fases 0 a 6) e concluir a Fase 2 (Cobranças Asaas e Carnê) e T4.1.
+- **Entregas Realizadas:**
+  1. **Reescrita Integral do [TASKS.md](file:///c:/Users/Douglas/Downloads/i-educar-financeiro-package/TASKS.md):** Substituição do roadmap antigo v1 pela matriz completa de correções, bugs P0/P1 e novos requisitos de conformidade com o i-Educar 2.10.
+  2. **Conclusão da Fase 2 (100%):**
+     - `T2.6`: Implementação real do comando `financeiro:sincronizar-asaas` (`SincronizarCobrancasAsaasCommand.php`) com rate limiting de 100ms, consulta à API do Asaas e conciliação automática com `BaixaTituloService`.
+     - `T2.6`: Criação da rota `POST titulos/sincronizar-lote-asaas` e integração com a barra flutuante de seleção em lote na view `resources/views/titulos/index.blade.php`.
+     - `T2.7`: Registro de todas as rotinas agendadas no `FinanceiroServiceProvider.php` via `callAfterResolving(Schedule::class)` (`processar-regua` 08:00, `sincronizar-asaas` de hora em hora, `atualizar-status` 00:10 e `reprocessar-webhooks` a cada 5 min).
+  3. **Avanço em Fase 4 (T4.1):**
+     - Criação do comando `financeiro:atualizar-status` (`AtualizarStatusTitulosCommand.php`) para transição de títulos vencidos e quitação de saldos residuais em rotina noturna, eliminando mutações em requisições GET no `DashboardController`.
+  4. **Bateria de Testes:**
+     - Implementação dos testes `test_t35_sincronizacao_cobrancas_comando_e_rota_lote` e `test_t36_comando_atualizar_status_titulos`.
+     - Total: **36 testes passing, 257 asserções, 0 falhas** no PostgreSQL/SQLite via PHPUnit.

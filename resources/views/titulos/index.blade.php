@@ -12,12 +12,23 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="titulos-container">
         
+        @php
+            $breadcrumbs = [['label' => 'Títulos', 'url' => route('financeiro.titulos.index')]];
+            if ($responsavelFiltro) {
+                $breadcrumbs[] = ['label' => 'Responsável: ' . $responsavelFiltro->nome];
+            } elseif ($contratoFiltro) {
+                $breadcrumbs[] = ['label' => 'Contrato #' . $contratoFiltro->numero_contrato];
+            }
+        @endphp
+
         @include('financeiro::partials.page-header', [
             'title' => 'Títulos e Mensalidades Escolares',
-            'subtitle' => 'Gerenciamento operacional de cobranças, vencimentos, liquidações e taxas escolares',
-            'breadcrumbs' => [
-                ['label' => 'Títulos']
-            ],
+            'subtitle' => $responsavelFiltro 
+                ? 'Exibindo títulos do responsável ' . $responsavelFiltro->nome . ' (CPF: ' . $responsavelFiltro->cpf_cnpj_formatado . ')'
+                : ($contratoFiltro 
+                    ? 'Exibindo títulos do Contrato #' . $contratoFiltro->numero_contrato . ' (Ano Letivo: ' . $contratoFiltro->ano_letivo . ')'
+                    : 'Gerenciamento operacional de cobranças, vencimentos, liquidações e taxas escolares'),
+            'breadcrumbs' => $breadcrumbs,
             'actions' => '
                 <div class="flex flex-wrap items-center gap-2">
                     <a href="' . route('financeiro.baixas.create') . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;" title="Baixar pagamento em dinheiro, cartão ou cheque na secretaria">
@@ -26,17 +37,17 @@
                         </svg>
                         Baixa de Balcão (Caixa)
                     </a>
-                    <a href="' . route('financeiro.contratos.create') . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;" title="Matricular e gerar parcelas">
+                    <a href="' . route('financeiro.contratos.create', array_filter(['responsavel_id' => $responsavelId])) . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;" title="Matricular e gerar parcelas">
                         <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                         </svg>
                         Novo Contrato
                     </a>
-                    <a href="' . route('financeiro.titulos.imprimir-carne') . '" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;" title="Imprimir carnê das próximas parcelas">
+                    <a href="' . route('financeiro.titulos.imprimir-carne', array_filter(['contrato_id' => $contratoId, 'responsavel_id' => $responsavelId])) . '" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;" title="Imprimir carnê das parcelas">
                         <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                         </svg>
-                        Imprimir Carnê Geral
+                        Imprimir Carnê
                     </a>
                 </div>
             '
@@ -45,6 +56,16 @@
         <!-- Barra de Filtros e Busca -->
         <section class="bg-white shadow-xs border border-slate-200 p-4" data-purpose="filter-section">
             <form method="get" action="{{ route('financeiro.titulos.index') }}" class="flex flex-wrap items-end gap-3">
+                @if($responsavelId)
+                    <input type="hidden" name="responsavel_id" value="{{ $responsavelId }}">
+                @endif
+                @if($contratoId)
+                    <input type="hidden" name="contrato_id" value="{{ $contratoId }}">
+                @endif
+                @if($alunoId)
+                    <input type="hidden" name="aluno_id" value="{{ $alunoId }}">
+                @endif
+
                 <div class="flex-1 min-w-[260px]">
                     <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                         Buscar:
@@ -73,6 +94,13 @@
                     <input type="text" name="competencia" value="{{ $competencia }}" placeholder="AAAA-MM" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
                 </div>
 
+                <div class="w-full sm:w-28">
+                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                        Ano Letivo:
+                    </label>
+                    <input type="number" name="ano" value="{{ $ano }}" placeholder="{{ date('Y') }}" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+                </div>
+
                 <div class="flex items-center gap-2 pt-1 sm:pt-0">
                     <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 btn-ieducar-action btn-ieducar-blue">
                         <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,13 +108,61 @@
                         </svg>
                         Filtrar
                     </button>
-                    @if($busca || $status || $competencia)
+                    @if($busca || $status || $competencia || $ano || $responsavelId || $contratoId || $alunoId)
                         <a href="{{ route('financeiro.titulos.index') }}" class="px-3 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
-                            Limpar
+                            Limpar Filtros
                         </a>
                     @endif
                 </div>
             </form>
+
+            @if($responsavelFiltro || $contratoFiltro || $status || $competencia || $ano || $alunoId || $busca)
+                <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                    <span class="text-xs text-slate-500 font-medium">Filtros ativos:</span>
+                    @if($responsavelFiltro)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-[#47728f] border border-blue-200 text-xs font-medium">
+                            Responsável: {{ $responsavelFiltro->nome }}
+                            <a href="{{ route('financeiro.titulos.index', request()->except('responsavel_id')) }}" class="text-[#47728f] hover:text-red-600 font-bold ml-1" style="text-decoration: none;" title="Remover filtro">×</a>
+                        </span>
+                    @endif
+                    @if($contratoFiltro)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-[#47728f] border border-blue-200 text-xs font-medium">
+                            Contrato #{{ $contratoFiltro->numero_contrato }}
+                            <a href="{{ route('financeiro.titulos.index', request()->except('contrato_id')) }}" class="text-[#47728f] hover:text-red-600 font-bold ml-1" style="text-decoration: none;" title="Remover filtro">×</a>
+                        </span>
+                    @endif
+                    @if($alunoId)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-[#47728f] border border-blue-200 text-xs font-medium">
+                            Aluno #{{ $alunoId }}
+                            <a href="{{ route('financeiro.titulos.index', request()->except('aluno_id')) }}" class="text-[#47728f] hover:text-red-600 font-bold ml-1" style="text-decoration: none;" title="Remover filtro">×</a>
+                        </span>
+                    @endif
+                    @if($ano)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium">
+                            Ano: {{ $ano }}
+                            <a href="{{ route('financeiro.titulos.index', request()->except('ano')) }}" class="text-slate-500 hover:text-red-600 font-bold ml-1" style="text-decoration: none;" title="Remover filtro">×</a>
+                        </span>
+                    @endif
+                    @if($status)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium">
+                            Status: {{ ucfirst($status) }}
+                            <a href="{{ route('financeiro.titulos.index', request()->except('status')) }}" class="text-slate-500 hover:text-red-600 font-bold ml-1" style="text-decoration: none;" title="Remover filtro">×</a>
+                        </span>
+                    @endif
+                    @if($competencia)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium">
+                            Competência: {{ $competencia }}
+                            <a href="{{ route('financeiro.titulos.index', request()->except('competencia')) }}" class="text-slate-500 hover:text-red-600 font-bold ml-1" style="text-decoration: none;" title="Remover filtro">×</a>
+                        </span>
+                    @endif
+                    @if($busca)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium">
+                            Busca: "{{ $busca }}"
+                            <a href="{{ route('financeiro.titulos.index', request()->except('busca')) }}" class="text-slate-500 hover:text-red-600 font-bold ml-1" style="text-decoration: none;" title="Remover filtro">×</a>
+                        </span>
+                    @endif
+                </div>
+            @endif
         </section>
 
         <!-- Formulário Oculto de Ações em Lote -->
@@ -278,6 +354,13 @@
                     Emitir no Asaas
                 </button>
 
+                <button type="button" id="btn-sincronizar-asaas-lote" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded cursor-pointer transition">
+                    <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    Sincronizar Asaas
+                </button>
+
                 <button type="button" id="btn-desmarcar-todos" class="text-xs text-slate-400 hover:text-white px-2 py-1 underline transition cursor-pointer">
                     Desmarcar
                 </button>
@@ -296,6 +379,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const totalSpan = document.getElementById('total-selecionados');
     const btnImprimir = document.getElementById('btn-imprimir-carne-lote');
     const btnEmitirAsaas = document.getElementById('btn-emitir-asaas-lote');
+    const btnSincronizarAsaas = document.getElementById('btn-sincronizar-asaas-lote');
     const btnDesmarcar = document.getElementById('btn-desmarcar-todos');
     const inputLoteIds = document.getElementById('lote-titulo-ids');
     const formLote = document.getElementById('form-lote-acoes');
@@ -362,6 +446,18 @@ document.addEventListener('DOMContentLoaded', function () {
             const ids = inputLoteIds.value;
             if (!ids) return;
             if (confirm('Deseja emitir no Asaas as ' + contadorSpan.textContent + ' cobranças selecionadas?')) {
+                formLote.action = "{{ route('financeiro.titulos.emitir-lote-asaas') }}";
+                formLote.submit();
+            }
+        });
+    }
+
+    if (btnSincronizarAsaas) {
+        btnSincronizarAsaas.addEventListener('click', function () {
+            const ids = inputLoteIds.value;
+            if (!ids) return;
+            if (confirm('Deseja consultar e sincronizar no Asaas as ' + contadorSpan.textContent + ' cobranças selecionadas?')) {
+                formLote.action = "{{ route('financeiro.titulos.sincronizar-lote-asaas') }}";
                 formLote.submit();
             }
         });

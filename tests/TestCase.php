@@ -45,6 +45,7 @@ abstract class TestCase extends BaseTestCase
     protected function defineDatabaseMigrations()
     {
         $this->setupIeducarMockTables();
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
     }
 
     protected function setUp(): void
@@ -97,6 +98,38 @@ abstract class TestCase extends BaseTestCase
         DB::statement("CREATE TABLE IF NOT EXISTS pmieducar.matricula_turma (
             ref_cod_matricula INTEGER,
             ref_cod_turma INTEGER
+        );");
+
+        DB::statement("CREATE TABLE IF NOT EXISTS public.menus (
+            id SERIAL PRIMARY KEY,
+            name TEXT,
+            process INTEGER,
+            old INTEGER
+        );");
+
+        DB::statement("CREATE TABLE IF NOT EXISTS public.menu_tipo_usuario (
+            menu_id INTEGER,
+            tipo_usuario_id INTEGER,
+            visualiza INTEGER DEFAULT 1,
+            cadastra INTEGER DEFAULT 1,
+            exclui INTEGER DEFAULT 1,
+            PRIMARY KEY (menu_id, tipo_usuario_id)
+        );");
+
+        DB::statement("CREATE TABLE IF NOT EXISTS financeiro.menus (
+            id SERIAL PRIMARY KEY,
+            name TEXT,
+            process INTEGER,
+            old INTEGER
+        );");
+
+        DB::statement("CREATE TABLE IF NOT EXISTS financeiro.menu_tipo_usuario (
+            menu_id INTEGER,
+            tipo_usuario_id INTEGER,
+            visualiza INTEGER DEFAULT 1,
+            cadastra INTEGER DEFAULT 1,
+            exclui INTEGER DEFAULT 1,
+            PRIMARY KEY (menu_id, tipo_usuario_id)
         );");
 
         try {

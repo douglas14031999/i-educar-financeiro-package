@@ -422,19 +422,13 @@ class AlunoBuscaController extends Controller
             ]);
         }
 
-        // Cria ou atualiza o vínculo do aluno com este responsável como principal
-        AlunoResponsavel::where('aluno_id', $alunoId)->update(['responsavel_principal' => false]);
-
-        $vinculo = AlunoResponsavel::updateOrCreate(
-            [
-                'aluno_id' => $alunoId,
-                'responsavel_id' => $responsavel->id,
-            ],
-            [
-                'parentesco' => $validated['parentesco'] ?: 'Responsável',
-                'percentual_rateio' => 100.00,
-                'responsavel_principal' => true,
-            ]
+        // BUG-009: Vincula o responsável ajustando percentuais para garantir soma estrita de 100,00%
+        /** @var \iEducar\Financeiro\Services\RateioResponsavelService $rateioService */
+        $rateioService = app(\iEducar\Financeiro\Services\RateioResponsavelService::class);
+        $vinculo = $rateioService->vincularComAjusteRateio(
+            $alunoId,
+            $responsavel->id,
+            $validated['parentesco'] ?: 'Responsável'
         );
 
         return response()->json([

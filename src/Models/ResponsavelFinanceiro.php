@@ -79,6 +79,11 @@ class ResponsavelFinanceiro extends Model
         return $this->hasMany(AlunoResponsavel::class, 'responsavel_id');
     }
 
+    public function alunos()
+    {
+        return $this->hasMany(AlunoResponsavel::class, 'responsavel_id');
+    }
+
     /**
      * Contratos associados ao responsável
      */
@@ -147,5 +152,64 @@ class ResponsavelFinanceiro extends Model
         }
 
         return false;
+    }
+
+    /**
+     * Créditos gerados por pagamentos a maior (BUG-004)
+     */
+    public function creditos()
+    {
+        return $this->hasMany(CreditoResponsavel::class, 'responsavel_financeiro_id');
+    }
+
+    /**
+     * Créditos disponíveis (não utilizados e não cancelados)
+     */
+    public function creditosDisponiveis()
+    {
+        return $this->creditos()->where('utilizado', false)->where('cancelado', false);
+    }
+
+    /**
+     * Retorna o saldo total de créditos disponíveis
+     */
+    public function getSaldoCreditoDisponivelAttribute(): float
+    {
+        return (float) $this->creditosDisponiveis()->sum('valor');
+    }
+
+    /**
+     * Verifica se o cadastro possui dados essenciais completos (BUG-007)
+     */
+    public function cadastroCompleto(): bool
+    {
+        return !empty($this->cpf_cnpj)
+            && !empty($this->nome)
+            && !empty($this->cep)
+            && !empty($this->logradouro);
+    }
+
+    /**
+     * Guarda por finalidade: Emissão Asaas requer nome e CPF/CNPJ válido (BUG-007)
+     */
+    public function podeEmitirAsaas(): bool
+    {
+        return !empty($this->nome) && !empty($this->cpf_cnpj) && static::validarCpfCnpj($this->cpf_cnpj);
+    }
+
+    /**
+     * Guarda por finalidade: Notificação por WhatsApp requer celular (BUG-007)
+     */
+    public function podeReceberNotificacaoWhatsApp(): bool
+    {
+        return !empty($this->telefone_celular);
+    }
+
+    /**
+     * Guarda por finalidade: Notificação por email requer email válido (BUG-007)
+     */
+    public function podeReceberEmail(): bool
+    {
+        return !empty($this->email) && filter_var($this->email, FILTER_VALIDATE_EMAIL) !== false;
     }
 }

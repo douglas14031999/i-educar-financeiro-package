@@ -14,8 +14,18 @@ class FinanceiroServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        // 0. Carregamento de Helpers
+        if (file_exists(__DIR__ . '/helpers.php')) {
+            require_once __DIR__ . '/helpers.php';
+        }
+
         // 1. Carregamento de Migrations e Seeds
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+
+        // Registro de Middlewares
+        if (isset($this->app['router'])) {
+            $this->app['router']->aliasMiddleware('financeiro.can', \iEducar\Financeiro\Http\Middleware\AutorizarProcessoFinanceiro::class);
+        }
 
         // 2. Carregamento de Rotas Web e API
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
@@ -39,19 +49,57 @@ class FinanceiroServiceProvider extends ServiceProvider
                 __DIR__ . '/../resources/views' => resource_path('views/vendor/financeiro'),
             ], 'financeiro-views');
 
+            $this->publishes([
+                __DIR__ . '/../resources/lang' => resource_path('lang/vendor/financeiro'),
+            ], 'financeiro-translations');
+
             // Registro de Comandos Artisan
             $this->commands([
                 Commands\ProcessarReguaCobrancaCommand::class,
                 Commands\SincronizarCobrancasAsaasCommand::class,
                 Commands\SincronizarMenusCommand::class,
+                Commands\ReprocessarWebhooksCommand::class,
+                Commands\AtualizarStatusTitulosCommand::class,
             ]);
+
+            // Registro de Tarefas Agendadas no Laravel Scheduler (BUG-027.2)
+            $this->callAfterResolving(\Illuminate\Console\Scheduling\Schedule::class, function (\Illuminate\Console\Scheduling\Schedule $schedule) {
+                $schedule->command('financeiro:processar-regua')->dailyAt('08:00');
+                $schedule->command('financeiro:sincronizar-asaas')->hourly();
+                $schedule->command('financeiro:atualizar-status')->dailyAt('00:10');
+                $schedule->command('financeiro:reprocessar-webhooks')->everyFiveMinutes();
+            });
+
+            // Registro de Event Listeners do i-Educar (BUG-014)
+            $matriculaEvents = [
+                Events\MatriculaCriada::class    => Listeners\CriarContratoAposMatricula::class,
+                Events\MatriculaCancelada::class => Listeners\CancelarTitulosMatriculaCancelada::class,
+                'App\Events\MatriculaCriada'     => Listeners\CriarContratoAposMatricula::class,
+                'App\Events\MatriculaCancelada'  => Listeners\CancelarTitulosMatriculaCancelada::class,
+                'matricula.criada'               => Listeners\CriarContratoAposMatricula::class,
+                'matricula.cancelada'            => Listeners\CancelarTitulosMatriculaCancelada::class,
+            ];
+            foreach ($matriculaEvents as $event => $listener) {
+                \Illuminate\Support\Facades\Event::listen($event, $listener);
+            }
+
+            // Registro de Event Listener para Emissão Fiscal (BUG-029)
+            \Illuminate\Support\Facades\Event::listen(
+                Events\TituloPago::class,
+                Listeners\EmitirNfseListener::class
+            );
         }
 
-        // 6. View Composer para integração visual nativa com layout/menus do i-Educar 2.10
+        // 6. View Composer para integração visual nativa com layout/menus do i-Educar 2.10 (BUG-039)
+        // Se as variáveis de menu já foram compartilhadas pelo CompartilharMenuMiddleware, não recalcula
         View::composer(['layout.menu', 'layout.topmenu', 'layout.default', 'financeiro::layouts.app'], function ($view) {
             $data = $view->getData();
 
-            // Garantir que $menu esteja sempre definido
+            if (!empty($data['menu']) && !empty($data['mainmenu'])) {
+                return;
+            }
+
+            // Garantir que $menu esteja sempre definido caso chamado fora do pipeline do middleware
             if (!isset($data['menu']) || empty($data['menu'])) {
                 $user = auth()->user();
                 $menuList = collect();
@@ -84,7 +132,7 @@ class FinanceiroServiceProvider extends ServiceProvider
             // Garantir root, mainmenu, currentMenu e menuPaths
             if (empty($data['mainmenu']) || empty($data['root'])) {
                 $path = '/' . ltrim(request()->path(), '/');
-                if (empty($path) || strpos($path, '/financeiro') === 0 || strpos($path, 'financeiro') === 0) {
+                if (strpos($path, '/financeiro') === 0 || strpos($path, 'financeiro') === 0) {
                     if (class_exists(\App\Menu::class)) {
                         $topmenu = \App\Menu::query()->where('link', $path)->first()
                             ?: \App\Menu::query()->where('link', 'like', "{$path}%")->first()

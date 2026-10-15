@@ -4,6 +4,7 @@ namespace iEducar\Financeiro\Services;
 
 use Carbon\Carbon;
 use iEducar\Financeiro\Models\Titulo;
+use iEducar\Financeiro\Support\AlunoLookup;
 
 class InadimplenciaCheckService
 {
@@ -11,28 +12,44 @@ class InadimplenciaCheckService
      * Verifica se o aluno possui débitos em aberto para fins de rematrícula (Lei 9.870/99)
      *
      * @param int $alunoId
+     * @param int|null $escolaId
+     * @param int $diasTolerancia
      * @return array
      */
-    public function verificarAluno(int $alunoId): array
+    public function verificarAluno(int $alunoId, ?int $escolaId = null, int $diasTolerancia = 0): array
     {
-        $titulosAtrasados = Titulo::with(['responsavel'])
+        $query = Titulo::vencidos()
+            ->with(['responsavel'])
             ->where('aluno_id', $alunoId)
-            ->whereIn('status', ['aberto', 'parcial', 'vencido'])
-            ->where('data_vencimento', '<', Carbon::today()->format('Y-m-d'))
-            ->orderBy('data_vencimento')
-            ->get();
+            ->where('valor_saldo', '>', 0.005);
 
-        $totalDebito = $titulosAtrasados->sum('valor_saldo');
+        if ($escolaId) {
+            $query->where('escola_id', $escolaId);
+        }
+
+        $titulosAtrasados = $query->orderBy('data_vencimento')->get();
+
+        // Se houver tolerância configurada, filtra os títulos cujo atraso é superior à tolerância
+        if ($diasTolerancia > 0) {
+            $titulosAtrasados = $titulosAtrasados->filter(function ($t) use ($diasTolerancia) {
+                return $t->dias_atraso > $diasTolerancia;
+            })->values();
+        }
+
+        AlunoLookup::carregarParaTitulos($titulosAtrasados);
+
+        $totalDebito = (float) $titulosAtrasados->sum('valor_saldo');
         $qtdTitulos = $titulosAtrasados->count();
         $inadimplente = $qtdTitulos > 0;
 
         return [
             'aluno_id' => $alunoId,
+            'aluno_nome' => AlunoLookup::nome($alunoId),
             'inadimplente' => $inadimplente,
             'pode_rematricular' => !$inadimplente,
-            'total_debito' => (float) $totalDebito,
+            'total_debito' => $totalDebito,
             'qtd_titulos_vencidos' => $qtdTitulos,
-            'maior_atraso_dias' => $inadimplente ? Carbon::parse($titulosAtrasados->first()->data_vencimento)->diffInDays(Carbon::today()) : 0,
+            'maior_atraso_dias' => $inadimplente ? (int) $titulosAtrasados->max('dias_atraso') : 0,
             'fundamentacao_legal' => $inadimplente 
                 ? 'De acordo com o Art. 5º da Lei Federal nº 9.870/1999, a instituição de ensino tem o direito legal de recusar a renovação de matrícula (rematrícula) de alunos inadimplentes, sendo vedadas penalidades pedagógicas durante o ano letivo em curso.'
                 : 'Aluno em situação financeira regular perante a instituição.',
@@ -48,19 +65,22 @@ class InadimplenciaCheckService
      */
     public function verificarResponsavel(int $responsavelId): array
     {
-        $titulosAtrasados = Titulo::with(['aluno'])
+        // A33 / BUG-028: Remove with(['aluno']) inexistente e usa Titulo::vencidos() com saldo > 0
+        $titulosAtrasados = Titulo::vencidos()
+            ->with(['responsavel'])
             ->where('responsavel_financeiro_id', $responsavelId)
-            ->whereIn('status', ['aberto', 'parcial', 'vencido'])
-            ->where('data_vencimento', '<', Carbon::today()->format('Y-m-d'))
+            ->where('valor_saldo', '>', 0.005)
             ->orderBy('data_vencimento')
             ->get();
 
-        $totalDebito = $titulosAtrasados->sum('valor_saldo');
+        AlunoLookup::carregarParaTitulos($titulosAtrasados);
+
+        $totalDebito = (float) $titulosAtrasados->sum('valor_saldo');
 
         return [
             'responsavel_id' => $responsavelId,
             'inadimplente' => $titulosAtrasados->isNotEmpty(),
-            'total_debito' => (float) $totalDebito,
+            'total_debito' => $totalDebito,
             'qtd_titulos_vencidos' => $titulosAtrasados->count(),
             'titulos' => $titulosAtrasados,
         ];
@@ -76,21 +96,27 @@ class InadimplenciaCheckService
      * - Mais de 90 dias (PCLD - Perdas Estimadas com Créditos de Liquidação Duvidosa)
      *
      * @param int|null $escolaId
+     * @param int|null $ano
      * @return array
      */
-    public function obterRelatorioAging(?int $escolaId = null): array
+    public function obterRelatorioAging(?int $escolaId = null, ?int $ano = null): array
     {
-        $hoje = Carbon::today();
-
-        $query = Titulo::with(['responsavel'])
-            ->whereIn('status', ['aberto', 'parcial', 'vencido'])
-            ->where('data_vencimento', '<', $hoje->format('Y-m-d'));
+        $query = Titulo::vencidos()
+            ->with(['responsavel'])
+            ->where('valor_saldo', '>', 0.005);
 
         if ($escolaId) {
             $query->where('escola_id', $escolaId);
         }
 
-        $titulosVencidos = $query->get();
+        if ($ano) {
+            $query->whereHas('contrato', function ($q) use ($ano) {
+                $q->where('ano_letivo', $ano);
+            });
+        }
+
+        $titulosVencidos = $query->orderBy('data_vencimento')->get();
+        AlunoLookup::carregarParaTitulos($titulosVencidos, $ano);
 
         $faixas = [
             'faixa_1_30' => ['nome' => '1 a 30 dias', 'total' => 0.0, 'qtd' => 0, 'titulos' => []],
@@ -102,7 +128,7 @@ class InadimplenciaCheckService
         $totalGeralInadimplente = 0.0;
 
         foreach ($titulosVencidos as $titulo) {
-            $diasAtraso = Carbon::parse($titulo->data_vencimento)->diffInDays($hoje);
+            $diasAtraso = $titulo->dias_atraso;
             $saldo = (float) $titulo->valor_saldo;
             $totalGeralInadimplente += $saldo;
 
@@ -126,7 +152,7 @@ class InadimplenciaCheckService
         }
 
         return [
-            'total_geral' => $totalGeralInadimplente,
+            'total_geral' => round($totalGeralInadimplente, 2),
             'total_titulos' => $titulosVencidos->count(),
             'faixas' => $faixas,
         ];

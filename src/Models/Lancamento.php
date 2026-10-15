@@ -27,14 +27,29 @@ class Lancamento extends Model
         'documento_fiscal',
         'observacoes',
         'usuario_id',
+        'valor_pago',
+        'valor_juros',
+        'valor_multa',
+        'valor_desconto',
+        'forma_pagamento',
+        'liquidado_por',
+        'liquidado_em',
+        'cancelado_em',
+        'cancelado_por',
     ];
 
     protected $casts = [
         'escola_id' => 'integer',
         'valor' => 'decimal:2',
+        'valor_pago' => 'decimal:2',
+        'valor_juros' => 'decimal:2',
+        'valor_multa' => 'decimal:2',
+        'valor_desconto' => 'decimal:2',
         'data_competencia' => 'date',
         'data_vencimento' => 'date',
         'data_pagamento' => 'date',
+        'liquidado_em' => 'datetime',
+        'cancelado_em' => 'datetime',
     ];
 
     public function contaBancaria()

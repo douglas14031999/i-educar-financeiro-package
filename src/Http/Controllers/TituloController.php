@@ -16,8 +16,45 @@ class TituloController extends Controller
         $status = $request->input('status');
         $competencia = $request->input('competencia');
         $busca = $request->input('busca');
+        $responsavelId = $request->input('responsavel_id');
+        $contratoId = $request->input('contrato_id');
+        $alunoId = $request->input('aluno_id');
+        $ano = $request->input('ano');
+        $turmaId = $request->input('turma_id');
 
         $query = Titulo::with(['responsavel', 'cobrancaGateway']);
+
+        if ($responsavelId) {
+            $query->where('responsavel_financeiro_id', $responsavelId);
+        }
+
+        if ($contratoId) {
+            $query->where('contrato_id', $contratoId);
+        }
+
+        if ($alunoId) {
+            $query->where('aluno_id', $alunoId);
+        }
+
+        if ($ano) {
+            $query->whereHas('contrato', function ($cq) use ($ano) {
+                $cq->where('ano_letivo', (int) $ano);
+            });
+        }
+
+        if ($turmaId) {
+            try {
+                if (\Illuminate\Support\Facades\Schema::hasTable('pmieducar.matricula') && \Illuminate\Support\Facades\Schema::hasTable('pmieducar.matricula_turma')) {
+                    $query->whereIn('aluno_id', function ($sub) use ($turmaId) {
+                        $sub->select('matricula.aluno_id')
+                            ->from('pmieducar.matricula')
+                            ->join('pmieducar.matricula_turma', 'matricula.cod_matricula', '=', 'matricula_turma.ref_cod_matricula')
+                            ->where('matricula_turma.ref_cod_turma', (int) $turmaId)
+                            ->where('matricula.ativo', 1);
+                    });
+                }
+            } catch (\Throwable $e) {}
+        }
 
         if ($status) {
             if ($status === 'vencido') {
@@ -50,9 +87,26 @@ class TituloController extends Controller
             });
         }
 
-        $titulos = $query->orderBy('data_vencimento')->paginate(20);
+        $titulos = $query->orderBy('data_vencimento')->paginate(20)->withQueryString();
 
-        return view('financeiro::titulos.index', compact('titulos', 'status', 'competencia', 'busca'));
+        \iEducar\Financeiro\Support\AlunoLookup::carregarParaTitulos($titulos, $ano ? (int) $ano : null);
+
+        $responsavelFiltro = $responsavelId ? \iEducar\Financeiro\Models\ResponsavelFinanceiro::find($responsavelId) : null;
+        $contratoFiltro = $contratoId ? \iEducar\Financeiro\Models\Contrato::find($contratoId) : null;
+
+        return view('financeiro::titulos.index', compact(
+            'titulos',
+            'status',
+            'competencia',
+            'busca',
+            'responsavelId',
+            'contratoId',
+            'alunoId',
+            'ano',
+            'turmaId',
+            'responsavelFiltro',
+            'contratoFiltro'
+        ));
     }
 
     /**
@@ -134,31 +188,55 @@ class TituloController extends Controller
 
         // Se foram passados IDs específicos de títulos
         if (!empty($ids)) {
-            $titulos = Titulo::with('cobrancaGateway')->whereIn('id', $ids)->get();
+            // Para lotes com mais de 10 títulos, enfileira para segundo plano (BUG-001 / BUG-002)
+            if (count($ids) > 10) {
+                \iEducar\Financeiro\Jobs\GerarCobrancasGatewayLoteJob::dispatch($ids, null, null, auth()->id());
+                return redirect()->back()->with('success', sprintf(
+                    'Emissão em lote de %d títulos agendada com sucesso. As cobranças estão sendo geradas em segundo plano.',
+                    count($ids)
+                ));
+            }
+
+            /** @var \iEducar\Financeiro\Gateways\Drivers\AsaasGateway $gateway */
+            $gateway = app(\iEducar\Financeiro\Gateways\GatewayManager::class)->driver('asaas');
+
+            $titulos = Titulo::with(['cobrancaGateway', 'responsavel'])
+                ->whereIn('id', $ids)
+                ->whereIn('status', ['aberto', 'parcial', 'vencido'])
+                ->get();
+
             $sucessos = 0;
             $erros = 0;
-
-            /** @var \iEducar\Financeiro\Services\AsaasIntegrationService $asaasService */
-            $asaasService = app(\iEducar\Financeiro\Services\AsaasIntegrationService::class);
+            $ignorados = 0;
 
             foreach ($titulos as $titulo) {
                 try {
-                    if (!$titulo->cobrancaGateway || empty($titulo->cobrancaGateway->gateway_charge_id)) {
-                        $asaasService->emitirCobrancaTitulo($titulo);
-                        $sucessos++;
+                    // Ignora títulos que já possuem cobrança ativa
+                    if ($titulo->cobrancaGateway && !empty($titulo->cobrancaGateway->gateway_charge_id) && $titulo->cobrancaGateway->ativa) {
+                        $ignorados++;
+                        continue;
                     }
+
+                    if (!$titulo->responsavel || empty($titulo->responsavel->cpf_cnpj)) {
+                        $erros++;
+                        continue;
+                    }
+
+                    $gateway->criarCobranca($titulo);
+                    $sucessos++;
                 } catch (\Throwable $e) {
                     $erros++;
+                    \Illuminate\Support\Facades\Log::error("Erro ao emitir cobrança para título #{$titulo->id}: " . $e->getMessage());
                 }
             }
 
-            $msg = "Emissão em lote: {$sucessos} cobrança(s) emitida(s) com sucesso no Asaas.";
-            if ($erros > 0) {
-                $msg .= " Houve erro em {$erros} título(s).";
-                return redirect()->back()->with('warning', $msg);
-            }
+            $mensagens = [];
+            if ($sucessos > 0) $mensagens[] = "{$sucessos} cobrança(s) emitida(s) com sucesso.";
+            if ($ignorados > 0) $mensagens[] = "{$ignorados} já possuíam cobrança ativa.";
+            if ($erros > 0) $mensagens[] = "{$erros} título(s) falharam ou sem CPF.";
 
-            return redirect()->back()->with('success', $msg);
+            $tipoAlerta = $erros > 0 ? 'warning' : 'success';
+            return redirect()->back()->with($tipoAlerta, implode(' ', $mensagens) ?: 'Nenhum título processado.');
         }
 
         // Se foi passada uma competência global
@@ -170,7 +248,7 @@ class TituloController extends Controller
         $competencia = $request->input('competencia');
         $escolaId = $request->input('escola_id');
 
-        \iEducar\Financeiro\Jobs\GerarCobrancasGatewayLoteJob::dispatch('asaas', $competencia, $escolaId);
+        \iEducar\Financeiro\Jobs\GerarCobrancasGatewayLoteJob::dispatch([], $competencia, $escolaId, auth()->id());
 
         return redirect()->back()->with('success', "Processamento em lote agendado para a competência {$competencia}. Os boletos e Pix estão sendo gerados em segundo plano.");
     }
@@ -217,11 +295,21 @@ class TituloController extends Controller
                 if (in_array($statusExterno, ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH']) && !$titulo->isLiquidado()) {
                     /** @var \iEducar\Financeiro\Services\BaixaTituloService $baixaService */
                     $baixaService = app(\iEducar\Financeiro\Services\BaixaTituloService::class);
+
+                    $billingType = strtoupper($dados['billingType'] ?? 'BOLETO');
+                    $forma = match ($billingType) {
+                        'PIX' => 'pix',
+                        'CREDIT_CARD' => 'cartao_credito',
+                        'DEBIT_CARD' => 'cartao_debito',
+                        'TRANSFER', 'DEPOSIT' => 'transferencia',
+                        default => 'boleto',
+                    };
+
                     $baixaService->realizarBaixa($titulo, [
                         'valor_pago' => (float) ($dados['value'] ?? $titulo->valor_saldo),
-                        'forma_pagamento' => ($dados['billingType'] ?? 'BOLETO') === 'PIX' ? 'pix' : 'boleto',
+                        'forma_pagamento' => $forma,
                         'origem_baixa' => 'sincronizacao_gateway',
-                        'data_pagamento' => $dados['paymentDate'] ?? date('Y-m-d'),
+                        'data_pagamento' => \Carbon\Carbon::parse($dados['paymentDate'] ?? ($dados['clientPaymentDate'] ?? now())),
                         'observacoes' => "Baixa confirmada via sincronização manual com Asaas (ID {$titulo->cobrancaGateway->gateway_charge_id})"
                     ]);
                 }
@@ -236,15 +324,124 @@ class TituloController extends Controller
     }
 
     /**
-     * Prepara link de cobrança para disparo via WhatsApp pela secretaria
+     * Sincroniza em lote o status de cobranças selecionadas no Asaas
+     */
+    public function sincronizarLoteAsaas(Request $request)
+    {
+        $tituloIds = $request->input('titulo_ids', []);
+
+        if (is_string($tituloIds)) {
+            $tituloIds = explode(',', $tituloIds);
+        }
+
+        $tituloIds = array_filter(array_map('intval', (array) $tituloIds));
+
+        if (empty($tituloIds)) {
+            return redirect()->back()->with('error', 'Selecione ao menos um título para sincronizar.');
+        }
+
+        /** @var \iEducar\Financeiro\Gateways\GatewayManager $manager */
+        $manager = app(\iEducar\Financeiro\Gateways\GatewayManager::class);
+        $gateway = $manager->driver('asaas');
+        /** @var \iEducar\Financeiro\Services\BaixaTituloService $baixaService */
+        $baixaService = app(\iEducar\Financeiro\Services\BaixaTituloService::class);
+
+        $titulos = Titulo::with(['cobrancaGateway'])
+            ->whereIn('id', $tituloIds)
+            ->get();
+
+        $sucessos = 0;
+        $baixados = 0;
+        $erros = 0;
+        $semCobranca = 0;
+
+        foreach ($titulos as $titulo) {
+            if (!$titulo->cobrancaGateway || empty($titulo->cobrancaGateway->gateway_charge_id)) {
+                $semCobranca++;
+                continue;
+            }
+
+            try {
+                $chargeId = $titulo->cobrancaGateway->gateway_charge_id;
+                $dados = $gateway->consultarCobranca($chargeId);
+
+                if (!empty($dados)) {
+                    $statusExterno = $dados['status'] ?? null;
+                    $updateData = [
+                        'status_externo' => $statusExterno,
+                        'payload_resposta' => $dados,
+                    ];
+
+                    if (!empty($dados['identificationField'])) {
+                        $updateData['linha_digitavel'] = $dados['identificationField'];
+                    }
+                    if (!empty($dados['barCode'])) {
+                        $updateData['codigo_barras'] = $dados['barCode'];
+                    }
+                    if (!empty($dados['pixQrCode'])) {
+                        $updateData['pix_qr_code_base64'] = $dados['pixQrCode'];
+                    }
+                    if (!empty($dados['pixCopiaCola'])) {
+                        $updateData['pix_copia_cola'] = $dados['pixCopiaCola'];
+                    }
+
+                    $titulo->cobrancaGateway->update($updateData);
+
+                    if (in_array($statusExterno, ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH']) && !$titulo->isLiquidado()) {
+                        $baixaService->realizarBaixa($titulo, [
+                            'valor_pago' => (float) ($dados['value'] ?? $titulo->valor_saldo),
+                            'forma_pagamento' => ($dados['billingType'] ?? 'BOLETO') === 'PIX' ? 'pix' : 'boleto',
+                            'origem_baixa' => 'sincronizacao_gateway',
+                            'data_pagamento' => $dados['paymentDate'] ?? date('Y-m-d'),
+                            'observacoes' => "Baixa confirmada via sincronização em lote com Asaas (ID {$chargeId})"
+                        ]);
+                        $baixados++;
+                    }
+
+                    $sucessos++;
+                }
+            } catch (\Throwable $e) {
+                $erros++;
+                \Illuminate\Support\Facades\Log::error("Erro na sincronização em lote do título #{$titulo->id}: " . $e->getMessage());
+            }
+        }
+
+        $mensagens = [];
+        if ($sucessos > 0) $mensagens[] = "{$sucessos} cobrança(s) sincronizada(s).";
+        if ($baixados > 0) $mensagens[] = "{$baixados} pagamento(s) baixado(s).";
+        if ($semCobranca > 0) $mensagens[] = "{$semCobranca} título(s) sem cobrança ativa no Asaas.";
+        if ($erros > 0) $mensagens[] = "{$erros} falha(s) durante a consulta.";
+
+        $tipo = $erros > 0 ? 'warning' : 'success';
+        return redirect()->back()->with($tipo, implode(' ', $mensagens) ?: 'Nenhum título processado.');
+    }
+
+    /**
+     * Prepara link de cobrança para disparo via WhatsApp pela secretaria (BUG-033)
      */
     public function notificarWhatsApp($id)
     {
         $titulo = Titulo::with(['responsavel', 'cobrancaGateway'])->findOrFail($id);
-        $telefone = preg_replace('/\D/', '', $titulo->responsavel->telefone_celular ?? '');
 
-        if (empty($telefone)) {
-            return redirect()->back()->with('error', 'O responsável financeiro não possui telefone celular cadastrado.');
+        if (!$titulo->responsavel || empty($titulo->responsavel->telefone_celular)) {
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'O responsável financeiro não possui telefone celular cadastrado para envio de WhatsApp.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'O responsável financeiro não possui telefone celular cadastrado para envio de WhatsApp.');
+        }
+
+        $telefone = preg_replace('/\D/', '', $titulo->responsavel->telefone_celular ?? '');
+        if (strlen($telefone) < 10) {
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'O número de celular cadastrado é inválido para envio de WhatsApp.',
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'O número de celular cadastrado é inválido para envio de WhatsApp.');
         }
 
         // Adiciona DDI 55 se não tiver
@@ -259,6 +456,21 @@ class TituloController extends Controller
         $mensagem = "Olá, {$titulo->responsavel->nome}! Informamos a mensalidade escolar referente a {$titulo->competencia} (Vencimento: {$vencimento}) no valor de R$ {$valor}. Acesse a 2ª via ou pague com Pix pelo link: {$linkBoleto}";
 
         $url = 'https://api.whatsapp.com/send?phone=' . $telefone . '&text=' . urlencode($mensagem);
+
+        \Illuminate\Support\Facades\Log::info("WhatsApp gerado manualmente para título #{$titulo->id} (Destinatário: {$telefone})", [
+            'usuario_id' => auth()->id(),
+            'titulo_id'  => $titulo->id,
+            'telefone'   => $telefone,
+        ]);
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'url' => $url,
+                'mensagem' => $mensagem,
+                'telefone' => $telefone,
+            ]);
+        }
 
         return redirect()->away($url);
     }

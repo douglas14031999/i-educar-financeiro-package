@@ -88,9 +88,9 @@ class DuploSubmitContratoTest extends TestCase
             $contrato2 = $this->service->criarContratoEParcelas($dados);
             // Se criou contrato diferente (sem unique constraint por número), garante títulos únicos
             $this->assertNotEquals($contrato1->id, $contrato2->id);
-        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
-            // Comportamento esperado: unique constraint impede duplicação
-            $this->assertTrue(true, 'UniqueConstraintViolationException é o comportamento esperado');
+        } catch (\InvalidArgumentException|\Illuminate\Database\UniqueConstraintViolationException $e) {
+            // Comportamento esperado: validação de negócio ou unique constraint impede duplicação
+            $this->assertTrue(true, 'Validação ou Unique constraint impediu duplicação');
         }
 
         // Assert — apenas os títulos do primeiro contrato existem

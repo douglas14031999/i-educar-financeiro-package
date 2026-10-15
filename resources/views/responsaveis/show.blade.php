@@ -12,6 +12,48 @@
 <div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
     <main class="w-full p-4 md:p-6 space-y-6" data-purpose="responsaveis-show-container">
         
+        @php
+            $headerActions = '
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="' . route('financeiro.contratos.create', ['responsavel_id' => $responsavel->id]) . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;" title="Gerar novo contrato escolar para este responsável">
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Criar Contrato
+                    </a>
+                    <a href="' . route('financeiro.titulos.index', ['responsavel_id' => $responsavel->id]) . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;" title="Ver todas as mensalidades e cobranças deste responsável">
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Ver Mensalidades
+                    </a>';
+
+            if ($saldoVencido > 0) {
+                $headerActions .= '
+                    <a href="' . route('financeiro.renegociacao.index', ['responsavel_id' => $responsavel->id]) . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-danger" style="text-decoration: none;" title="Renegociar parcelas em atraso deste responsável">
+                        <svg class="w-4 h-4 text-red-600" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Renegociar Débitos
+                    </a>';
+            }
+
+            $headerActions .= '
+                    <a href="' . route('financeiro.responsaveis.edit', $responsavel->id) . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Editar Cadastro
+                    </a>
+                    <a href="' . route('financeiro.responsaveis.index') . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Voltar
+                    </a>
+                </div>';
+        @endphp
+
         @include('financeiro::partials.page-header', [
             'title' => $responsavel->nome,
             'subtitle' => 'CPF: ' . $responsavel->cpf_cnpj_formatado . ' • E-mail: ' . ($responsavel->email ?: 'Não informado'),
@@ -19,21 +61,67 @@
                 ['label' => 'Responsáveis', 'url' => route('financeiro.responsaveis.index')],
                 ['label' => $responsavel->nome]
             ],
-            'actions' => '
-                <a href="' . route('financeiro.responsaveis.edit', $responsavel->id) . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;">
-                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                    </svg>
-                    Editar Cadastro
-                </a>
-                <a href="' . route('financeiro.responsaveis.index') . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
-                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                    </svg>
-                    Voltar
-                </a>
-            '
+            'actions' => $headerActions
         ])
+
+        <!-- Painel de Indicadores Financeiros do Responsável (FEAT-03) -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-purpose="financeiro-summary-cards">
+            <article class="bg-white shadow-xs border border-slate-200 p-4 relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 inset-x-0 h-1 {{ $saldoVencido > 0 ? 'bg-rose-500' : 'bg-slate-300' }}"></div>
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-[11px] font-bold tracking-wider uppercase {{ $saldoVencido > 0 ? 'text-rose-600' : 'text-slate-500' }}">Saldo Vencido</span>
+                    @if($saldoVencido > 0)
+                        <span class="px-1.5 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-700 rounded-sm">{{ $titulosVencidosCount }} pendente(s)</span>
+                    @endif
+                </div>
+                <div>
+                    <span class="text-2xl font-bold {{ $saldoVencido > 0 ? 'text-rose-700' : 'text-slate-700' }}">
+                        R$ {{ number_format($saldoVencido, 2, ',', '.') }}
+                    </span>
+                    <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">
+                        {{ $saldoVencido > 0 ? 'Exige renegociação ou cobrança' : 'Em dia, sem pendências' }}
+                    </p>
+                </div>
+            </article>
+
+            <article class="bg-white shadow-xs border border-slate-200 p-4 relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 inset-x-0 h-1 bg-[#47728f]"></div>
+                <span class="text-[11px] font-bold tracking-wider uppercase text-slate-500 mb-1">Saldo a Vencer</span>
+                <div>
+                    <span class="text-2xl font-bold text-slate-900">
+                        R$ {{ number_format($saldoAVencer, 2, ',', '.') }}
+                    </span>
+                    <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">Parcelas futuras em aberto</p>
+                </div>
+            </article>
+
+            <article class="bg-white shadow-xs border border-slate-200 p-4 relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 inset-x-0 h-1 {{ $totalCreditos > 0 ? 'bg-emerald-500' : 'bg-slate-300' }}"></div>
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-[11px] font-bold tracking-wider uppercase {{ $totalCreditos > 0 ? 'text-emerald-700' : 'text-slate-500' }}">Crédito Disponível</span>
+                    @if($totalCreditos > 0)
+                        <span class="px-1.5 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 rounded-sm">Ativo</span>
+                    @endif
+                </div>
+                <div>
+                    <span class="text-2xl font-bold {{ $totalCreditos > 0 ? 'text-emerald-700' : 'text-slate-600' }}">
+                        R$ {{ number_format($totalCreditos, 2, ',', '.') }}
+                    </span>
+                    <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">Disponível para abater parcelas</p>
+                </div>
+            </article>
+
+            <article class="bg-white shadow-xs border border-slate-200 p-4 relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 inset-x-0 h-1 bg-cyan-600"></div>
+                <span class="text-[11px] font-bold tracking-wider uppercase text-slate-500 mb-1">Contratos Ativos</span>
+                <div>
+                    <span class="text-2xl font-bold text-cyan-800">
+                        {{ $totalContratosAtivos }}
+                    </span>
+                    <p class="text-xs text-slate-500 mt-1" style="margin: 4px 0 0 0;">Contratos escolares vigentes</p>
+                </div>
+            </article>
+        </section>
 
         <!-- Ficha Cadastral em Cards Modernos -->
         <div class="bg-white shadow-xs border border-slate-200 overflow-hidden">

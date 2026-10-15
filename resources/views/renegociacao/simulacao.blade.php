@@ -136,6 +136,7 @@
                 <input type="hidden" name="desconto_valor" value="{{ $simulacao['desconto_concedido'] }}">
                 <input type="hidden" name="qtd_parcelas" value="{{ $simulacao['qtd_parcelas'] }}">
                 <input type="hidden" name="primeiro_vencimento" value="{{ $simulacao['parcelas'][0]['data_vencimento'] }}">
+                <input type="hidden" name="valor_original_esperado" value="{{ $simulacao['total_original'] }}">
 
                 <div class="text-xs text-slate-500">
                     O termo de confissão de dívida ficará disponível para download em PDF imediatamente após a confirmação.

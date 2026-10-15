@@ -4,6 +4,7 @@ namespace iEducar\Financeiro\Events;
 
 use iEducar\Financeiro\Models\Pagamento;
 use iEducar\Financeiro\Models\Titulo;
+use iEducar\Financeiro\Support\AlunoLookup;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -23,7 +24,7 @@ class TituloPago
     public $pagamento;
 
     /**
-     * @var array Payload fiscal estruturado pronto para provedores de NFS-e
+     * @var array Payload fiscal estruturado pronto para provedores de NFS-e (BUG-029)
      */
     public $payloadFiscal;
 
@@ -34,28 +35,45 @@ class TituloPago
 
         $responsavel = $this->titulo->responsavel;
 
+        // Monta o logradouro completo com número e complemento
+        $enderecoPartes = array_filter([
+            $responsavel?->logradouro,
+            $responsavel?->numero ? 'nº ' . $responsavel->numero : null,
+            $responsavel?->complemento,
+        ]);
+        $logradouroCompleto = implode(', ', $enderecoPartes);
+
+        $nomeAluno = $titulo->aluno_nome ?: ("Aluno #" . $titulo->aluno_id);
+
         // Estrutura padrão para emissão de NFS-e (Nota Fiscal de Serviços Eletrônica)
         $this->payloadFiscal = [
             'referencia_externa' => "TITULO-{$titulo->id}-PAG-{$pagamento->id}",
             'data_emissao' => date('Y-m-d\TH:i:sP'),
+            'competencia' => $titulo->competencia,
             'valor_servicos' => (float) $pagamento->valor_pago,
+            'valor_deducoes' => (float) ($pagamento->valor_desconto_concedido ?? 0),
+            'aliquota_iss' => (float) config('financeiro.fiscal.aliquota_iss', 0.0),
+            'codigo_municipio' => config('financeiro.fiscal.codigo_municipio_ibge', ''),
             'discriminacao' => sprintf(
-                'Serviços educacionais e instrução escolar referente à competência %s do Aluno #%d (%s).',
+                'Serviços educacionais e instrução escolar referente à competência %s do Aluno %s (%s).',
                 $titulo->competencia,
-                $titulo->aluno_id,
+                $nomeAluno,
                 $titulo->observacoes ?? 'Mensalidade Escolar'
             ),
             'tomador' => [
-                'cpf_cnpj' => preg_replace('/\D/', '', $responsavel->cpf_cnpj ?? ''),
-                'razao_social' => $responsavel->nome ?? '',
-                'email' => $responsavel->email ?? '',
-                'telefone' => preg_replace('/\D/', '', $responsavel->celular ?? $responsavel->telefone ?? ''),
+                'cpf_cnpj' => preg_replace('/\D/', '', $responsavel?->cpf_cnpj ?? ''),
+                'razao_social' => $responsavel?->nome ?? '',
+                'email' => $responsavel?->email ?? '',
+                'telefone' => preg_replace('/\D/', '', $responsavel?->telefone_celular ?? ''),
                 'endereco' => [
-                    'logradouro' => $responsavel->endereco ?? '',
-                    'bairro' => $responsavel->bairro ?? '',
-                    'cep' => preg_replace('/\D/', '', $responsavel->cep ?? ''),
-                    'cidade' => $responsavel->cidade ?? '',
-                    'uf' => $responsavel->uf ?? '',
+                    'logradouro' => $logradouroCompleto ?: ($responsavel?->logradouro ?? ''),
+                    'numero' => $responsavel?->numero ?? '',
+                    'complemento' => $responsavel?->complemento ?? '',
+                    'bairro' => $responsavel?->bairro ?? '',
+                    'cep' => preg_replace('/\D/', '', $responsavel?->cep ?? ''),
+                    'cidade' => $responsavel?->cidade ?? '',
+                    'uf' => $responsavel?->estado ?? '',
+                    'estado' => $responsavel?->estado ?? '',
                 ],
             ],
             'dados_pagamento' => [

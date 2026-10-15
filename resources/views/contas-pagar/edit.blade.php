@@ -92,6 +92,20 @@
                             </label>
                             <input type="date" name="data_vencimento" id="data_vencimento" value="{{ old('data_vencimento', $despesa->data_vencimento ? \Carbon\Carbon::parse($despesa->data_vencimento)->format('Y-m-d') : '') }}" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm font-mono focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
                         </div>
+
+                        <div>
+                            <label for="escola_id" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                                Unidade Escolar
+                            </label>
+                            <select name="escola_id" id="escola_id" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+                                <option value="">-- Toda a Rede / Administração Central --</option>
+                                @foreach($escolas as $esc)
+                                    <option value="{{ $esc->id }}" {{ old('escola_id', $despesa->escola_id) == $esc->id ? 'selected' : '' }}>
+                                        {{ $esc->nome }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
 

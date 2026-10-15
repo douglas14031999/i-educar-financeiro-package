@@ -154,6 +154,12 @@
                                 </td>
                                 <td class="py-3.5 px-4 text-center">
                                     <div class="flex items-center justify-center gap-1.5">
+                                        <a href="{{ route('financeiro.contas-pagar.show', $d->id) }}" class="inline-flex items-center p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium border border-slate-200 transition" title="Ver Detalhes">
+                                            <svg class="w-3.5 h-3.5 text-cyan-800" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                            </svg>
+                                        </a>
                                         @if($d->status === 'a_pagar')
                                             <button type="button" onclick="document.getElementById('modal-liquidar-{{ $d->id }}').style.display='flex';" class="inline-flex items-center gap-1 px-2.5 py-1.5 btn-ieducar-action btn-ieducar-green" title="Registrar Liquidação de Pagamento">
                                                 <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">

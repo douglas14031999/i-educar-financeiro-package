@@ -11,12 +11,18 @@ use Illuminate\Routing\Controller;
 
 class RenegociacaoController extends Controller
 {
-    /**
-     * Tela inicial de acordos e seleção de títulos
-     */
     public function index(Request $request)
     {
         $responsavelId = $request->input('responsavel_id');
+        $tituloId = $request->input('titulo_id');
+
+        if (!$responsavelId && $tituloId) {
+            $titulo = Titulo::find($tituloId);
+            if ($titulo) {
+                $responsavelId = $titulo->responsavel_financeiro_id;
+            }
+        }
+
         $responsaveis = ResponsavelFinanceiro::orderBy('nome')->get();
         $titulosPendentes = collect();
         $acordosRecentes = Renegociacao::with(['responsavel'])->orderBy('id', 'desc')->limit(10)->get();
@@ -28,7 +34,7 @@ class RenegociacaoController extends Controller
                 ->get();
         }
 
-        return view('financeiro::renegociacao.index', compact('responsaveis', 'responsavelId', 'titulosPendentes', 'acordosRecentes'));
+        return view('financeiro::renegociacao.index', compact('responsaveis', 'responsavelId', 'tituloId', 'titulosPendentes', 'acordosRecentes'));
     }
 
     /**
@@ -63,19 +69,23 @@ class RenegociacaoController extends Controller
     public function confirmar(Request $request, RenegociacaoService $service)
     {
         $request->validate([
-            'titulos_ids' => 'required|array|min:1',
-            'desconto_valor' => 'nullable|numeric|min:0',
-            'qtd_parcelas' => 'required|integer|min:1|max:24',
-            'primeiro_vencimento' => 'required|date',
+            'titulos_ids'             => 'required|array|min:1',
+            'desconto_valor'          => 'nullable|numeric|min:0',
+            'qtd_parcelas'            => 'required|integer|min:1|max:24',
+            'primeiro_vencimento'     => 'required|date',
+            'valor_original_esperado' => 'nullable|numeric|min:0',
         ]);
 
         try {
+            $valorEsperado = $request->input('valor_original_esperado') !== null ? (float) $request->input('valor_original_esperado') : null;
+
             $renegociacao = $service->confirmar(
                 $request->input('titulos_ids'),
                 (float) $request->input('desconto_valor', 0.0),
                 (int) $request->input('qtd_parcelas', 1),
                 $request->input('primeiro_vencimento'),
-                auth()->id() // A28 — null registrado; contexto web sempre tem usuário pelo middleware auth
+                auth()->id(),
+                $valorEsperado
             );
 
             return redirect()->route('financeiro.renegociacao.termo-pdf', $renegociacao->id)

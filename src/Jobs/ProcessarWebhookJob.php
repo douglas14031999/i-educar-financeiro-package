@@ -19,6 +19,9 @@ class ProcessarWebhookJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 5;
+    public array $backoff = [60, 300, 900, 3600];
+
     /**
      * @var int
      */
@@ -54,20 +57,58 @@ class ProcessarWebhookJob implements ShouldQueue
             }
 
             $cobranca = CobrancaGateway::where('gateway_charge_id', $chargeId)->first();
+
+            // Fallback 1: Resolução por installment (carnê Asaas - BUG-003)
+            if ((!$cobranca || !$cobranca->titulo) && !empty($paymentData['installment'])) {
+                $carne = \iEducar\Financeiro\Models\CarneGateway::where('installment_id', $paymentData['installment'])->first();
+                if ($carne && !empty($carne->titulo_ids)) {
+                    // Localiza o título aberto do carnê com data de vencimento mais próxima
+                    $dueDate = $paymentData['dueDate'] ?? null;
+                    $tituloCarne = Titulo::whereIn('id', $carne->titulo_ids)
+                        ->whereIn('status', ['aberto', 'parcial'])
+                        ->when($dueDate, fn($q) => $q->orderByRaw("ABS(EXTRACT(EPOCH FROM (data_vencimento - ?::date)))", [$dueDate]))
+                        ->first();
+
+                    if ($tituloCarne) {
+                        $cobranca = CobrancaGateway::firstOrCreate(
+                            ['gateway_charge_id' => $chargeId],
+                            [
+                                'titulo_id'       => $tituloCarne->id,
+                                'contrato_id'     => $carne->contrato_id,
+                                'gateway'         => 'asaas',
+                                'installment_id'  => $carne->installment_id,
+                                'carne_id'        => $carne->id,
+                                'status_externo'  => $paymentData['status'] ?? 'PENDING',
+                                'ativa'           => true,
+                            ]
+                        );
+                    }
+                }
+            }
+
+            // Fallback 2: externalReference (título ou formato TIT-{id})
             if (!$cobranca || !$cobranca->titulo) {
-                // Fallback: se a cobrança não estiver indexada pelo gateway_charge_id, tenta pelo externalReference (titulo_id)
                 $externalRef = $paymentData['externalReference'] ?? null;
-                if ($externalRef && is_numeric($externalRef)) {
-                    $tituloFallback = Titulo::find((int) $externalRef);
+                $tituloIdFallback = null;
+                if ($externalRef) {
+                    if (is_numeric($externalRef)) {
+                        $tituloIdFallback = (int) $externalRef;
+                    } elseif (preg_match('/^TIT-(\d+)$/', (string) $externalRef, $m)) {
+                        $tituloIdFallback = (int) $m[1];
+                    }
+                }
+
+                if ($tituloIdFallback) {
+                    $tituloFallback = Titulo::find($tituloIdFallback);
                     if ($tituloFallback) {
                         $cobranca = CobrancaGateway::firstOrCreate(
                             ['gateway_charge_id' => $chargeId],
                             [
                                 'titulo_id'         => $tituloFallback->id,
+                                'contrato_id'       => $tituloFallback->contrato_id,
                                 'gateway'           => 'asaas',
-                                'tipo_cobranca'     => strtolower($paymentData['billingType'] ?? 'pix'),
                                 'status_externo'    => $paymentData['status'] ?? 'PENDING',
-                                'dados_retorno'     => $paymentData,
+                                'ativa'             => true,
                             ]
                         );
                     }
@@ -75,11 +116,26 @@ class ProcessarWebhookJob implements ShouldQueue
             }
 
             if (!$cobranca || !$cobranca->titulo) {
-                $evento->update(['erro' => "Cobrança {$chargeId} não localizada no sistema local"]);
+                $evento->update([
+                    'erro'        => "Cobrança {$chargeId} não localizada no sistema local",
+                    'requer_acao' => true,
+                    'motivo_acao' => "Pagamento recebido no gateway (#{$chargeId}) sem correspondência em títulos locais.",
+                ]);
                 return;
             }
 
             $titulo = $cobranca->titulo;
+
+            // BUG-005: Proteção contra baixa automática em títulos renegociados ou cancelados
+            if (in_array($titulo->status, ['renegociado', 'cancelado'])) {
+                $evento->update([
+                    'erro'        => "Título #{$titulo->id} está {$titulo->status}. Baixa automática bloqueada.",
+                    'requer_acao' => true,
+                    'motivo_acao' => "Pagamento de R$ " . ($paymentData['value'] ?? 0) . " recebido para título com status '{$titulo->status}'. Exige reconciliação manual da secretaria.",
+                ]);
+                Log::warning("ProcessarWebhookJob: pagamento recebido para título #{$titulo->id} com status {$titulo->status}. Marcado para revisão manual.");
+                return;
+            }
 
             if (in_array($eventType, ['PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED_IN_CASH'])) {
                 // A09 (complementar) — Idempotência financeira:

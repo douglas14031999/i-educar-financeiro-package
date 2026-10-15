@@ -94,6 +94,14 @@
                             <input type="text" name="telefone_celular" id="telefone_celular" value="{{ old('telefone_celular', $responsavel->telefone_celular) }}" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm font-mono focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
                         </div>
                     </div>
+
+                    <!-- Status Ativo/Inativo (BUG-025) -->
+                    <div class="mt-4 p-3 bg-slate-50 border border-slate-200">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-800">
+                            <input type="checkbox" name="ativo" value="1" {{ old('ativo', $responsavel->ativo) ? 'checked' : '' }} class="w-4 h-4 text-brand-petroleum rounded border-slate-300 focus:ring-brand-petroleum">
+                            <span>Cadastro Ativo (se desmarcado, o responsável é inativado para emissão de novos contratos e cobranças)</span>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Seção 2: Endereço -->

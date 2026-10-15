@@ -28,14 +28,14 @@ class RenegociacaoService
             ->get();
 
         if ($titulos->isEmpty()) {
-            throw new Exception('Nenhum título elegível encontrado para renegocição.');
+            throw new Exception('Nenhum título elegível encontrado para renegociação.');
         }
 
         // A13 — Todos os títulos devem pertencer ao mesmo responsável financeiro
         $responsaveisIds = $titulos->pluck('responsavel_financeiro_id')->unique();
         if ($responsaveisIds->count() > 1) {
             throw new Exception(
-                'Todos os títulos de uma renegocição devem pertencer ao mesmo responsável financeiro. ' .
+                'Todos os títulos de uma renegociação devem pertencer ao mesmo responsável financeiro. ' .
                 'IDs encontrados: ' . $responsaveisIds->implode(', ')
             );
         }
@@ -171,12 +171,11 @@ class RenegociacaoService
             foreach ($titulosLocked as $titulo) {
                 $renegociacao->titulosOriginais()->attach($titulo->id);
 
-                // Cancela cobrança pendente no Asaas para não gerar cobrança duplicada
                 if ($titulo->cobrancaGateway && !empty($titulo->cobrancaGateway->gateway_charge_id)) {
                     try {
-                        \iEducar\Financeiro\Jobs\CancelarCobrancaGatewayJob::dispatch($titulo->id);
+                        \iEducar\Financeiro\Jobs\CancelarCobrancaGatewayJob::dispatch($titulo->cobrancaGateway->id);
                     } catch (\Throwable $e) {
-                        \Illuminate\Support\Facades\Log::warning("Erro ao despachar cancelamento Asaas para título #{$titulo->id} na renegociação: " . $e->getMessage());
+                        \Illuminate\Support\Facades\Log::warning("Erro ao despachar cancelamento Asaas para cobrança #{$titulo->cobrancaGateway->id} na renegociação: " . $e->getMessage());
                     }
                 }
 

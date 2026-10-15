@@ -70,6 +70,20 @@ class ResponsavelFinanceiroController extends Controller
             return back()->withInput()->withErrors(['cpf_cnpj' => 'O CPF ou CNPJ informado não é válido.']);
         }
 
+        // BUG-025: Suporte à restauração de cadastro soft-deleted com o mesmo CPF
+        $softDeleted = ResponsavelFinanceiro::onlyTrashed()->where('cpf_cnpj', $cpfLimpo)->first();
+        if ($softDeleted) {
+            if ($request->boolean('restaurar')) {
+                $softDeleted->restore();
+                $softDeleted->update($validated);
+                return redirect()->route('financeiro.responsaveis.show', $softDeleted->id)
+                    ->with('success', 'Cadastro anterior deste responsável foi restaurado e atualizado com sucesso.');
+            }
+            return back()->withInput()->withErrors([
+                'cpf_cnpj' => 'Existe um cadastro anterior inativo/excluído com este CPF/CNPJ. Marque a opção de restauração se desejar reativá-lo.',
+            ])->with('pode_restaurar', $softDeleted->id);
+        }
+
         $jaExiste = ResponsavelFinanceiro::where('cpf_cnpj', $cpfLimpo)->exists();
         if ($jaExiste) {
             return back()->withInput()->withErrors(['cpf_cnpj' => 'Já existe um responsável cadastrado com este CPF/CNPJ.']);
@@ -99,7 +113,21 @@ class ResponsavelFinanceiroController extends Controller
                 ->get();
         }
 
-        return view('financeiro::responsaveis.show', compact('responsavel', 'alunosDisponiveis'));
+        $saldoVencido = \iEducar\Financeiro\Models\Titulo::where('responsavel_financeiro_id', $responsavel->id)->vencidos()->sum('valor_saldo');
+        $saldoAVencer = \iEducar\Financeiro\Models\Titulo::where('responsavel_financeiro_id', $responsavel->id)->abertos()->where('data_vencimento', '>=', \Carbon\Carbon::today())->sum('valor_saldo');
+        $totalCreditos = $responsavel->creditosDisponiveis()->sum('valor');
+        $totalContratosAtivos = $responsavel->contratos()->where('status', 'ativo')->count();
+        $titulosVencidosCount = \iEducar\Financeiro\Models\Titulo::where('responsavel_financeiro_id', $responsavel->id)->vencidos()->count();
+
+        return view('financeiro::responsaveis.show', compact(
+            'responsavel',
+            'alunosDisponiveis',
+            'saldoVencido',
+            'saldoAVencer',
+            'totalCreditos',
+            'totalContratosAtivos',
+            'titulosVencidosCount'
+        ));
     }
 
     /**
@@ -132,8 +160,10 @@ class ResponsavelFinanceiroController extends Controller
             'cidade' => 'required|string|max:100',
             'estado' => 'required|string|size:2',
             'observacoes' => 'nullable|string',
-            'ativo' => 'boolean',
+            'ativo' => 'nullable|boolean',
         ]);
+
+        $validated['ativo'] = $request->boolean('ativo', true);
 
         $cpfLimpo = preg_replace('/\D/', '', $validated['cpf_cnpj']);
         if (!ResponsavelFinanceiro::validarCpfCnpj($cpfLimpo)) {
@@ -154,19 +184,25 @@ class ResponsavelFinanceiroController extends Controller
     }
 
     /**
-     * Exclusão
+     * Exclusão (BUG-025)
      */
     public function destroy($id)
     {
         $responsavel = ResponsavelFinanceiro::findOrFail($id);
 
-        // FIN-015 — Bloqueia exclusão se houver títulos (abertos, parciais, vencidos, pagos ou renegociados)
-        if ($responsavel->titulos()->exists()) {
-            return back()->with('error', 'Não é possível excluir fisicamente este responsável financeiro pois existem títulos e histórico financeiro vinculados. Altere o cadastro para inativo (ativo = falso) para preservar a integridade contábil e documental.');
+        // Bloqueia se houver títulos pendentes
+        if ($responsavel->titulos()->whereIn('status', ['aberto', 'parcial', 'vencido'])->exists()) {
+            return back()->with('error', 'Não é possível excluir este responsável pois existem títulos financeiros pendentes ou em aberto.');
         }
 
-        if (\iEducar\Financeiro\Models\Contrato::where('responsavel_financeiro_id', $id)->exists()) {
-            return back()->with('error', 'Não é possível excluir este responsável pois existem contratos associados.');
+        // Bloqueia se houver contratos ativos
+        if (\iEducar\Financeiro\Models\Contrato::where('responsavel_financeiro_id', $id)->where('status', '!=', 'cancelado')->exists()) {
+            return back()->with('error', 'Não é possível excluir este responsável pois existem contratos ativos associados.');
+        }
+
+        // Bloqueia se possuir saldo de créditos financeiros
+        if ($responsavel->creditosDisponiveis()->sum('valor') > 0) {
+            return back()->with('error', 'Não é possível excluir este responsável pois ele possui créditos financeiros disponíveis.');
         }
 
         if ($responsavel->alunos()->exists()) {
@@ -193,9 +229,12 @@ class ResponsavelFinanceiroController extends Controller
         $responsavel = ResponsavelFinanceiro::findOrFail($id);
         $alunoId = (int) $request->input('aluno_id');
         $percentual = (float) $request->input('percentual_rateio');
+        $vinculoExistente = AlunoResponsavel::where('aluno_id', $alunoId)
+            ->where('responsavel_id', $responsavel->id)
+            ->first();
 
         try {
-            AlunoResponsavel::validarSomaRateio($alunoId, $percentual);
+            AlunoResponsavel::validarSomaRateio($alunoId, $percentual, $vinculoExistente?->id);
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
         }

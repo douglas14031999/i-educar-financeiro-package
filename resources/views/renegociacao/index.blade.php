@@ -144,7 +144,7 @@
                             <thead>
                                 <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-[11px] font-semibold tracking-wider">
                                     <th class="py-3 px-4 text-center" width="50">
-                                        <input type="checkbox" id="check-todos" onclick="document.querySelectorAll('.check-titulo').forEach(cb => cb.checked = this.checked);" checked class="w-4 h-4 text-brand-petroleum rounded border-slate-300 focus:ring-brand-petroleum">
+                                        <input type="checkbox" id="check-todos" onclick="document.querySelectorAll('.check-titulo').forEach(cb => cb.checked = this.checked);" {{ empty($tituloId) ? 'checked' : '' }} class="w-4 h-4 text-brand-petroleum rounded border-slate-300 focus:ring-brand-petroleum">
                                     </th>
                                     <th class="py-3 px-4" width="70">ID</th>
                                     <th class="py-3 px-4">Competência / Descrição</th>
@@ -156,9 +156,9 @@
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-slate-700">
                                 @forelse($titulosPendentes as $t)
-                                    <tr class="hover:bg-slate-50/80 transition duration-150">
+                                    <tr class="hover:bg-slate-50/80 transition duration-150 {{ (!empty($tituloId) && $t->id == $tituloId) ? 'bg-amber-50/50' : '' }}">
                                         <td class="py-3.5 px-4 text-center">
-                                            <input type="checkbox" name="titulos_ids[]" value="{{ $t->id }}" class="check-titulo w-4 h-4 text-brand-petroleum rounded border-slate-300 focus:ring-brand-petroleum" checked>
+                                            <input type="checkbox" name="titulos_ids[]" value="{{ $t->id }}" class="check-titulo w-4 h-4 text-brand-petroleum rounded border-slate-300 focus:ring-brand-petroleum" {{ (empty($tituloId) || $t->id == $tituloId) ? 'checked' : '' }}>
                                         </td>
                                         <td class="py-3.5 px-4 font-mono font-medium text-slate-500">
                                             #{{ $t->id }}

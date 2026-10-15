@@ -6,7 +6,6 @@ return [
     | Schema do PostgreSQL
     |--------------------------------------------------------------------------
     | Nome do schema isolado no PostgreSQL onde residem as tabelas financeiras.
-    | Não alterar a menos que haja necessidade estrita de ambiente multi-tenant.
     */
     'schema' => env('FINANCEIRO_DB_SCHEMA', 'financeiro'),
 
@@ -27,27 +26,27 @@ return [
     | Parâmetros de juros, multa e tolerância aplicados aos títulos em atraso.
     */
     'politicas' => [
-        // Multa rescisória / atraso (máximo legal de 2% para mensalidades escolares)
+        // Multa rescisória / atraso (máximo legal de 2% para mensalidades escolares - Lei 9.870/99)
         'multa_percentual' => (float) env('FINANCEIRO_MULTA_PERCENTUAL', 2.00),
 
-        // Juros de mora mensal (1.0% ao mês)
+        // Juros de mora mensal (1.0% ao mês pro-rata die)
         'juros_mensal_percentual' => (float) env('FINANCEIRO_JUROS_MENSAL', 1.00),
 
-        // Dias de carência/tolerância antes de incidir juros e multas
+        // Dias de carência/tolerância antes de incidir encargos ou bloquear rematrícula
         'dias_tolerancia' => (int) env('FINANCEIRO_DIAS_TOLERANCIA', 0),
 
         // Dia de vencimento padrão sugerido para novos contratos
         'dia_vencimento_padrao' => (int) env('FINANCEIRO_DIA_VENCIMENTO_PADRAO', 10),
 
-        // Cancelamento de matrícula: 'apenas_futuras' (mantém vencidas) ou 'todas'
-        'politica_cancelamento_matricula' => 'apenas_futuras',
+        // Cancelamento de matrícula: 'apenas_futuras' (preserva títulos vencidos) ou 'todas'
+        'politica_cancelamento_matricula' => env('FINANCEIRO_CANCELAMENTO_MATRICULA', 'apenas_futuras'),
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Gateway de Pagamento Padrão (MVP: Asaas)
+    | Gateway de Pagamento Integrado (Asaas v3)
     |--------------------------------------------------------------------------
-    | Gateway utilizado para emissão de Boletos Híbridos com Pix e Cartão.
+    | Gateway oficial para emissão de Boletos Híbridos com Pix QR Code e Carnês.
     */
     'gateway_padrao' => env('FINANCEIRO_GATEWAY_PADRAO', 'asaas'),
 
@@ -59,14 +58,7 @@ return [
             'base_url' => env('ASAAS_ENV', 'sandbox') === 'production'
                 ? 'https://api.asaas.com/v3'
                 : 'https://sandbox.asaas.com/api/v3',
-            'dias_vencimento_apos_emissao' => 3,
-        ],
-
-        'efi' => [
-            'client_id' => env('EFI_CLIENT_ID', ''),
-            'client_secret' => env('EFI_CLIENT_SECRET', ''),
-            'certificate_path' => env('EFI_CERTIFICATE_PATH', ''),
-            'sandbox' => env('EFI_SANDBOX', true),
+            'dias_vencimento_apos_emissao' => (int) env('ASAAS_DIAS_VENCIMENTO_EMISSAO', 3),
         ],
     ],
 
@@ -74,13 +66,23 @@ return [
     |--------------------------------------------------------------------------
     | Régua de Cobrança Automatizada (E-mail e WhatsApp)
     |--------------------------------------------------------------------------
-    | Marcos temporais nos quais as notificações de cobrança são enfileiradas.
     */
     'regua_cobranca' => [
         'habilitada' => env('FINANCEIRO_REGUA_HABILITADA', true),
-        'lembretes_antes_vencimento' => [7, 3], // D-7, D-3
-        'notificar_dia_vencimento' => true,      // D0
-        'alertas_apos_vencimento' => [3, 10],   // D+3, D+10
+        'assunto_padrao' => 'Aviso Financeiro Escolar',
+        'horario_comercial_inicio' => 7,
+        'horario_comercial_fim' => 22,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Parâmetros Fiscais (NFS-e / Nota Fiscal de Serviços)
+    |--------------------------------------------------------------------------
+    */
+    'fiscal' => [
+        'nfse_habilitada' => (bool) env('FINANCEIRO_NFSE_HABILITADA', false),
+        'codigo_municipio_ibge' => env('FINANCEIRO_MUNICIPIO_IBGE', ''),
+        'aliquota_iss' => (float) env('FINANCEIRO_ALIQUOTA_ISS', 2.00),
     ],
 
     /*

@@ -55,19 +55,24 @@ class CancelarCobrancaGatewayJob implements ShouldQueue
             return;
         }
 
-        $baseUrl = ($config->environment === 'production')
-            ? 'https://api.asaas.com/v3'
-            : 'https://sandbox.asaas.com/api/v3';
+        /** @var \iEducar\Financeiro\Gateways\Drivers\AsaasGateway $gateway */
+        $gateway = app(\iEducar\Financeiro\Gateways\GatewayManager::class)->driver('asaas');
 
-        $gateway = new AsaasGateway([
-            'api_key'  => $config->api_key,
-            'base_url' => $baseUrl,
-        ]);
-
-        $sucesso = $gateway->cancelarCobranca($cobranca->gateway_charge_id);
+        $sucesso = false;
+        if (!empty($cobranca->gateway_charge_id)) {
+            $sucesso = $gateway->cancelarCobranca($cobranca->gateway_charge_id);
+        } elseif (!empty($cobranca->installment_id)) {
+            $sucesso = $gateway->cancelarParcelamento($cobranca->installment_id);
+        } else {
+            $sucesso = true;
+        }
 
         if ($sucesso) {
-            $cobranca->update(['status_externo' => 'CANCELLED']);
+            $cobranca->update([
+                'status_externo' => 'CANCELLED',
+                'ativa'          => false,
+                'cancelada_em'   => now(),
+            ]);
             Log::info("CancelarCobrancaGatewayJob: cobrança {$cobranca->gateway_charge_id} cancelada no Asaas. Motivo: {$this->motivo}");
         } else {
             throw new \RuntimeException(

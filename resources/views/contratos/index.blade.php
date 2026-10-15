@@ -19,12 +19,20 @@
                 ['label' => 'Contratos']
             ],
             'actions' => '
-                <a href="' . route('financeiro.contratos.create') . '" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
-                    <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                    </svg>
-                    Novo Contrato por Matrícula
-                </a>
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="' . route('financeiro.contratos.matriculas-sem-contrato') . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
+                        <svg class="w-4 h-4 text-amber-600" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Matrículas sem Contrato
+                    </a>
+                    <a href="' . route('financeiro.contratos.create') . '" class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
+                        <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Novo Contrato
+                    </a>
+                </div>
             '
         ])
 
