@@ -244,11 +244,11 @@
                 ['label' => 'Novo Contrato']
             ],
             'actions' => '
-                <a href="' . route('financeiro.contratos.index') . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline text-xs md:text-sm" style="text-decoration: none;">
+                <a href="' . (url()->previous() !== url()->current() ? url()->previous() : route('financeiro.contratos.index')) . '" onclick="if (window.history.length > 1) { window.history.back(); return false; }" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline text-xs md:text-sm cursor-pointer" style="text-decoration: none;">
                     <svg class="w-4 h-4 text-[#47728f]" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
-                    Voltar para Contratos
+                    Voltar
                 </a>
             '
         ])
@@ -1107,7 +1107,7 @@
                                     <span>Emitir Contrato e Gerar Parcelas</span>
                                 </button>
 
-                                <a href="{{ route('financeiro.contratos.index') }}" class="btn-cancelar-operacao">
+                                <a href="{{ url()->previous() !== url()->current() ? url()->previous() : route('financeiro.contratos.index') }}" onclick="if (window.history.length > 1) { window.history.back(); return false; }" class="btn-cancelar-operacao">
                                     Cancelar Operação
                                 </a>
                             </div>
