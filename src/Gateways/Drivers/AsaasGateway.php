@@ -555,4 +555,109 @@ class AsaasGateway implements GatewayInterface
             ];
         }
     }
+
+    /**
+     * Cria um Link de Pagamento no Asaas para o contrato (Cartão de crédito até 12x com repasse de juros)
+     *
+     * POST /v3/paymentLinks
+     *
+     * @param  Contrato $contrato
+     * @param  float    $valor
+     * @param  int      $maxParcelas (default: 12)
+     * @param  int      $validadeDiasUteis (default: 5)
+     * @return array    ['payment_link_id', 'payment_link_url', 'value', 'max_installments']
+     * @throws Exception
+     */
+    public function criarPaymentLink(Contrato $contrato, float $valor, int $maxParcelas = 12, int $validadeDiasUteis = 5): array
+    {
+        $diasCorridos = max(3, (int) ceil($validadeDiasUteis * 1.4)); // 5 dias úteis ~ 7 dias corridos
+
+        $payload = [
+            'name'                 => sprintf('Anuidade Escolar - %s', $contrato->numero_contrato),
+            'description'          => sprintf(
+                'Pagamento de contrato escolar #%s do aluno #%d (%d). Disponível no cartão de crédito em até %dx.',
+                $contrato->numero_contrato,
+                $contrato->aluno_id,
+                $contrato->ano_letivo,
+                $maxParcelas
+            ),
+            'billingType'          => 'CREDIT_CARD',
+            'chargeType'           => 'INSTALLMENT',
+            'value'                => round($valor, 2),
+            'maxInstallmentCount'  => min(12, max(1, $maxParcelas)),
+            'dueDateLimitDays'     => $diasCorridos,
+            'notificationEnabled'  => true,
+            'externalReference'    => 'CTR-' . $contrato->id,
+        ];
+
+        $response = $this->client()->post("{$this->baseUrl}/paymentLinks", $payload);
+
+        if (!$response->successful()) {
+            $erro = $response->json('errors.0.description') ?? $response->body();
+            Log::error('AsaasGateway::criarPaymentLink falhou', [
+                'status'      => $response->status(),
+                'response'    => $response->body(),
+                'contrato_id' => $contrato->id,
+                'payload'     => $payload,
+            ]);
+            throw new Exception("Falha ao gerar link de pagamento no Asaas (HTTP {$response->status()}): {$erro}");
+        }
+
+        $dados = $response->json();
+        $linkId = $dados['id'] ?? null;
+        $url    = $dados['url'] ?? null;
+
+        if (empty($linkId) || empty($url)) {
+            throw new Exception('O Asaas não retornou os identificadores do Link de Pagamento.');
+        }
+
+        Log::info("AsaasGateway::criarPaymentLink gerado com sucesso: {$linkId} ({$url})");
+
+        return [
+            'payment_link_id'  => $linkId,
+            'payment_link_url' => $url,
+            'value'            => (float) ($dados['value'] ?? $valor),
+            'max_installments' => (int) ($dados['maxInstallmentCount'] ?? $maxParcelas),
+            'expira_em'        => Carbon::today()->addDays($diasCorridos)->endOfDay(),
+        ];
+    }
+
+    /**
+     * Consulta o QR Code dinâmico e o código copia-e-cola de uma cobrança Pix no Asaas
+     *
+     * GET /v3/payments/{id}/pixQrCode
+     *
+     * @param  string $gatewayChargeId
+     * @return array  ['encodedImage', 'payload', 'expirationDate']
+     */
+    public function obterPixQrCode(string $gatewayChargeId): array
+    {
+        try {
+            $response = $this->client()->get("{$this->baseUrl}/payments/{$gatewayChargeId}/pixQrCode");
+
+            if ($response->successful()) {
+                $dados = $response->json();
+                return [
+                    'encodedImage'   => $dados['encodedImage'] ?? null,
+                    'payload'        => $dados['payload'] ?? null,
+                    'expirationDate' => $dados['expirationDate'] ?? Carbon::now()->addHours(24)->toIso8601String(),
+                ];
+            }
+
+            Log::warning("AsaasGateway::obterPixQrCode falhou para {$gatewayChargeId}: " . $response->body());
+            return [
+                'encodedImage'   => null,
+                'payload'        => null,
+                'expirationDate' => null,
+            ];
+        } catch (\Throwable $e) {
+            Log::error("AsaasGateway::obterPixQrCode exceção para {$gatewayChargeId}: " . $e->getMessage());
+            return [
+                'encodedImage'   => null,
+                'payload'        => null,
+                'expirationDate' => null,
+            ];
+        }
+    }
 }
+

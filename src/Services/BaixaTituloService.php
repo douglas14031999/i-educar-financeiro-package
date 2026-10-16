@@ -140,6 +140,11 @@ class BaixaTituloService
             $tituloLocked->status        = $titulo_pago ? 'pago' : 'parcial';
             $tituloLocked->save();
 
+            // Atualiza status do contrato para quitado se todas as parcelas foram liquidadas
+            if ($titulo_pago && $tituloLocked->contrato_id) {
+                $this->verificarEAtualizarQuitacaoContrato((int) $tituloLocked->contrato_id);
+            }
+
             event(new \iEducar\Financeiro\Events\TituloPago($tituloLocked, $pagamento));
 
             // Dispara notificacao SSE em tempo real para as telas ativas
@@ -148,6 +153,32 @@ class BaixaTituloService
             return $pagamento;
         });
     }
+
+    /**
+     * Verifica se todas as parcelas de um contrato foram pagas e, em caso positivo,
+     * atualiza o status do contrato para 'quitado' automaticamente.
+     */
+    public function verificarEAtualizarQuitacaoContrato(int $contratoId): void
+    {
+        $contrato = \iEducar\Financeiro\Models\Contrato::find($contratoId);
+        if (!$contrato || $contrato->status === 'cancelado') {
+            return;
+        }
+
+        $temPendentes = $contrato->titulos()
+            ->whereIn('status', ['aberto', 'parcial', 'vencido'])
+            ->where('valor_saldo', '>', 0.00)
+            ->exists();
+
+        if (!$temPendentes && in_array($contrato->status, ['aguardando_pagamento', 'ativo', 'inadimplente'])) {
+            $contrato->update([
+                'status'     => 'quitado',
+                'quitado_em' => Carbon::now(),
+            ]);
+            \Illuminate\Support\Facades\Log::info("Contrato #{$contrato->numero_contrato} foi automaticamente QUITADO.");
+        }
+    }
+
 
     /**
      * Estorna um pagamento preservando o histórico contábil auditado.

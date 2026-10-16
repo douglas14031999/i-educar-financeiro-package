@@ -26,6 +26,13 @@ class Contrato extends Model
         'valor_total_liquido',
         'dia_vencimento',
         'status',
+        'forma_pagamento',
+        'cartao_bandeira',
+        'cartao_nsu',
+        'cartao_tipo',
+        'payment_link_url',
+        'payment_link_id',
+        'quitado_em',
         'motivo_cancelamento',
         'plano_snapshot',
         'cancelado_em',
@@ -47,7 +54,19 @@ class Contrato extends Model
         'plano_snapshot' => 'array',
         'cancelado_em' => 'datetime',
         'cancelado_por' => 'integer',
+        'quitado_em' => 'datetime',
     ];
+
+    public function isQuitado(): bool
+    {
+        return $this->status === 'quitado';
+    }
+
+    public function isAguardandoPagamento(): bool
+    {
+        return $this->status === 'aguardando_pagamento';
+    }
+
 
     public function responsavel()
     {

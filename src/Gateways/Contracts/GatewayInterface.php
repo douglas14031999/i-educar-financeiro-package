@@ -46,4 +46,19 @@ interface GatewayInterface
      * GET /v3/installments/{id}/paymentBook
      */
     public function gerarCarneUrl(string $installmentId): ?string;
+
+    /**
+     * Cria um Link de Pagamento no gateway (Cartão parcelado com repasse de juros).
+     *
+     * POST /v3/paymentLinks
+     */
+    public function criarPaymentLink(Contrato $contrato, float $valor, int $maxParcelas = 12, int $validadeDiasUteis = 5): array;
+
+    /**
+     * Obtém o QR Code em base64 e a chave copia-e-cola de uma cobrança Pix.
+     *
+     * GET /v3/payments/{id}/pixQrCode
+     */
+    public function obterPixQrCode(string $gatewayChargeId): array;
 }
+

@@ -80,16 +80,38 @@ class ContratoController extends Controller
             'responsavel_financeiro_id' => 'nullable|integer',
             'dia_vencimento' => 'required|integer|min:1|max:31',
             'valor_total_descontos' => 'nullable|numeric|min:0',
+            'forma_pagamento' => 'nullable|string|in:dinheiro,cartao_presencial,cartao_credito,pix,boleto,carne',
+            'cartao_bandeira' => 'nullable|string|max:50',
+            'cartao_nsu' => 'nullable|string|max:100',
+            'cartao_tipo' => 'nullable|string|max:20',
+            'cartao_parcelas' => 'nullable|integer|min:1|max:12',
         ]);
 
         try {
             $contrato = $this->contratoService->criarContratoEParcelas($validated);
+
+            if (!empty($validated['forma_pagamento'])) {
+                return redirect()->route('financeiro.contratos.checkout', $contrato->id)
+                    ->with('success', 'Contrato financeiro gerado com sucesso. Confira o fechamento do pagamento abaixo.');
+            }
 
             return redirect()->route('financeiro.contratos.show', $contrato->id)
                 ->with('success', 'Contrato financeiro e parcelas gerados com sucesso.');
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
+    }
+
+    /**
+     * Tela de Fechamento / Checkout Escolar do Contrato
+     */
+    public function checkout($id)
+    {
+        $contrato = Contrato::with(['responsavel', 'plano', 'titulos.cobrancaGateway'])->findOrFail($id);
+        $primeiroTitulo = $contrato->titulos->first();
+        $cobrancaAtiva = $primeiroTitulo?->cobrancaGateway;
+
+        return view('financeiro::contratos.checkout', compact('contrato', 'primeiroTitulo', 'cobrancaAtiva'));
     }
 
     public function show($id)
@@ -99,6 +121,7 @@ class ContratoController extends Controller
 
         return view('financeiro::contratos.show', compact('contrato', 'temTitulosVencidos'));
     }
+
 
     /**
      * Cancelamento de Contrato

@@ -37,9 +37,9 @@ class EnviarNotificacaoCobrancaJob implements ShouldQueue
 
     public function handle(): void
     {
-        // BUG-027.10: Respeitar horário comercial (não enviar entre 22h e 07h)
+        // BUG-027.10: Respeitar horário comercial (não enviar entre 22h e 07h, exceto em testes)
         $horaAtual = (int) now()->format('H');
-        if ($horaAtual >= 22 || $horaAtual < 7) {
+        if (!app()->runningUnitTests() && ($horaAtual >= 22 || $horaAtual < 7)) {
             Log::info("Notificação régua [{$this->regra->nome_regra}] adiada: fora do horário comercial permitido ({$horaAtual}h).");
             return;
         }

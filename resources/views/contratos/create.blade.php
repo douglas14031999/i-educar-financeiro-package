@@ -448,8 +448,165 @@
                 </div>
 
                 {{-- ========================================================================= --}}
+                {{-- SEÇÃO 4: FORMA DE PAGAMENTO E CHECKOUT DA MATRÍCULA                       --}}
+                {{-- ========================================================================= --}}
+                <div class="space-y-4 pt-4 border-t border-slate-200">
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+                        <div class="flex items-center gap-2.5">
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#47728f] text-white text-xs font-bold shadow-2xs">4</span>
+                            <div>
+                                <h3 class="text-xs md:text-sm font-bold text-slate-900 uppercase tracking-wider" style="margin: 0;">
+                                    Condição de Pagamento e Checkout da Matrícula
+                                </h3>
+                                <p class="text-xs text-slate-500" style="margin: 2px 0 0 0;">
+                                    Escolha como o responsável quitará o contrato para automatizar a baixa e a emissão no Asaas
+                                </p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 font-semibold border border-emerald-200">
+                            Automação Integrada
+                        </span>
+                    </div>
+
+                    {{-- Grid das 6 Opções de Pagamento --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        
+                        {{-- 1. Dinheiro à Vista --}}
+                        <label class="cursor-pointer border border-slate-200 p-3.5 bg-white hover:border-[#47728f] transition flex flex-col justify-between relative payment-option-card" id="card_pagto_dinheiro">
+                            <div class="flex items-start gap-3">
+                                <input type="radio" name="forma_pagamento" value="dinheiro" class="mt-1 text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'dinheiro' ? 'checked' : '' }}>
+                                <div>
+                                    <span class="block text-xs font-bold text-slate-900">💵 Dinheiro (À Vista)</span>
+                                    <span class="block text-[11px] text-slate-500 mt-1">Baixa imediata no caixa de balcão e emissão do Recibo Oficial.</span>
+                                </div>
+                            </div>
+                            <span class="mt-2 text-[10px] font-bold text-emerald-700 uppercase">Nasce Quitado</span>
+                        </label>
+
+                        {{-- 2. Cartão Presencial (Maquininha POS) --}}
+                        <label class="cursor-pointer border border-slate-200 p-3.5 bg-white hover:border-[#47728f] transition flex flex-col justify-between relative payment-option-card" id="card_pagto_cartao_presencial">
+                            <div class="flex items-start gap-3">
+                                <input type="radio" name="forma_pagamento" value="cartao_presencial" class="mt-1 text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'cartao_presencial' ? 'checked' : '' }}>
+                                <div>
+                                    <span class="block text-xs font-bold text-slate-900">💳 Cartão Presencial (POS)</span>
+                                    <span class="block text-[11px] text-slate-500 mt-1">Passado na maquininha física da escola. Registra bandeira e NSU.</span>
+                                </div>
+                            </div>
+                            <span class="mt-2 text-[10px] font-bold text-emerald-700 uppercase">Nasce Quitado</span>
+                        </label>
+
+                        {{-- 3. Cartão Online (Link Asaas até 12x) --}}
+                        <label class="cursor-pointer border border-slate-200 p-3.5 bg-white hover:border-[#47728f] transition flex flex-col justify-between relative payment-option-card" id="card_pagto_cartao_credito">
+                            <div class="flex items-start gap-3">
+                                <input type="radio" name="forma_pagamento" value="cartao_credito" class="mt-1 text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'cartao_credito' ? 'checked' : '' }}>
+                                <div>
+                                    <span class="block text-xs font-bold text-slate-900">🌐 Cartão Online (Link Asaas)</span>
+                                    <span class="block text-[11px] text-slate-500 mt-1">Link de crédito em até 12x com repasse de juros (5 dias úteis).</span>
+                                </div>
+                            </div>
+                            <span class="mt-2 text-[10px] font-bold text-amber-600 uppercase">Aguardando Webhook</span>
+                        </label>
+
+                        {{-- 4. PIX Instantâneo (Validade 24h) --}}
+                        <label class="cursor-pointer border border-slate-200 p-3.5 bg-white hover:border-[#47728f] transition flex flex-col justify-between relative payment-option-card" id="card_pagto_pix">
+                            <div class="flex items-start gap-3">
+                                <input type="radio" name="forma_pagamento" value="pix" class="mt-1 text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'pix' ? 'checked' : '' }}>
+                                <div>
+                                    <span class="block text-xs font-bold text-slate-900">⚡ PIX Instantâneo (24h)</span>
+                                    <span class="block text-[11px] text-slate-500 mt-1">QR Code dinâmico na tela com monitoramento em tempo real.</span>
+                                </div>
+                            </div>
+                            <span class="mt-2 text-[10px] font-bold text-sky-700 uppercase">Confirmação em 3s</span>
+                        </label>
+
+                        {{-- 5. Boleto Bancário (1x) --}}
+                        <label class="cursor-pointer border border-slate-200 p-3.5 bg-white hover:border-[#47728f] transition flex flex-col justify-between relative payment-option-card" id="card_pagto_boleto">
+                            <div class="flex items-start gap-3">
+                                <input type="radio" name="forma_pagamento" value="boleto" class="mt-1 text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'boleto' ? 'checked' : '' }}>
+                                <div>
+                                    <span class="block text-xs font-bold text-slate-900">📄 Boleto Bancário (1x)</span>
+                                    <span class="block text-[11px] text-slate-500 mt-1">Boleto único do Asaas com PDF e envio imediato no WhatsApp.</span>
+                                </div>
+                            </div>
+                            <span class="mt-2 text-[10px] font-bold text-amber-600 uppercase">Compensação D+1</span>
+                        </label>
+
+                        {{-- 6. Carnê Escolar (2x a 12x) --}}
+                        <label class="cursor-pointer border border-slate-200 p-3.5 bg-white hover:border-[#47728f] transition flex flex-col justify-between relative payment-option-card" id="card_pagto_carne">
+                            <div class="flex items-start gap-3">
+                                <input type="radio" name="forma_pagamento" value="carne" class="mt-1 text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'carne' ? 'checked' : '' }}>
+                                <div>
+                                    <span class="block text-xs font-bold text-slate-900">📚 Carnê Escolar (Asaas)</span>
+                                    <span class="block text-[11px] text-slate-500 mt-1">Todas as mensalidades do ano com PDF completo de carnê do Asaas.</span>
+                                </div>
+                            </div>
+                            <span class="mt-2 text-[10px] font-bold text-blue-700 uppercase">Contrato Ativo</span>
+                        </label>
+
+                    </div>
+
+                    {{-- Bloco Condicional: Detalhes do Cartão Presencial (POS) --}}
+                    <div id="bloco_cartao_presencial_detalhes" class="p-4 bg-slate-50 border border-slate-200 space-y-3 hidden">
+                        <div class="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            <svg class="w-4 h-4 text-[#47728f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            </svg>
+                            <span>Dados do Comprovante da Maquininha (POS)</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Bandeira do Cartão</label>
+                                <select name="cartao_bandeira" class="w-full text-xs p-2 bg-white border border-slate-300">
+                                    <option value="Visa">Visa</option>
+                                    <option value="Mastercard">Mastercard</option>
+                                    <option value="Elo">Elo</option>
+                                    <option value="Hipercard">Hipercard</option>
+                                    <option value="Amex">American Express</option>
+                                    <option value="Outra">Outra</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tipo de Operação</label>
+                                <select name="cartao_tipo" class="w-full text-xs p-2 bg-white border border-slate-300">
+                                    <option value="credito_vista">Crédito à Vista</option>
+                                    <option value="debito">Débito</option>
+                                    <option value="credito_parcelado">Crédito Parcelado</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Código de Autorização / NSU</label>
+                                <input type="text" name="cartao_nsu" placeholder="Ex: 082914" class="w-full text-xs p-2 bg-white border border-slate-300">
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Bloco Condicional: Detalhes do Cartão Online Link --}}
+                    <div id="bloco_cartao_credito_detalhes" class="p-4 bg-slate-50 border border-slate-200 space-y-2 hidden">
+                        <div class="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            <span>Configuração do Link Asaas</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Parcelamento Máximo Liberado</label>
+                                <select name="cartao_parcelas" class="w-full text-xs p-2 bg-white border border-slate-300">
+                                    <option value="12" selected>Até 12x com repasse de juros</option>
+                                    <option value="10">Até 10x com repasse de juros</option>
+                                    <option value="6">Até 6x com repasse de juros</option>
+                                    <option value="1">Apenas 1x (à vista no crédito)</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center text-xs text-slate-500 pt-5">
+                                <span>* Link gerado com validade de 5 dias úteis e repasse automático de taxas para o cliente.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                {{-- ========================================================================= --}}
                 {{-- AÇÕES DO FORMULÁRIO (RODAPÉ)                                              --}}
                 {{-- ========================================================================= --}}
+
                 <div class="pt-5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div class="flex items-center gap-2 text-xs text-slate-500">
                         <span class="text-rose-500 font-bold">*</span>
@@ -1303,10 +1460,46 @@ document.addEventListener('DOMContentLoaded', function () {
         `;
     });
 
+    // Toggle visual das opções de pagamento
+    const paymentRadios = document.querySelectorAll('input[name="forma_pagamento"]');
+    const blocoCartaoPresencial = document.getElementById('bloco_cartao_presencial_detalhes');
+    const blocoCartaoCredito = document.getElementById('bloco_cartao_credito_detalhes');
+
+    function atualizarOpcoesPagamento() {
+        document.querySelectorAll('.payment-option-card').forEach(card => {
+            card.classList.remove('border-[#47728f]', 'bg-blue-50/40', 'ring-1', 'ring-[#47728f]');
+            card.classList.add('border-slate-200');
+        });
+
+        if (blocoCartaoPresencial) blocoCartaoPresencial.classList.add('hidden');
+        if (blocoCartaoCredito) blocoCartaoCredito.classList.add('hidden');
+
+        const selecionado = document.querySelector('input[name="forma_pagamento"]:checked');
+        if (selecionado) {
+            const card = selecionado.closest('.payment-option-card');
+            if (card) {
+                card.classList.remove('border-slate-200');
+                card.classList.add('border-[#47728f]', 'bg-blue-50/40', 'ring-1', 'ring-[#47728f]');
+            }
+
+            if (selecionado.value === 'cartao_presencial' && blocoCartaoPresencial) {
+                blocoCartaoPresencial.classList.remove('hidden');
+            } else if (selecionado.value === 'cartao_credito' && blocoCartaoCredito) {
+                blocoCartaoCredito.classList.remove('hidden');
+            }
+        }
+    }
+
+    paymentRadios.forEach(radio => {
+        radio.addEventListener('change', atualizarOpcoesPagamento);
+    });
+    atualizarOpcoesPagamento();
+
     // Caso volte de erro com old('aluno_id')
     @if(old('aluno_id'))
         carregarDetalhesAluno({{ old('aluno_id') }});
     @endif
+
 
     // Inicializa simulação se já tiver plano selecionado
     if (selectPlano.value) {

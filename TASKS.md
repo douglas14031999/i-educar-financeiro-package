@@ -216,3 +216,37 @@
   - [x] **TC-13:** Fila e reprocessamento de webhooks com falha temporária via comando `financeiro:reprocessar-webhooks --limit=50`.
   - [x] **TC-14:** Integração de eventos de matrícula do i-Educar (`MatriculaCriada`, `MatriculaCancelada`) e exibição de alunos sem contrato na tela "Matrículas sem Contrato".
   - [x] **Documentação de Homologação:** Gerado o documento oficial [docs/HOMOLOGACAO-EVIDENCIAS.md](file:///c:/Users/Douglas/Downloads/i-educar-financeiro-package/docs/HOMOLOGACAO-EVIDENCIAS.md).
+
+---
+
+### Fase 7: Checkout Multimodal de Contratos e Integração Asaas (PRD v3.1) `[x] 100% Concluída`
+
+- [x] **T7.1: Migration de Schema para Contratos Multimodais (Migration 000024)**
+  - Adicionar colunas `forma_pagamento`, `cartao_bandeira`, `cartao_nsu`, `cartao_tipo`, `payment_link_url`, `payment_link_id` e `quitado_em` na tabela `financeiro.contratos`.
+  - Adicionar `qr_code_base64`, `pix_copia_cola`, `tipo_cobranca` e `expira_em` na tabela `financeiro.cobrancas_gateway`.
+- [x] **T7.2: Implementação de Payment Links e Pix no AsaasGateway**
+  - Implementar `criarPaymentLink(Contrato $contrato, float $valor, int $maxParcelas = 12)` com repasse de juros e validade de 5 dias úteis (`dueDateLimitDays: 7`).
+  - Implementar geração de Pix com validade de 24 horas e recuperação/cache do QR Code dinâmico (`obterPixQrCode($paymentId)`).
+- [x] **T7.3: Orquestração no ContratoService (Checkout Escolar Multimodal)**
+  - Atualizar `ContratoService::criarContratoEParcelas` para processar as 6 formas de pagamento:
+    - `dinheiro`: Gera título, baixa imediata no caixa e status `quitado`.
+    - `cartao_presencial`: Coleta bandeira, NSU e parcelas, baixa imediata e status `quitado`.
+    - `cartao_credito`: Gera Link de Pagamento Asaas até 12x (5 dias úteis), status `aguardando_pagamento`.
+    - `pix`: Gera cobrança Pix com QR Code 24h, status `aguardando_pagamento`.
+    - `boleto`: Gera boleto à vista no Asaas, status `aguardando_pagamento`.
+    - `carne`: Gera installment no Asaas e vincula cobranças, status `ativo`.
+- [x] **T7.4: Transição Automática de Status e Quitação de Contratos no Webhook**
+  - No `ProcessarWebhookJob`, após liquidar o título, disparar `verificarEAtualizarQuitacaoContrato($contratoId)`.
+  - Transicionar contrato para `quitado` automaticamente assim que não houver parcelas com saldo pendente.
+  - Manter contratos vencidos pendentes para cobrança ativa pela régua agendada (`financeiro:processar-regua`).
+- [x] **T7.5: Interface de Checkout na Criação de Contrato (`contratos/create` e `contratos/checkout`)**
+  - Seletor visual moderno com 6 botões e ícones para forma de pagamento.
+  - Campos condicionais para Cartão Presencial (Bandeira, NSU, Débito/Crédito).
+  - Tela/modal de checkout pós-criação com QR Code Pix em tela grande, botão de WhatsApp (`wa.me`), botão de impressão de recibo oficial ou carnê Asaas.
+  - Endpoint leve de polling `/financeiro/titulos/{id}/status-stream` para notificação em tempo real de pagamento recebido.
+- [x] **T7.6: Bateria de Testes Automatizados da Fase 7**
+  - Testes cobrindo cada uma das 6 formas de pagamento.
+  - Teste de persistência de dados de maquineta (bandeira/NSU) e quitação imediata.
+  - Teste de conciliação por webhook e transição para `quitado` na última parcela de carnê.
+
+

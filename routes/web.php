@@ -52,6 +52,9 @@ Route::group(['prefix' => $prefix, 'as' => 'financeiro.', 'middleware' => $middl
         ->name('contratos.matriculas-sem-contrato')
         ->middleware('financeiro.can:MENU_CONTRATOS,visualiza');
     Route::resource('contratos', 'ContratoController')->only(['index', 'create', 'store', 'show'])->middleware('financeiro.can:MENU_CONTRATOS,visualiza');
+    Route::get('contratos/{id}/checkout', 'ContratoController@checkout')
+        ->name('contratos.checkout')
+        ->middleware('financeiro.can:MENU_CONTRATOS,visualiza');
     Route::post('contratos/{id}/gerar-titulos', 'ContratoController@gerarTitulos')
         ->name('contratos.gerar-titulos')
         ->middleware('financeiro.can:MENU_CONTRATOS,cadastra');

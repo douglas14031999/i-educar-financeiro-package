@@ -12,6 +12,7 @@ class CobrancaGateway extends Model
         'titulo_id',
         'contrato_id',
         'gateway',
+        'tipo_cobranca',
         'gateway_charge_id',
         'installment_id',
         'status_externo',
@@ -25,6 +26,8 @@ class CobrancaGateway extends Model
         'cancelada_em',
         'pix_copia_cola',
         'pix_qr_code_base64',
+        'qr_code_base64',
+        'expira_em',
         'payload_requisicao',
         'payload_resposta',
     ];
@@ -35,6 +38,7 @@ class CobrancaGateway extends Model
         'carne_id'         => 'integer',
         'ativa'            => 'boolean',
         'cancelada_em'     => 'datetime',
+        'expira_em'        => 'datetime',
         'payload_requisicao' => 'array',
         'payload_resposta'   => 'array',
     ];

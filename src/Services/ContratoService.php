@@ -223,6 +223,7 @@ class ContratoService
             ]);
 
             $totalParcelas = $plano->itens->where('numero_parcela', '>', 0)->count();
+            $titulosCriados = [];
 
             foreach ($plano->itens as $item) {
                 // FIN-007: Se número da parcela for > 12, avança o ano letivo correspondente
@@ -252,7 +253,7 @@ class ContratoService
                         continue;
                     }
 
-                    Titulo::create([
+                    $titulosCriados[] = Titulo::create([
                         'contrato_id'               => $contrato->id,
                         'aluno_id'                  => $alunoId,
                         'responsavel_financeiro_id' => $vinculo->responsavel_id,
@@ -278,9 +279,155 @@ class ContratoService
                 }
             }
 
+            // Orquestra a modalidade de pagamento escolhida no ato do contrato
+            $this->processarModalidadePagamento($contrato, $titulosCriados, $dados);
+
             return $contrato;
         });
     }
+
+    /**
+     * Orquestra as 6 modalidades de pagamento e inicializa a integracao de gateway ou baixa de balcao.
+     */
+    public function processarModalidadePagamento(Contrato $contrato, array $titulos, array $dados): void
+    {
+        $formaPagamento = $dados['forma_pagamento'] ?? null;
+        if (empty($formaPagamento)) {
+            return;
+        }
+
+        switch ($formaPagamento) {
+            case 'dinheiro':
+                $baixaService = app(BaixaTituloService::class);
+                foreach ($titulos as $titulo) {
+                    $baixaService->realizarBaixa($titulo, [
+                        'valor_pago'      => (float) $titulo->valor_saldo,
+                        'forma_pagamento' => 'dinheiro',
+                        'data_pagamento'  => Carbon::today(),
+                        'origem_baixa'    => 'balcao',
+                        'usuario_id'      => auth()->id() ?? null,
+                    ]);
+                }
+                $contrato->update([
+                    'forma_pagamento' => 'dinheiro',
+                    'status'          => 'quitado',
+                    'quitado_em'      => Carbon::now(),
+                ]);
+                break;
+
+            case 'cartao_presencial':
+                $baixaService = app(BaixaTituloService::class);
+                foreach ($titulos as $titulo) {
+                    $baixaService->realizarBaixa($titulo, [
+                        'valor_pago'      => (float) $titulo->valor_saldo,
+                        'forma_pagamento' => 'cartao_presencial',
+                        'data_pagamento'  => Carbon::today(),
+                        'origem_baixa'    => 'balcao_pos',
+                        'usuario_id'      => auth()->id() ?? null,
+                    ]);
+                }
+                $contrato->update([
+                    'forma_pagamento' => 'cartao_presencial',
+                    'cartao_bandeira' => $dados['cartao_bandeira'] ?? null,
+                    'cartao_nsu'      => $dados['cartao_nsu'] ?? null,
+                    'cartao_tipo'     => $dados['cartao_tipo'] ?? 'credito_vista',
+                    'status'          => 'quitado',
+                    'quitado_em'      => Carbon::now(),
+                ]);
+                break;
+
+            case 'cartao_credito': // Link Asaas até 12x com repasse de juros (validade 5 dias úteis)
+                $contrato->update([
+                    'forma_pagamento' => 'cartao_credito',
+                    'status'          => 'aguardando_pagamento',
+                ]);
+                try {
+                    $gateway = app(\iEducar\Financeiro\Gateways\GatewayManager::class);
+                    $maxParcelas = (int) ($dados['cartao_parcelas'] ?? 12);
+                    $res = $gateway->criarPaymentLink($contrato, (float) $contrato->valor_total_liquido, $maxParcelas, 5);
+                    $contrato->update([
+                        'payment_link_url' => $res['payment_link_url'] ?? null,
+                        'payment_link_id'  => $res['payment_link_id'] ?? null,
+                    ]);
+                    if (!empty($titulos)) {
+                        CobrancaGateway::create([
+                            'titulo_id'         => $titulos[0]->id,
+                            'contrato_id'       => $contrato->id,
+                            'gateway'           => 'asaas',
+                            'tipo_cobranca'     => 'payment_link',
+                            'gateway_charge_id' => $res['payment_link_id'] ?? 'LINK-' . $contrato->id,
+                            'link_pagamento'    => $res['payment_link_url'] ?? null,
+                            'status_externo'    => 'ACTIVE',
+                            'ativa'             => true,
+                            'expira_em'         => $res['expira_em'] ?? Carbon::now()->addDays(7),
+                        ]);
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("ContratoService: Falha ao gerar payment link Asaas: " . $e->getMessage());
+                }
+                break;
+
+            case 'pix': // Pix Instantâneo (Validade 24h)
+                $contrato->update([
+                    'forma_pagamento' => 'pix',
+                    'status'          => 'aguardando_pagamento',
+                ]);
+                if (!empty($titulos)) {
+                    try {
+                        $gateway = app(\iEducar\Financeiro\Gateways\GatewayManager::class);
+                        $res = $gateway->criarCobranca($titulos[0], ['billingType' => 'PIX']);
+                        $titulos[0]->cobrancasGateway()->updateOrCreate(
+                            ['titulo_id' => $titulos[0]->id, 'gateway_charge_id' => $res['gateway_charge_id']],
+                            [
+                                'contrato_id'    => $contrato->id,
+                                'gateway'        => 'asaas',
+                                'tipo_cobranca'  => 'pix',
+                                'status_externo' => $res['status_externo'] ?? 'PENDING',
+                                'pix_copia_cola' => $res['pix_copia_cola'] ?? null,
+                                'qr_code_base64' => $res['pix_qr_code_base64'] ?? null,
+                                'link_pagamento' => $res['link_boleto_pdf'] ?? null,
+                                'ativa'          => true,
+                                'expira_em'      => Carbon::now()->addHours(24),
+                            ]
+                        );
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning("ContratoService: Falha ao emitir Pix Asaas: " . $e->getMessage());
+                    }
+                }
+                break;
+
+            case 'boleto': // Boleto 1x à vista
+                $contrato->update([
+                    'forma_pagamento' => 'boleto',
+                    'status'          => 'aguardando_pagamento',
+                ]);
+                if (!empty($titulos)) {
+                    try {
+                        $gateway = app(\iEducar\Financeiro\Gateways\GatewayManager::class);
+                        $gateway->criarCobranca($titulos[0], ['billingType' => 'BOLETO']);
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning("ContratoService: Falha ao emitir Boleto Asaas: " . $e->getMessage());
+                    }
+                }
+                break;
+
+            case 'carne': // Carnê 2x a 12x Asaas
+                $contrato->update([
+                    'forma_pagamento' => 'carne',
+                    'status'          => 'ativo',
+                ]);
+                if (count($titulos) >= 2) {
+                    try {
+                        $carneService = app(CarneService::class);
+                        $carneService->gerarCarneInstallment($contrato, $titulos, auth()->id() ?? null);
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning("ContratoService: Falha ao gerar carnê Asaas: " . $e->getMessage());
+                    }
+                }
+                break;
+        }
+    }
+
 
     /**
      * Distribui um valor monetário entre vínculos pelo algoritmo Largest Remainder.
