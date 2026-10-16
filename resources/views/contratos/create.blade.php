@@ -2595,6 +2595,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 return false;
             }
 
+            // Habilita inputs de rateio
+            inputRateio0Id.disabled = false;
+            inputRateio0Pct.disabled = false;
+            inputRateio0Forma.disabled = false;
+            inputRateio0Venc.disabled = false;
+            inputRateio1Id.disabled = false;
+            inputRateio1Pct.disabled = false;
+            inputRateio1Forma.disabled = false;
+            inputRateio1Venc.disabled = false;
+
             // Sincroniza inputs hidden para envio ao backend
             inputResponsavelId.value = resp0.responsavel_financeiro_id;
             inputRateio0Id.value = resp0.responsavel_financeiro_id;
@@ -2612,6 +2622,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert('Selecione o responsável financeiro titular da cobrança no Passo 2.');
                 return false;
             }
+
+            // Desabilita inputs de rateio para não enviar lixo no POST de titular único
+            inputRateio0Id.disabled = true;
+            inputRateio0Pct.disabled = true;
+            inputRateio0Forma.disabled = true;
+            inputRateio0Venc.disabled = true;
+            inputRateio1Id.disabled = true;
+            inputRateio1Pct.disabled = true;
+            inputRateio1Forma.disabled = true;
+            inputRateio1Venc.disabled = true;
         }
 
         const btnSubmit = document.getElementById('btn_submit_contrato');

@@ -324,9 +324,477 @@
         </div>
 
         {{-- ═══════════════════════════════════════════════════════════════════════
-             CENÁRIO 1 — QUITADO (DINHEIRO / CARTÃO PRESENCIAL POS)
+             CENÁRIO 0 — RATEIO FINANCEIRO (2 OU MAIS RESPONSÁVEIS)
              ═══════════════════════════════════════════════════════════════════════ --}}
-        @if($contrato->status === 'quitado')
+        @if(($ehRateio ?? false) && ($rateioResponsaveis ?? collect())->isNotEmpty())
+
+            {{-- Banner Explicativo do Rateio --}}
+            <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-[#47728f] text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                        👥
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-sm font-extrabold text-slate-900 uppercase tracking-wider m-0">Checkout com Rateio Financeiro</h2>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
+                                {{ $rateioResponsaveis->count() }} Responsáveis Definidos
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-0.5 mb-0">
+                            As cobranças foram geradas separadamente para cada responsável conforme as porcentagens e modalidades acordadas.
+                        </p>
+                    </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <span class="text-xs text-slate-500 font-semibold block">Total do Contrato</span>
+                    <span class="text-base font-extrabold text-slate-900">R$ {{ number_format($contrato->valor_total_liquido, 2, ',', '.') }}</span>
+                </div>
+            </div>
+
+            {{-- Duas Seções: uma para cada responsável do rateio --}}
+            <div class="space-y-6">
+                @foreach($rateioResponsaveis as $idx => $itemRateio)
+                    @php
+                        $ordem = ($idx === 0) ? '1º' : (($idx === 1) ? '2º' : ($idx + 1) . 'º');
+                        $respObj = $itemRateio->responsavel;
+                        $nomeResp = $respObj?->nome ?? ('Responsável ' . ($idx + 1));
+                        $cpfResp = $respObj?->cpf_cnpj ?? 'Não informado';
+                        $telRespRaw = preg_replace('/\D/', '', $respObj?->telefone_celular ?? $respObj?->telefone_fixo ?? '');
+                        $cobranca = $itemRateio->cobranca_ativa;
+                        $forma = $itemRateio->forma_pagamento;
+                        $titulosResp = $itemRateio->titulos ?? collect();
+                        $primeiroTit = $itemRateio->primeiro_titulo ?? $titulosResp->first();
+                        $estaQuitado = ($itemRateio->status === 'quitado') || ($contrato->status === 'quitado');
+                    @endphp
+
+                    <div class="co-panel border-2 {{ $idx === 0 ? 'border-sky-300' : 'border-indigo-300' }} shadow-sm">
+                        {{-- Header da Seção do Responsável --}}
+                        <div class="co-panel-header bg-slate-50/70 border-b border-slate-200">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-9 h-9 rounded-full {{ $idx === 0 ? 'bg-sky-600' : 'bg-indigo-600' }} text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-xs">
+                                        {{ $ordem }}
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="text-xs font-bold uppercase tracking-wider {{ $idx === 0 ? 'text-sky-800' : 'text-indigo-800' }}">
+                                                {{ $ordem }} Responsável Financeiro
+                                            </span>
+                                            <span class="text-xs text-slate-400">·</span>
+                                            <span class="text-sm font-bold text-slate-900">{{ $nomeResp }}</span>
+                                        </div>
+                                        <div class="text-xs text-slate-500 mt-1 flex items-center gap-3 flex-wrap">
+                                            <span><strong>CPF:</strong> {{ $cpfResp }}</span>
+                                            @if($respObj?->telefone_celular)
+                                                <span>·</span>
+                                                <span><strong>WhatsApp/Cel:</strong> {{ $respObj->telefone_celular }}</span>
+                                            @endif
+                                            @if($respObj?->pivot?->parentesco ?? $respObj?->parentesco)
+                                                <span>·</span>
+                                                <span><strong>Parentesco:</strong> {{ ucfirst($respObj?->pivot?->parentesco ?? $respObj?->parentesco) }}</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-4 text-right flex-shrink-0">
+                                    <div>
+                                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Cota / Rateio</div>
+                                        <div class="text-lg font-extrabold text-slate-900">
+                                            R$ {{ number_format($itemRateio->valor_total, 2, ',', '.') }}
+                                            <span class="text-xs font-semibold text-slate-500">({{ $itemRateio->percentual }}%)</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        @if($estaQuitado)
+                                            <span class="co-badge co-badge-quitado">✓ Quitado</span>
+                                        @elseif($forma === 'pix')
+                                            <span class="co-badge co-badge-pix">⚡ Pix Instantâneo</span>
+                                        @elseif($forma === 'boleto')
+                                            <span class="co-badge co-badge-boleto">📄 Boleto (1x)</span>
+                                        @elseif($forma === 'carne')
+                                            <span class="co-badge co-badge-carne">📚 Carnê ({{ $titulosResp->count() }}x)</span>
+                                        @elseif($forma === 'cartao_credito')
+                                            <span class="co-badge co-badge-cartao">🌐 Cartão Link (12x)</span>
+                                        @else
+                                            <span class="co-badge" style="background:#f1f5f9;color:#475569;">{{ ucfirst($forma) }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Corpo da Seção Conforme a Modalidade do Responsável --}}
+                        <div class="co-panel-body">
+                            
+                            {{-- SUB-CENÁRIO A: QUITADO --}}
+                            @if($estaQuitado)
+                                <div class="p-6 bg-emerald-50/70 border border-emerald-200 rounded-md text-center space-y-3">
+                                    <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto text-xl font-bold">
+                                        ✓
+                                    </div>
+                                    <h3 class="text-base font-bold text-slate-900 m-0">Pagamento Deste Responsável Confirmado!</h3>
+                                    <p class="text-xs text-slate-600 max-w-md mx-auto">
+                                        A cota deste responsável (R$ {{ number_format($itemRateio->valor_total, 2, ',', '.') }}) foi devidamente liquidada no sistema.
+                                    </p>
+                                    @if($primeiroTit)
+                                        <div class="pt-2">
+                                            <a href="{{ route('financeiro.titulos.recibo-pdf', $primeiroTit->id) }}" target="_blank"
+                                               class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
+                                               style="text-decoration:none;">
+                                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                                                </svg>
+                                                Imprimir Recibo Oficial
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+
+                            {{-- SUB-CENÁRIO B: PIX --}}
+                            @elseif($forma === 'pix')
+                                <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
+                                    {{-- QR Code --}}
+                                    <div class="flex-shrink-0 flex flex-col items-center gap-3">
+                                        <div class="co-qr-wrapper">
+                                            @if($cobranca && ($cobranca->qr_code_base64 || $cobranca->pix_qr_code_base64))
+                                                <img src="data:image/png;base64,{{ $cobranca->qr_code_base64 ?? $cobranca->pix_qr_code_base64 }}"
+                                                     alt="QR Code Pix — {{ $nomeResp }}">
+                                            @else
+                                                <div class="co-qr-placeholder">
+                                                    <svg width="40" height="40" fill="none" stroke="#94a3b8" viewBox="0 0 24 24">
+                                                        <path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+                                                    </svg>
+                                                    <span>QR Code sendo<br>gerado no Asaas...</span>
+                                                    <span style="font-size:10px;color:#94a3b8;">Recarregue a página</span>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <span class="text-[11px] text-slate-500 text-center max-w-[200px]">
+                                            Aponte a câmera do aplicativo bancário
+                                        </span>
+                                    </div>
+
+                                    {{-- Ações Pix --}}
+                                    <div class="flex-1 w-full space-y-4">
+                                        {{-- Copia e Cola --}}
+                                        <div>
+                                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-2">
+                                                Pix Copia e Cola — Cota {{ $ordem }} Responsável
+                                            </label>
+                                            <div class="co-copy-group">
+                                                <input type="text" id="co-pix-input-{{ $idx }}" readonly
+                                                       value="{{ $cobranca?->pix_copia_cola ?? 'Chave Pix em processamento...' }}"
+                                                       title="Código Pix Copia e Cola">
+                                                <button type="button" class="co-copy-btn" id="co-pix-btn-{{ $idx }}"
+                                                        onclick="copiaCola('co-pix-input-{{ $idx }}','co-pix-btn-{{ $idx }}')">
+                                                    Copiar
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {{-- Info Box --}}
+                                        <div class="bg-slate-50 border border-slate-200 rounded-md p-3.5 text-xs">
+                                            <div class="co-info-row">
+                                                <span>Valor da Cota ({{ $itemRateio->percentual }}%)</span>
+                                                <strong class="text-sm text-slate-900">R$ {{ number_format($itemRateio->valor_total, 2, ',', '.') }}</strong>
+                                            </div>
+                                            <div class="co-info-row">
+                                                <span>Validade</span>
+                                                <strong>24 horas após emissão</strong>
+                                            </div>
+                                            <div class="co-info-row">
+                                                <span>Confirmação Bancária</span>
+                                                <strong class="text-emerald-700">Automática via Webhook Asaas</strong>
+                                            </div>
+                                        </div>
+
+                                        {{-- Botões --}}
+                                        <div class="flex flex-col sm:flex-row gap-3 pt-1">
+                                            @php
+                                                $msgPixResp = urlencode(
+                                                    "Olá " . $nomeResp . "!\n" .
+                                                    "Segue o Pix para pagamento da sua cota (" . $itemRateio->percentual . "%) da matrícula no Contrato " . $contrato->numero_contrato . ".\n" .
+                                                    "Valor: R$ " . number_format($itemRateio->valor_total, 2, ',', '.') . "\n\n" .
+                                                    "Código Pix Copia e Cola:\n" .
+                                                    ($cobranca?->pix_copia_cola ?? '')
+                                                );
+                                            @endphp
+                                            @if($telRespRaw)
+                                                <a href="https://wa.me/55{{ $telRespRaw }}?text={{ $msgPixResp }}" target="_blank"
+                                                   class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
+                                                   style="text-decoration:none;">
+                                                    <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                                                    </svg>
+                                                    Enviar Pix via WhatsApp
+                                                </a>
+                                            @endif
+                                            @if($cobranca?->link_pagamento)
+                                                <a href="{{ $cobranca->link_pagamento }}" target="_blank"
+                                                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-blue text-xs font-semibold"
+                                                   style="text-decoration:none;">
+                                                    Abrir Página Asaas
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                            {{-- SUB-CENÁRIO C: BOLETO --}}
+                            @elseif($forma === 'boleto')
+                                <div class="space-y-4">
+                                    <p class="text-xs text-slate-600 m-0">
+                                        Boleto bancário à vista registrado no Asaas para <strong>{{ $nomeResp }}</strong>. O título será liquidado automaticamente após a compensação bancária.
+                                    </p>
+
+                                    {{-- Linha Digitável --}}
+                                    @if($cobranca?->linha_digitavel)
+                                        <div>
+                                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-2">
+                                                Linha Digitável do Boleto — Cota {{ $ordem }} Responsável
+                                            </label>
+                                            <div class="co-copy-group">
+                                                <input type="text" id="co-boleto-input-{{ $idx }}" readonly
+                                                       value="{{ $cobranca->linha_digitavel }}"
+                                                       title="Linha digitável do boleto">
+                                                <button type="button" class="co-copy-btn" id="co-boleto-btn-{{ $idx }}"
+                                                        onclick="copiaCola('co-boleto-input-{{ $idx }}','co-boleto-btn-{{ $idx }}')">
+                                                    Copiar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    {{-- Detalhes --}}
+                                    <div class="bg-slate-50 border border-slate-200 rounded-md p-3.5 text-xs">
+                                        <div class="co-info-row">
+                                            <span>Valor da Cota ({{ $itemRateio->percentual }}%)</span>
+                                            <strong class="text-sm text-slate-900">R$ {{ number_format($itemRateio->valor_total, 2, ',', '.') }}</strong>
+                                        </div>
+                                        @if($primeiroTit?->data_vencimento)
+                                            <div class="co-info-row">
+                                                <span>Data de Vencimento</span>
+                                                <strong>{{ \Carbon\Carbon::parse($primeiroTit->data_vencimento)->format('d/m/Y') }}</strong>
+                                            </div>
+                                        @endif
+                                        <div class="co-info-row">
+                                            <span>Status da Cobrança</span>
+                                            <strong class="text-amber-700">Aguardando Pagamento</strong>
+                                        </div>
+                                    </div>
+
+                                    {{-- Botões do Boleto --}}
+                                    <div class="flex flex-col sm:flex-row gap-3 pt-1">
+                                        @if($cobranca?->link_boleto_pdf)
+                                            <a href="{{ $cobranca->link_boleto_pdf }}" target="_blank"
+                                               class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
+                                               style="text-decoration:none;">
+                                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                                                </svg>
+                                                Baixar Boleto (PDF)
+                                            </a>
+                                        @endif
+                                        @if($cobranca?->link_pagamento)
+                                            <a href="{{ $cobranca->link_pagamento }}" target="_blank"
+                                               class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-blue text-xs font-semibold"
+                                               style="text-decoration:none;">
+                                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                                                </svg>
+                                                Abrir Boleto Online
+                                            </a>
+                                        @endif
+                                        @php
+                                            $msgBoletoResp = urlencode(
+                                                "Olá " . $nomeResp . "!\n" .
+                                                "Segue o boleto para pagamento da sua cota (" . $itemRateio->percentual . "%) no Contrato " . $contrato->numero_contrato . ".\n" .
+                                                "Valor: R$ " . number_format($itemRateio->valor_total, 2, ',', '.') . "\n" .
+                                                ($cobranca?->linha_digitavel ? "Linha Digitável: " . $cobranca->linha_digitavel . "\n" : "") .
+                                                ($cobranca?->link_boleto_pdf ? "Link do PDF: " . $cobranca->link_boleto_pdf : ($cobranca?->link_pagamento ?? ''))
+                                            );
+                                        @endphp
+                                        @if($telRespRaw)
+                                            <a href="https://wa.me/55{{ $telRespRaw }}?text={{ $msgBoletoResp }}" target="_blank"
+                                               class="inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-outline text-xs font-semibold"
+                                               style="text-decoration:none;">
+                                                Enviar WhatsApp
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+
+                            {{-- SUB-CENÁRIO D: CARNÊ ESCOLAR --}}
+                            @elseif($forma === 'carne')
+                                @php
+                                    $qtdParcResp = $titulosResp->count();
+                                    $valParcResp = $qtdParcResp > 0 ? round($itemRateio->valor_total / $qtdParcResp, 2) : 0;
+                                    $titulosOrdenados = $titulosResp->sortBy('numero_parcela');
+                                @endphp
+                                <div class="space-y-4">
+                                    <p class="text-xs text-slate-600 m-0">
+                                        Carnê escolar individual com <strong>{{ $qtdParcResp }} parcelas</strong> geradas para <strong>{{ $nomeResp }}</strong>.
+                                    </p>
+
+                                    {{-- Resumo das Parcelas --}}
+                                    <div class="bg-slate-50 border border-slate-200 rounded-md p-3.5 text-xs">
+                                        <div class="co-info-row">
+                                            <span>Total do Carnê deste Responsável</span>
+                                            <strong class="text-sm text-slate-900">R$ {{ number_format($itemRateio->valor_total, 2, ',', '.') }} ({{ $itemRateio->percentual }}%)</strong>
+                                        </div>
+                                        <div class="co-info-row">
+                                            <span>Quantidade de Parcelas</span>
+                                            <strong>{{ $qtdParcResp }}x de aprox. R$ {{ number_format($valParcResp, 2, ',', '.') }}</strong>
+                                        </div>
+                                        <div class="co-info-row">
+                                            <span>Primeiro Vencimento</span>
+                                            <strong>{{ $titulosOrdenados->first() ? \Carbon\Carbon::parse($titulosOrdenados->first()->data_vencimento)->format('d/m/Y') : '—' }}</strong>
+                                        </div>
+                                        <div class="co-info-row">
+                                            <span>Último Vencimento</span>
+                                            <strong>{{ $titulosOrdenados->last() ? \Carbon\Carbon::parse($titulosOrdenados->last()->data_vencimento)->format('d/m/Y') : '—' }}</strong>
+                                        </div>
+                                    </div>
+
+                                    {{-- Botões Carnê --}}
+                                    <div class="flex flex-col sm:flex-row gap-3 pt-1">
+                                        <a href="{{ route('financeiro.contratos.imprimir-carne', $contrato->id) }}" target="_blank"
+                                           class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
+                                           style="text-decoration:none;">
+                                            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                                            </svg>
+                                            Imprimir Carnê Oficial (PDF)
+                                        </a>
+                                        @if($cobranca?->carne_url)
+                                            <a href="{{ $cobranca->carne_url }}" target="_blank"
+                                               class="inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-blue text-xs font-semibold"
+                                               style="text-decoration:none;">
+                                                Ver no Asaas
+                                            </a>
+                                        @endif
+                                        @php
+                                            $msgCarneResp = urlencode(
+                                                "Olá " . $nomeResp . "!\n" .
+                                                "Seu carnê escolar com " . $qtdParcResp . " parcelas referente ao Contrato " . $contrato->numero_contrato . " já está disponível.\n" .
+                                                "Valor Total da sua cota: R$ " . number_format($itemRateio->valor_total, 2, ',', '.') . "\n" .
+                                                "Qualquer dúvida procure a secretaria da escola."
+                                            );
+                                        @endphp
+                                        @if($telRespRaw)
+                                            <a href="https://wa.me/55{{ $telRespRaw }}?text={{ $msgCarneResp }}" target="_blank"
+                                               class="inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-outline text-xs font-semibold"
+                                               style="text-decoration:none;">
+                                                Enviar WhatsApp
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+
+                            {{-- SUB-CENÁRIO E: CARTÃO DE CRÉDITO ONLINE (LINK) --}}
+                            @elseif($forma === 'cartao_credito')
+                                @php
+                                    $linkUrl = $cobranca?->link_pagamento ?? $contrato->payment_link_url;
+                                @endphp
+                                <div class="space-y-4">
+                                    <p class="text-xs text-slate-600 m-0">
+                                        Link de checkout do Asaas gerado para <strong>{{ $nomeResp }}</strong> pagar em até 12x no cartão de crédito com repasse de juros.
+                                    </p>
+
+                                    @if($linkUrl)
+                                        <div>
+                                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-2">
+                                                Link de Pagamento Online — Cota {{ $ordem }} Responsável
+                                            </label>
+                                            <div class="co-copy-group">
+                                                <input type="text" id="co-link-input-{{ $idx }}" readonly
+                                                       value="{{ $linkUrl }}"
+                                                       title="Link de pagamento Asaas">
+                                                <button type="button" class="co-copy-btn" id="co-link-btn-{{ $idx }}"
+                                                        onclick="copiaCola('co-link-input-{{ $idx }}','co-link-btn-{{ $idx }}')">
+                                                    Copiar
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="bg-slate-50 border border-slate-200 rounded-md p-3.5 text-xs">
+                                            <div class="co-info-row">
+                                                <span>Valor da Cota ({{ $itemRateio->percentual }}%)</span>
+                                                <strong class="text-sm text-slate-900">R$ {{ number_format($itemRateio->valor_total, 2, ',', '.') }}</strong>
+                                            </div>
+                                            <div class="co-info-row">
+                                                <span>Parcelamento</span>
+                                                <strong>Em até 12x no cartão com repasse de juros</strong>
+                                            </div>
+                                            <div class="co-info-row">
+                                                <span>Confirmação</span>
+                                                <strong class="text-emerald-700">Automática via Webhook</strong>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex flex-col sm:flex-row gap-3 pt-1">
+                                            <a href="{{ $linkUrl }}" target="_blank"
+                                               class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-blue text-xs font-semibold"
+                                               style="text-decoration:none;">
+                                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                                                </svg>
+                                                Abrir Checkout Asaas
+                                            </a>
+                                            @php
+                                                $msgLinkResp = urlencode(
+                                                    "Olá " . $nomeResp . "!\n" .
+                                                    "Segue o link para pagar a sua cota (" . $itemRateio->percentual . "%) da matrícula em até 12x no cartão: " . $linkUrl
+                                                );
+                                            @endphp
+                                            @if($telRespRaw)
+                                                <a href="https://wa.me/55{{ $telRespRaw }}?text={{ $msgLinkResp }}" target="_blank"
+                                                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
+                                                   style="text-decoration:none;">
+                                                    Enviar WhatsApp
+                                                </a>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <div class="p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                                            Link de pagamento em processamento no gateway. Recarregue a página em instantes.
+                                        </div>
+                                    @endif
+                                </div>
+
+                            {{-- SUB-CENÁRIO F: DINHEIRO / CARTÃO PRESENCIAL / OUTROS --}}
+                            @else
+                                <div class="p-4 bg-slate-50 border border-slate-200 rounded-md text-xs space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold text-slate-700">Modalidade Presencial: {{ ucfirst($forma) }}</span>
+                                        <span class="font-bold text-slate-900">R$ {{ number_format($itemRateio->valor_total, 2, ',', '.') }}</span>
+                                    </div>
+                                    <p class="text-slate-500 m-0">
+                                        Cobrança registrada para quitação no caixa da escola.
+                                    </p>
+                                    @if($primeiroTit)
+                                        <div class="pt-1">
+                                            <a href="{{ route('financeiro.titulos.recibo-pdf', $primeiroTit->id) }}" target="_blank"
+                                               class="inline-flex items-center gap-2 px-3 py-1.5 btn-ieducar-action btn-ieducar-outline text-xs"
+                                               style="text-decoration:none;">
+                                                Emitir Recibo
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+        {{-- ═══════════════════════════════════════════════════════════════════════
+             CENÁRIOS TRADICIONAIS (TITULAR ÚNICO)
+             ═══════════════════════════════════════════════════════════════════════ --}}
+        @elseif($contrato->status === 'quitado')
 
             <div class="co-success-panel p-8 md:p-10">
                 <div class="co-success-icon">
@@ -937,8 +1405,12 @@
         window.getSelection && window.getSelection().removeAllRanges();
     }
 
-    // ── PIX COUNTDOWN ────────────────────────────────────────────────────────
-    @if($contrato->forma_pagamento === 'pix' && $contrato->status !== 'quitado')
+    // ── PIX COUNTDOWN E MONITORAMENTO REALTIME ──────────────────────────────
+    @php
+        $temPixAtivo = ($contrato->forma_pagamento === 'pix') 
+            || (($ehRateio ?? false) && ($rateioResponsaveis ?? collect())->contains(fn($r) => $r->forma_pagamento === 'pix'));
+    @endphp
+    @if($temPixAtivo && $contrato->status !== 'quitado')
         (function () {
             var expiresAt = null;
             @if($cobrancaAtiva?->expira_em)

@@ -79,30 +79,38 @@ class ContratoController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'aluno_id' => 'required|integer',
-            'matricula_id' => 'required|integer',
-            'escola_id' => 'nullable|integer',
-            'ano_letivo' => 'required|integer',
-            'plano_id' => 'required|integer',
-            'responsavel_financeiro_id' => 'nullable|integer',
-            'dia_vencimento' => 'nullable|integer|min:1|max:31',
-            'qtd_parcelas' => 'nullable|integer|min:1|max:24',
-            'valor_total_descontos' => 'nullable|numeric|min:0',
-            'forma_pagamento' => 'nullable|string|in:dinheiro,cartao_presencial,cartao_credito,pix,boleto,carne',
-            'aplicar_rateio' => 'nullable|boolean',
-            'rateio_responsaveis' => 'nullable|array',
-            'rateio_responsaveis.*.responsavel_id' => 'required_with:aplicar_rateio|integer',
-            'rateio_responsaveis.*.percentual' => 'required_with:aplicar_rateio|numeric|min:0.01|max:99.99',
-            'rateio_responsaveis.*.forma_pagamento' => 'required_with:aplicar_rateio|string|in:dinheiro,cartao_presencial,cartao_credito,pix,boleto,carne',
-            'rateio_responsaveis.*.dia_vencimento' => 'nullable|integer|min:1|max:31',
-            'cartao_bandeira' => 'nullable|string|max:50',
-            'cartao_nsu' => 'nullable|string|max:100',
-            'cartao_tipo' => 'nullable|string|max:20',
-            'cartao_parcelas' => 'nullable|integer|min:1|max:12',
-        ]);
-
         $aplicarRateio = $request->boolean('aplicar_rateio', false);
+
+        $rules = [
+            'aluno_id'                  => 'required|integer',
+            'matricula_id'              => 'required|integer',
+            'escola_id'                 => 'nullable|integer',
+            'ano_letivo'                => 'required|integer',
+            'plano_id'                  => 'required|integer',
+            'responsavel_financeiro_id' => 'nullable|integer',
+            'dia_vencimento'            => 'nullable|integer|min:1|max:31',
+            'qtd_parcelas'              => 'nullable|integer|min:1|max:24',
+            'valor_total_descontos'     => 'nullable|numeric|min:0',
+            'forma_pagamento'           => 'nullable|string|in:dinheiro,cartao_presencial,cartao_credito,pix,boleto,carne',
+            'aplicar_rateio'            => 'nullable',
+            'cartao_bandeira'           => 'nullable|string|max:50',
+            'cartao_nsu'                => 'nullable|string|max:100',
+            'cartao_tipo'               => 'nullable|string|max:20',
+            'cartao_parcelas'           => 'nullable|integer|min:1|max:12',
+        ];
+
+        if ($aplicarRateio) {
+            $rules['rateio_responsaveis'] = 'required|array|min:2';
+            $rules['rateio_responsaveis.*.responsavel_id'] = 'required|integer';
+            $rules['rateio_responsaveis.*.percentual'] = 'required|numeric|min:0.01|max:99.99';
+            $rules['rateio_responsaveis.*.forma_pagamento'] = 'required|string|in:dinheiro,cartao_presencial,cartao_credito,pix,boleto,carne';
+            $rules['rateio_responsaveis.*.dia_vencimento'] = 'nullable|integer|min:1|max:31';
+        } else {
+            $rules['responsavel_financeiro_id'] = 'required|integer';
+        }
+
+        $validated = $request->validate($rules);
+
         $validated['aplicar_rateio'] = $aplicarRateio;
         if ($aplicarRateio && $request->filled('rateio_responsaveis')) {
             $validated['rateio_responsaveis'] = $request->input('rateio_responsaveis');
@@ -130,7 +138,7 @@ class ContratoController extends Controller
         try {
             $contrato = $this->contratoService->criarContratoEParcelas($validated);
 
-            if (!empty($validated['forma_pagamento'])) {
+            if ($aplicarRateio || !empty($validated['forma_pagamento'])) {
                 return redirect()->route('financeiro.contratos.checkout', $contrato->id)
                     ->with('success', 'Contrato financeiro gerado com sucesso. Confira o fechamento do pagamento abaixo.');
             }
@@ -147,11 +155,71 @@ class ContratoController extends Controller
      */
     public function checkout($id)
     {
-        $contrato = Contrato::with(['responsavel', 'plano', 'titulos.cobrancaGateway'])->findOrFail($id);
+        $contrato = Contrato::with([
+            'responsavel',
+            'plano',
+            'titulos.cobrancaGateway',
+            'titulos.responsavel'
+        ])->findOrFail($id);
+
         $primeiroTitulo = $contrato->titulos->first();
         $cobrancaAtiva = $primeiroTitulo?->cobrancaGateway;
 
-        return view('financeiro::contratos.checkout', compact('contrato', 'primeiroTitulo', 'cobrancaAtiva'));
+        // Se for rateio ou houver títulos com mais de 1 responsável vinculado
+        $ehRateio = ($contrato->forma_pagamento === 'rateio')
+                 || ($contrato->titulos->pluck('responsavel_financeiro_id')->filter()->unique()->count() > 1);
+
+        $rateioResponsaveis = collect();
+        if ($ehRateio) {
+            $titulosPorResp = $contrato->titulos->groupBy('responsavel_financeiro_id');
+            foreach ($titulosPorResp as $respId => $titulosDoResp) {
+                $resp = $titulosDoResp->first()?->responsavel ?: ResponsavelFinanceiro::find($respId);
+                $primeiroTituloResp = $titulosDoResp->first();
+                $cobrancaResp = $titulosDoResp->map(function($t) {
+                    return $t->cobrancaGateway ?? $t->cobrancasGateway->sortByDesc('id')->first();
+                })->filter()->first();
+
+                if (!$cobrancaResp) {
+                    $cobrancaResp = \iEducar\Financeiro\Models\CobrancaGateway::where('contrato_id', $contrato->id)
+                        ->whereIn('titulo_id', $titulosDoResp->pluck('id'))
+                        ->latest('id')
+                        ->first();
+                }
+
+                // Identifica forma de pagamento escolhida para esse responsável
+                $formaResp = 'carne';
+                $snapshotRateio = $contrato->plano_snapshot['rateio'] ?? [];
+                foreach ($snapshotRateio as $sr) {
+                    if ((int)($sr['responsavel_id'] ?? 0) === (int)$respId && !empty($sr['forma_pagamento'])) {
+                        $formaResp = $sr['forma_pagamento'];
+                        break;
+                    }
+                }
+                if ($formaResp === 'carne' && $cobrancaResp) {
+                    if ($cobrancaResp->tipo_cobranca === 'pix') $formaResp = 'pix';
+                    elseif ($cobrancaResp->tipo_cobranca === 'payment_link') $formaResp = 'cartao_credito';
+                    elseif ($cobrancaResp->tipo_cobranca === 'boleto') $formaResp = 'boleto';
+                }
+
+                $valorTotalResp = (float) $titulosDoResp->sum('valor_nominal');
+                $pctResp = $contrato->valor_total_liquido > 0 
+                    ? round(($valorTotalResp / $contrato->valor_total_liquido) * 100, 2)
+                    : 0;
+
+                $rateioResponsaveis->push((object) [
+                    'responsavel'     => $resp,
+                    'forma_pagamento' => $formaResp,
+                    'valor_total'     => $valorTotalResp,
+                    'percentual'      => $pctResp,
+                    'titulos'         => $titulosDoResp,
+                    'primeiro_titulo' => $primeiroTituloResp,
+                    'cobranca_ativa'  => $cobrancaResp,
+                    'status'          => $titulosDoResp->every(fn($t) => in_array($t->status, ['pago', 'liquidado'])) ? 'quitado' : 'aberto',
+                ]);
+            }
+        }
+
+        return view('financeiro::contratos.checkout', compact('contrato', 'primeiroTitulo', 'cobrancaAtiva', 'ehRateio', 'rateioResponsaveis'));
     }
 
     /**
