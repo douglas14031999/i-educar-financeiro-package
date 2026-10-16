@@ -360,8 +360,10 @@
             {{-- Banner Explicativo do Rateio --}}
             <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-[#47728f] text-white flex items-center justify-center font-bold text-lg shadow-sm">
-                        👥
+                    <div class="w-10 h-10 rounded-lg bg-[#47728f] text-white flex items-center justify-center flex-shrink-0 shadow-sm ring-2 ring-blue-100">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
