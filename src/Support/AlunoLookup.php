@@ -352,35 +352,51 @@ class AlunoLookup
     }
 
     /**
-     * Monta texto rico e padronizado com Aluno, Escola, Turma e Turno para envio ao gateway Asaas
-     * Formato respeita o limite de 500 caracteres da API do Asaas.
+     * Monta texto rico e padronizado com Aluno, Escola, Turma e Turno para envio ao gateway Asaas.
+     * Formatação em até 2 linhas compactas para caber perfeitamente no espaço do carnê/boleto
+     * evitando overflow horizontal e caixas de rolagem indesejadas.
      */
     public static function textoDescricaoAsaas(?int $alunoId, ?int $ano = null, ?string $prefixo = null): string
     {
         $dados = static::dadosAcademicos($alunoId, $ano);
 
-        $partes = [];
-        if (!empty($prefixo)) {
-            $partes[] = $prefixo;
+        $nomeAluno = trim((string) $dados['nome']);
+        if (mb_strlen($nomeAluno) > 36) {
+            $nomeAluno = mb_substr($nomeAluno, 0, 34) . '..';
         }
 
-        $partes[] = "Aluno: {$dados['nome']}";
-        if (!empty($dados['escola']) && $dados['escola'] !== '-') {
-            $partes[] = "Escola: {$dados['escola']}";
-        }
+        $linha1 = "Aluno: {$nomeAluno}";
+
+        $detalhes = [];
         if (!empty($dados['turma']) && $dados['turma'] !== '-') {
-            $partes[] = "Turma: {$dados['turma']}";
-        }
-        if (!empty($dados['turno']) && $dados['turno'] !== '-') {
-            $partes[] = "Turno: {$dados['turno']}";
-        }
-
-        $texto = implode(' | ', $partes);
-
-        if (mb_strlen($texto) > 490) {
-            $texto = mb_substr($texto, 0, 487) . '...';
+            $turma = trim((string) $dados['turma']);
+            if (!empty($dados['turno']) && $dados['turno'] !== '-') {
+                $turma .= " (" . trim((string) $dados['turno']) . ")";
+            }
+            $detalhes[] = $turma;
+        } elseif (!empty($dados['turno']) && $dados['turno'] !== '-') {
+            $detalhes[] = trim((string) $dados['turno']);
         }
 
-        return $texto;
+        if (!empty($dados['escola']) && $dados['escola'] !== '-') {
+            $escola = trim((string) $dados['escola']);
+            // Limpa prefixos repetitivos para economizar espaço
+            $escola = preg_replace('/^(ESCOLA\s+(DE\s+ENS(INO)?\s+FUND(AMENTAL)?\s+|MUNICIPAL\s+|ESTADUAL\s+)?)/i', '', $escola);
+            if (mb_strlen($escola) > 24) {
+                $escola = mb_substr($escola, 0, 22) . '..';
+            }
+            $detalhes[] = $escola;
+        }
+
+        $linha2 = implode(' - ', $detalhes);
+        if (mb_strlen($linha2) > 46) {
+            $linha2 = mb_substr($linha2, 0, 44) . '..';
+        }
+
+        if (!empty($linha2)) {
+            return "{$linha1}\n{$linha2}";
+        }
+
+        return $linha1;
     }
 }

@@ -165,10 +165,7 @@ class AsaasGateway implements GatewayInterface
         }
 
         $anoLetivo = $titulo->contrato?->ano_letivo ?? (int) date('Y');
-        $prefixoDesc = $titulo->contrato?->numero_contrato
-            ? "Contrato {$titulo->contrato->numero_contrato}"
-            : ($titulo->observacoes ?? 'Mensalidade Escolar');
-        $descricaoCompleta = AlunoLookup::textoDescricaoAsaas($titulo->aluno_id, $anoLetivo, $prefixoDesc);
+        $descricaoCompleta = AlunoLookup::textoDescricaoAsaas($titulo->aluno_id, $anoLetivo);
 
         $payload = [
             'customer' => $customerId,
@@ -422,8 +419,7 @@ class AsaasGateway implements GatewayInterface
             'dueDate'               => $primeiroVencimento->format('Y-m-d'),
             'description'           => AlunoLookup::textoDescricaoAsaas(
                 $contrato->aluno_id,
-                $contrato->ano_letivo,
-                "Carnê Mensalidades - {$contrato->numero_contrato}"
+                $contrato->ano_letivo
             ),
             'paymentExternalReference' => 'CTR-' . $contrato->id,
             'postalService'         => false,
@@ -596,8 +592,7 @@ class AsaasGateway implements GatewayInterface
             'name'                 => sprintf('Anuidade Escolar - %s', $contrato->numero_contrato),
             'description'          => AlunoLookup::textoDescricaoAsaas(
                 $contrato->aluno_id,
-                $contrato->ano_letivo,
-                "Contrato {$contrato->numero_contrato}"
+                $contrato->ano_letivo
             ),
             'billingType'          => 'CREDIT_CARD',
             'chargeType'           => 'INSTALLMENT',

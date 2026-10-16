@@ -511,7 +511,7 @@
                                         </div>
 
                                         {{-- Botões --}}
-                                        <div class="flex flex-col sm:flex-row gap-3 pt-1">
+                                        <div class="flex flex-wrap items-center gap-2.5 pt-1">
                                             @php
                                                 $msgPixResp = urlencode(
                                                     "Olá " . $nomeResp . "!\n" .
@@ -523,7 +523,7 @@
                                             @endphp
                                             @if($telRespRaw)
                                                 <a href="https://wa.me/55{{ $telRespRaw }}?text={{ $msgPixResp }}" target="_blank"
-                                                   class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
+                                                   class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
                                                    style="text-decoration:none;">
                                                     <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
                                                         <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
@@ -533,7 +533,7 @@
                                             @endif
                                             @if($cobranca?->link_pagamento)
                                                 <a href="{{ $cobranca->link_pagamento }}" target="_blank"
-                                                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-blue text-xs font-semibold"
+                                                   class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-blue text-xs font-semibold"
                                                    style="text-decoration:none;">
                                                     Abrir Página Asaas
                                                 </a>
@@ -594,10 +594,10 @@
                                     </div>
 
                                     {{-- Botões do Boleto --}}
-                                    <div class="flex flex-col sm:flex-row gap-3 pt-1">
+                                    <div class="flex flex-wrap items-center gap-2.5 pt-1">
                                         @if($cobranca?->link_boleto_pdf)
                                             <a href="{{ $cobranca->link_boleto_pdf }}" target="_blank"
-                                               class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
+                                               class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
                                                style="text-decoration:none;">
                                                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
@@ -607,7 +607,7 @@
                                         @endif
                                         @if($cobranca?->link_pagamento)
                                             <a href="{{ $cobranca->link_pagamento }}" target="_blank"
-                                               class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-blue text-xs font-semibold"
+                                               class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-blue text-xs font-semibold"
                                                style="text-decoration:none;">
                                                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
@@ -626,7 +626,7 @@
                                         @endphp
                                         @if($telRespRaw)
                                             <a href="https://wa.me/55{{ $telRespRaw }}?text={{ $msgBoletoResp }}" target="_blank"
-                                               class="inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-outline text-xs font-semibold"
+                                               class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-outline text-xs font-semibold"
                                                style="text-decoration:none;">
                                                 Enviar WhatsApp
                                             </a>
@@ -667,9 +667,9 @@
                                     </div>
 
                                     {{-- Botões Carnê --}}
-                                    <div class="flex flex-col sm:flex-row gap-3 pt-1">
+                                    <div class="flex flex-wrap items-center gap-2.5 pt-1">
                                         <a href="{{ route('financeiro.contratos.imprimir-carne', ['id' => $contrato->id, 'responsavel_id' => $respObj?->id]) }}" target="_blank"
-                                           class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
+                                           class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
                                            style="text-decoration:none;">
                                             <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
@@ -678,7 +678,7 @@
                                         </a>
                                         @if($cobranca?->carne_url)
                                             <a href="{{ $cobranca->carne_url }}" target="_blank"
-                                               class="inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-blue text-xs font-semibold"
+                                               class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-blue text-xs font-semibold"
                                                style="text-decoration:none;">
                                                 Ver no Asaas
                                             </a>
@@ -693,7 +693,7 @@
                                         @endphp
                                         @if($telRespRaw)
                                             <a href="https://wa.me/55{{ $telRespRaw }}?text={{ $msgCarneResp }}" target="_blank"
-                                               class="inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-outline text-xs font-semibold"
+                                               class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-outline text-xs font-semibold"
                                                style="text-decoration:none;">
                                                 Enviar WhatsApp
                                             </a>
@@ -742,9 +742,9 @@
                                             </div>
                                         </div>
 
-                                        <div class="flex flex-col sm:flex-row gap-3 pt-1">
+                                        <div class="flex flex-wrap items-center gap-2.5 pt-1">
                                             <a href="{{ $linkUrl }}" target="_blank"
-                                               class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-blue text-xs font-semibold"
+                                               class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-blue text-xs font-semibold"
                                                style="text-decoration:none;">
                                                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
@@ -759,7 +759,7 @@
                                             @endphp
                                             @if($telRespRaw)
                                                 <a href="https://wa.me/55{{ $telRespRaw }}?text={{ $msgLinkResp }}" target="_blank"
-                                                   class="inline-flex items-center justify-center gap-2 px-4 py-2.5 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
+                                                   class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
                                                    style="text-decoration:none;">
                                                     Enviar WhatsApp
                                                 </a>
@@ -1003,22 +1003,23 @@
                                         ($cobrancaAtiva?->pix_copia_cola ?? '')
                                     );
                                 @endphp
-                                @if($telefoneResp)
-                                    <a href="https://wa.me/55{{ $telefoneResp }}?text={{ $msgPix }}" target="_blank"
-                                       class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-green text-sm font-semibold"
+                                <div class="flex flex-wrap items-center gap-2.5 pt-1">
+                                    @if($telefoneResp)
+                                        <a href="https://wa.me/55{{ $telefoneResp }}?text={{ $msgPix }}" target="_blank"
+                                           class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
+                                           style="text-decoration:none;">
+                                            <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                                            </svg>
+                                            Enviar Pix via WhatsApp
+                                        </a>
+                                    @endif
+                                    <a href="{{ route('financeiro.contratos.show', $contrato->id) }}"
+                                       class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-outline text-xs font-semibold"
                                        style="text-decoration:none;">
-                                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
-                                        </svg>
-                                        Enviar Pix via WhatsApp
+                                        Ver Contrato
                                     </a>
-                                @endif
-                                <a href="{{ route('financeiro.contratos.show', $contrato->id) }}"
-                                   class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-outline text-sm"
-                                   style="text-decoration:none;">
-                                    Ver Contrato
-                                </a>
-                            </div>
+                                </div>
 
                             {{-- Status em tempo real --}}
                             <div class="flex items-center gap-2 pt-1 text-xs text-slate-500" id="co-realtime-status">
@@ -1099,9 +1100,9 @@
                         </div>
 
                         {{-- Botões --}}
-                        <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="flex flex-wrap items-center gap-2.5 pt-1">
                             <a href="{{ $contrato->payment_link_url }}" target="_blank"
-                               class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-blue text-sm font-semibold"
+                               class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-blue text-xs font-semibold"
                                style="text-decoration:none;">
                                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
@@ -1122,7 +1123,7 @@
                             @endphp
                             @if($telLink)
                                 <a href="https://wa.me/55{{ $telLink }}?text={{ $msgLink }}" target="_blank"
-                                   class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-green text-sm font-semibold"
+                                   class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
                                    style="text-decoration:none;">
                                     <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
                                         <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
@@ -1219,10 +1220,10 @@
                     </div>
 
                     {{-- Botões --}}
-                    <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="flex flex-wrap items-center gap-2.5 pt-1">
                         @if($primeiroTitulo?->cobrancaGateway?->link_boleto_pdf)
                             <a href="{{ $primeiroTitulo->cobrancaGateway->link_boleto_pdf }}" target="_blank"
-                               class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-green text-sm font-semibold"
+                               class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
                                style="text-decoration:none;">
                                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
@@ -1233,7 +1234,7 @@
                         @endif
                         @if($primeiroTitulo?->cobrancaGateway?->link_pagamento)
                             <a href="{{ $primeiroTitulo->cobrancaGateway->link_pagamento }}" target="_blank"
-                               class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-blue text-sm font-semibold"
+                               class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-blue text-xs font-semibold"
                                style="text-decoration:none;">
                                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
@@ -1243,7 +1244,7 @@
                             </a>
                         @endif
                         <a href="{{ route('financeiro.contratos.show', $contrato->id) }}"
-                           class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-outline text-sm"
+                           class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-outline text-xs font-semibold"
                            style="text-decoration:none;">
                             Ver Contrato
                         </a>
@@ -1307,9 +1308,9 @@
                     </div>
 
                     {{-- Botões --}}
-                    <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="flex flex-wrap items-center gap-2.5 pt-1">
                         <a href="{{ route('financeiro.contratos.imprimir-carne', $contrato->id) }}" target="_blank"
-                           class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-green text-sm font-semibold"
+                           class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
                            style="text-decoration:none;">
                             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
@@ -1318,7 +1319,7 @@
                             Imprimir Carnê Oficial (PDF)
                         </a>
                         <a href="{{ route('financeiro.contratos.show', $contrato->id) }}"
-                           class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-outline text-sm"
+                           class="inline-flex items-center justify-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-outline text-xs font-semibold"
                            style="text-decoration:none;">
                             Ver Todas as Parcelas
                         </a>
