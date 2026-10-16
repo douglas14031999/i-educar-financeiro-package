@@ -222,7 +222,7 @@ class ResponsavelFinanceiroController extends Controller
     {
         $request->validate([
             'aluno_id' => 'required|integer',
-            'parentesco' => 'required|string|max:50',
+            'parentesco' => 'nullable|string|max:50',
             'percentual_rateio' => 'required|numeric|min:1|max:100',
         ]);
 
@@ -243,7 +243,7 @@ class ResponsavelFinanceiroController extends Controller
             'aluno_id' => $alunoId,
             'responsavel_id' => $responsavel->id,
         ], [
-            'parentesco' => $request->input('parentesco'),
+            'parentesco' => $request->input('parentesco') ?: 'Responsável',
             'percentual_rateio' => $percentual,
             'responsavel_principal' => $request->boolean('responsavel_principal', true),
         ]);

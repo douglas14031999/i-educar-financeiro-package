@@ -214,7 +214,6 @@
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-[11px] font-semibold tracking-wider">
                             <th class="py-3 px-4">Aluno</th>
-                            <th class="py-3 px-4">Parentesco</th>
                             <th class="py-3 px-4 text-right">Rateio Financeiro (%)</th>
                             <th class="py-3 px-4 text-center">Responsável Principal</th>
                             <th class="py-3 px-4 text-center">Ações</th>
@@ -225,9 +224,6 @@
                             <tr class="hover:bg-slate-50/80 transition duration-150">
                                 <td class="py-3.5 px-4 font-semibold text-slate-900">
                                     {{ \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($vinculo->aluno_id) }}
-                                </td>
-                                <td class="py-3.5 px-4 text-slate-600 capitalize">
-                                    {{ $vinculo->parentesco }}
                                 </td>
                                 <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
                                     {{ number_format($vinculo->percentual_rateio, 2, ',', '.') }}%
@@ -307,19 +303,7 @@
                         </div>
                     </div>
 
-                    <div class="w-full sm:w-40">
-                        <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                            Parentesco <span class="text-red-500">*</span>
-                        </label>
-                        <select name="parentesco" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
-                            <option value="mae">Mãe</option>
-                            <option value="pai">Pai</option>
-                            <option value="avo">Avô / Avó</option>
-                            <option value="tutor">Tutor Legal</option>
-                            <option value="empresa">Empresa</option>
-                            <option value="outro">Outro</option>
-                        </select>
-                    </div>
+                    <input type="hidden" name="parentesco" value="Responsável">
 
                     <div class="w-full sm:w-28">
                         <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
