@@ -275,4 +275,112 @@ class AlunoLookup
             static::turmas($alunoIds, $ano);
         }
     }
+
+    /**
+     * Resolve todos os dados acadêmicos do aluno (Nome, CPF, Escola, Turma e Turno)
+     *
+     * @param int|null $alunoId
+     * @param int|null $ano
+     * @return array{nome: string, cpf: string, escola: string, turma: string, turno: string}
+     */
+    public static function dadosAcademicos(?int $alunoId, ?int $ano = null): array
+    {
+        if (empty($alunoId)) {
+            return [
+                'nome'   => '-',
+                'cpf'    => '',
+                'escola' => '-',
+                'turma'  => '-',
+                'turno'  => '-',
+            ];
+        }
+
+        $nome = static::nome($alunoId);
+        $cpf  = static::cpf($alunoId);
+        $escola = '-';
+        $turma  = '-';
+        $turno  = '-';
+
+        try {
+            if (Schema::hasTable('pmieducar.matricula')) {
+                $query = DB::table('pmieducar.matricula')
+                    ->where('pmieducar.matricula.ref_cod_aluno', $alunoId)
+                    ->where('pmieducar.matricula.ativo', 1);
+
+                if (Schema::hasTable('pmieducar.matricula_turma') && Schema::hasTable('pmieducar.turma')) {
+                    $query->leftJoin('pmieducar.matricula_turma', 'pmieducar.matricula_turma.ref_cod_matricula', '=', 'pmieducar.matricula.cod_matricula')
+                          ->leftJoin('pmieducar.turma', 'pmieducar.turma.cod_turma', '=', 'pmieducar.matricula_turma.ref_cod_turma');
+
+                    if (Schema::hasTable('pmieducar.turma_turno')) {
+                        $query->leftJoin('pmieducar.turma_turno', 'pmieducar.turma_turno.id', '=', 'pmieducar.turma.turma_turno_id');
+                    }
+                }
+
+                if (Schema::hasTable('pmieducar.escola') && Schema::hasTable('cadastro.pessoa')) {
+                    $query->leftJoin('pmieducar.escola', 'pmieducar.escola.cod_escola', '=', 'pmieducar.matricula.ref_ref_cod_escola')
+                          ->leftJoin('cadastro.pessoa as escola_pessoa', 'escola_pessoa.idpes', '=', 'pmieducar.escola.ref_idpes');
+                }
+
+                if ($ano) {
+                    $query->where('pmieducar.matricula.ano', $ano);
+                }
+
+                $row = $query->orderByDesc('pmieducar.matricula.ano')
+                    ->select([
+                        Schema::hasTable('cadastro.pessoa') ? 'escola_pessoa.nome as escola_nome' : DB::raw("NULL as escola_nome"),
+                        Schema::hasTable('pmieducar.turma') ? 'pmieducar.turma.nm_turma as turma_nome' : DB::raw("NULL as turma_nome"),
+                        Schema::hasTable('pmieducar.turma_turno') ? 'pmieducar.turma_turno.nome as turno_nome' : DB::raw("NULL as turno_nome"),
+                    ])->first();
+
+                if ($row) {
+                    $escola = !empty($row->escola_nome) ? (string) $row->escola_nome : $escola;
+                    $turma  = !empty($row->turma_nome) ? (string) $row->turma_nome : $turma;
+                    $turno  = !empty($row->turno_nome) ? (string) $row->turno_nome : $turno;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Degradação elegante caso tabelas ou colunas não estejam presentes
+        }
+
+        return [
+            'nome'   => $nome,
+            'cpf'    => $cpf,
+            'escola' => $escola,
+            'turma'  => $turma,
+            'turno'  => $turno,
+        ];
+    }
+
+    /**
+     * Monta texto rico e padronizado com Aluno, Escola, Turma e Turno para envio ao gateway Asaas
+     * Formato respeita o limite de 500 caracteres da API do Asaas.
+     */
+    public static function textoDescricaoAsaas(?int $alunoId, ?int $ano = null, ?string $prefixo = null): string
+    {
+        $dados = static::dadosAcademicos($alunoId, $ano);
+
+        $partes = [];
+        if (!empty($prefixo)) {
+            $partes[] = $prefixo;
+        }
+
+        $partes[] = "Aluno: {$dados['nome']}";
+        if (!empty($dados['escola']) && $dados['escola'] !== '-') {
+            $partes[] = "Escola: {$dados['escola']}";
+        }
+        if (!empty($dados['turma']) && $dados['turma'] !== '-') {
+            $partes[] = "Turma: {$dados['turma']}";
+        }
+        if (!empty($dados['turno']) && $dados['turno'] !== '-') {
+            $partes[] = "Turno: {$dados['turno']}";
+        }
+
+        $texto = implode(' | ', $partes);
+
+        if (mb_strlen($texto) > 490) {
+            $texto = mb_substr($texto, 0, 487) . '...';
+        }
+
+        return $texto;
+    }
 }

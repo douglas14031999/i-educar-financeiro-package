@@ -8,6 +8,7 @@ use iEducar\Financeiro\Gateways\Contracts\GatewayInterface;
 use iEducar\Financeiro\Models\CobrancaGateway;
 use iEducar\Financeiro\Models\Contrato;
 use iEducar\Financeiro\Models\Titulo;
+use iEducar\Financeiro\Support\AlunoLookup;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -163,12 +164,18 @@ class AsaasGateway implements GatewayInterface
             $vencimento = Carbon::today()->addDays(3)->format('Y-m-d');
         }
 
+        $anoLetivo = $titulo->contrato?->ano_letivo ?? (int) date('Y');
+        $prefixoDesc = $titulo->contrato?->numero_contrato
+            ? "Contrato {$titulo->contrato->numero_contrato}"
+            : ($titulo->observacoes ?? 'Mensalidade Escolar');
+        $descricaoCompleta = AlunoLookup::textoDescricaoAsaas($titulo->aluno_id, $anoLetivo, $prefixoDesc);
+
         $payload = [
             'customer' => $customerId,
             'billingType' => 'UNDEFINED', // Permite Boleto, Pix e Cartão
             'value' => (float) $titulo->valor_saldo,
             'dueDate' => $vencimento,
-            'description' => sprintf('Mensalidade Aluno #%d - %s (%s)', $titulo->aluno_id, $titulo->observacoes ?? 'Mensalidade Escolar', $titulo->competencia),
+            'description' => $descricaoCompleta,
             'externalReference' => (string) $titulo->id,
             'postalService' => false,
             'fine' => [
@@ -413,11 +420,10 @@ class AsaasGateway implements GatewayInterface
             'totalValue'            => round($valorTotal, 2),
             'installmentCount'      => $totalParcelas,
             'dueDate'               => $primeiroVencimento->format('Y-m-d'),
-            'description'           => sprintf(
-                'Carnê Mensalidades - Contrato %s / Aluno #%d (%d)',
-                $contrato->numero_contrato,
+            'description'           => AlunoLookup::textoDescricaoAsaas(
                 $contrato->aluno_id,
-                $contrato->ano_letivo
+                $contrato->ano_letivo,
+                "Carnê Mensalidades - {$contrato->numero_contrato}"
             ),
             'paymentExternalReference' => 'CTR-' . $contrato->id,
             'postalService'         => false,
@@ -588,12 +594,10 @@ class AsaasGateway implements GatewayInterface
 
         $payload = [
             'name'                 => sprintf('Anuidade Escolar - %s', $contrato->numero_contrato),
-            'description'          => sprintf(
-                'Pagamento de contrato escolar #%s do aluno #%d (%d). Disponível no cartão de crédito em até %dx.',
-                $contrato->numero_contrato,
+            'description'          => AlunoLookup::textoDescricaoAsaas(
                 $contrato->aluno_id,
                 $contrato->ano_letivo,
-                $maxParcelas
+                "Contrato {$contrato->numero_contrato}"
             ),
             'billingType'          => 'CREDIT_CARD',
             'chargeType'           => 'INSTALLMENT',
