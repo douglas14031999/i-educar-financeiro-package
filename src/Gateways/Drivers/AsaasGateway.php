@@ -227,6 +227,7 @@ class AsaasGateway implements GatewayInterface
             'titulo_id' => $titulo->id,
         ], [
             'gateway' => 'asaas',
+            'contrato_id' => $titulo->contrato_id,
             'gateway_charge_id' => $chargeId,
             'status_externo' => $dados['status'] ?? 'PENDING',
             'linha_digitavel' => $linhaDigitavel,
