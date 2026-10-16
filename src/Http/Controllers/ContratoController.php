@@ -136,7 +136,7 @@ class ContratoController extends Controller
             'forma_pagamento' => $contrato->forma_pagamento,
             'titulo_id'       => $primeiroTitulo?->id,
             'titulo_status'   => $primeiroTitulo?->status,
-            'titulo_saldo'    => (float) ($primeiroTitulo?->valor_saldo ?? 0),
+            'titulo_saldo'    => (float) ($primeiroTitulo?->status === 'pago' ? $primeiroTitulo?->valor_nominal : ($primeiroTitulo?->valor_saldo ?? 0)),
             'quitado_em'      => $contrato->quitado_em?->toIso8601String(),
         ]);
     }

@@ -501,7 +501,7 @@
                                     {{ $titulo->observacoes ?? ucfirst($titulo->tipo) }}
                                 </td>
                                 <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
-                                    R$ {{ number_format($titulo->valor_saldo, 2, ',', '.') }}
+                                    R$ {{ number_format($titulo->status === 'pago' ? $titulo->valor_nominal : ($titulo->valor_saldo > 0 ? $titulo->valor_saldo : $titulo->valor_nominal), 2, ',', '.') }}
                                 </td>
                                 <td class="py-3.5 px-4 text-center">
                                     @php
