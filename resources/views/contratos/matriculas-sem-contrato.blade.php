@@ -96,7 +96,7 @@
                                     </span>
                                 </td>
                                 <td class="py-3 px-4 text-center whitespace-nowrap">
-                                    <a href="{{ route('financeiro.contratos.create', ['aluno_id' => $p->aluno_id]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
+                                    <a href="{{ route('financeiro.contratos.create', ['aluno_id' => $p->aluno_id, 'matricula_id' => $p->matricula_id]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;">
                                         <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                         </svg>

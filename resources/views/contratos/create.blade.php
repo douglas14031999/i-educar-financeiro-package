@@ -305,11 +305,11 @@
             @csrf
 
             {{-- Campos Ocultos para Submissão do Contrato --}}
-            <input type="hidden" name="aluno_id" id="aluno_id" value="{{ old('aluno_id') }}" required>
-            <input type="hidden" name="matricula_id" id="matricula_id" value="{{ old('matricula_id') }}" required>
+            <input type="hidden" name="aluno_id" id="aluno_id" value="{{ old('aluno_id', $preAlunoId ?? '') }}" required>
+            <input type="hidden" name="matricula_id" id="matricula_id" value="{{ old('matricula_id', $preMatriculaId ?? '') }}" required>
             <input type="hidden" name="escola_id" id="escola_id" value="{{ old('escola_id') }}">
             <input type="hidden" name="ano_letivo" id="ano_letivo" value="{{ old('ano_letivo', $anoAtual) }}" required>
-            <input type="hidden" name="responsavel_financeiro_id" id="responsavel_financeiro_id" value="{{ old('responsavel_financeiro_id') }}">
+            <input type="hidden" name="responsavel_financeiro_id" id="responsavel_financeiro_id" value="{{ old('responsavel_financeiro_id', $preResponsavelId ?? '') }}">
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
@@ -1283,7 +1283,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // 2. Carrega Detalhes Completos do Aluno
-    function carregarDetalhesAluno(alunoId) {
+    function carregarDetalhesAluno(alunoId, matriculaDesejadaId = null) {
         dropdown.classList.add('hidden');
         spinner.classList.remove('hidden');
         spinner.style.display = 'flex';
@@ -1330,16 +1330,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 inputMatriculaId.value = '';
                 inputEscolaId.value = '';
             } else {
+                let selecionadaIdx = 0;
                 matriculasCache.forEach((m, idx) => {
                     const opt = document.createElement('option');
                     opt.value = m.cod_matricula;
                     opt.textContent = m.descricao_completa;
                     opt.dataset.escolaId = m.escola_id;
                     opt.dataset.ano = m.ano;
-                    if (idx === 0) opt.selected = true;
+                    if (matriculaDesejadaId && m.cod_matricula == matriculaDesejadaId) {
+                        selecionadaIdx = idx;
+                    }
                     seletorMatricula.appendChild(opt);
                 });
 
+                seletorMatricula.selectedIndex = selecionadaIdx;
                 aplicarMatriculaSelecionada();
             }
 
@@ -1360,6 +1364,17 @@ document.addEventListener('DOMContentLoaded', function () {
             placeholderSemAluno.classList.add('hidden');
             renderizarTabelaResponsaveis();
             blocoResponsaveis.classList.remove('hidden');
+
+            // Auto-selecionar responsável se pré-definido ou se único disponível
+            const respPreId = inputResponsavelId.value;
+            if (respPreId && responsaveisCache.length > 0) {
+                const respEncontrado = responsaveisCache.find(r => r.responsavel_financeiro_id == respPreId);
+                if (respEncontrado) {
+                    selecionarOuCriarResponsavel(respEncontrado);
+                }
+            } else if (responsaveisCache.length === 1 && responsaveisCache[0].cadastro_completo) {
+                selecionarOuCriarResponsavel(responsaveisCache[0]);
+            }
         })
         .catch(err => {
             spinner.classList.add('hidden');
@@ -1870,9 +1885,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     atualizarOpcoesPagamento();
 
-    // Caso volte de erro com old('aluno_id')
-    @if(old('aluno_id'))
-        carregarDetalhesAluno({{ old('aluno_id') }});
+    // Pré-carregamento automático do Aluno e Matrícula (via query params ?aluno_id=&matricula_id= ou old())
+    @php
+        $initAlunoId = old('aluno_id', $preAlunoId ?? null);
+        $initMatriculaId = old('matricula_id', $preMatriculaId ?? null);
+    @endphp
+    @if(!empty($initAlunoId))
+        carregarDetalhesAluno({{ (int) $initAlunoId }}, {{ !empty($initMatriculaId) ? (int) $initMatriculaId : 'null' }});
     @endif
 
     // Inicializa simulação se já tiver plano selecionado

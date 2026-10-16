@@ -55,6 +55,7 @@ class ContratoController extends Controller
 
         $preResponsavelId = $request->input('responsavel_id') ? (int) $request->input('responsavel_id') : null;
         $preAlunoId = $request->input('aluno_id') ? (int) $request->input('aluno_id') : null;
+        $preMatriculaId = $request->input('matricula_id') ? (int) $request->input('matricula_id') : null;
 
         if ($preResponsavelId && !$preAlunoId) {
             $vinculo = \iEducar\Financeiro\Models\AlunoResponsavel::where('responsavel_financeiro_id', $preResponsavelId)->first();
@@ -63,7 +64,7 @@ class ContratoController extends Controller
             }
         }
 
-        return view('financeiro::contratos.create', compact('planos', 'responsaveis', 'anoAtual', 'preResponsavelId', 'preAlunoId'));
+        return view('financeiro::contratos.create', compact('planos', 'responsaveis', 'anoAtual', 'preResponsavelId', 'preAlunoId', 'preMatriculaId'));
     }
 
     /**
