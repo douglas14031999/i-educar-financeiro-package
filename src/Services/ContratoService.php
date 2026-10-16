@@ -419,9 +419,12 @@ class ContratoService
                 if (count($titulos) >= 2) {
                     try {
                         $carneService = app(CarneService::class);
-                        $carneService->gerarCarneInstallment($contrato, $titulos, auth()->id() ?? null);
+                        $carneService->gerar($contrato, $titulos, auth()->id() ?? null);
                     } catch (\Throwable $e) {
-                        \Illuminate\Support\Facades\Log::warning("ContratoService: Falha ao gerar carnê Asaas: " . $e->getMessage());
+                        \Illuminate\Support\Facades\Log::error("ContratoService: Falha ao gerar carnê Asaas: " . $e->getMessage(), [
+                            'contrato_id' => $contrato->id,
+                            'trace'       => $e->getTraceAsString(),
+                        ]);
                     }
                 }
                 break;

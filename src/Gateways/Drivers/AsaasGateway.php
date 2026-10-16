@@ -322,13 +322,26 @@ class AsaasGateway implements GatewayInterface
     public function listarPagamentosDoParcelamento(string $installmentId): array
     {
         try {
-            $response = $this->client()->get("{$this->baseUrl}/installments/{$installmentId}/payments");
+            $response = $this->client()->get("{$this->baseUrl}/installments/{$installmentId}/payments?limit=100");
+            if ($response->successful()) {
+                $dados = $response->json('data') ?? [];
+                if (!empty($dados)) {
+                    return $dados;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning("AsaasGateway: tentativa de listagem via /installments/{$installmentId}/payments falhou: " . $e->getMessage());
+        }
+
+        try {
+            $response = $this->client()->get("{$this->baseUrl}/payments?installment={$installmentId}&limit=100");
             if ($response->successful()) {
                 return $response->json('data') ?? [];
             }
         } catch (\Throwable $e) {
-            Log::error("Erro ao listar pagamentos do parcelamento {$installmentId}: " . $e->getMessage());
+            Log::error("AsaasGateway: erro ao listar pagamentos do parcelamento {$installmentId}: " . $e->getMessage());
         }
+
         return [];
     }
 

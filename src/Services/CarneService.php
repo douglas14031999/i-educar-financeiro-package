@@ -47,17 +47,13 @@ class CarneService
                 break;
             }
 
-            if ($titulo->status !== 'aberto') {
-                $motivos[] = "Título #{$titulo->id} está com status '{$titulo->status}'. Somente títulos em aberto podem compor o carnê.";
+            if (in_array($titulo->status, ['pago', 'liquidado', 'cancelado', 'renegociado'])) {
+                $motivos[] = "Título #{$titulo->id} está com status '{$titulo->status}'. Títulos já quitados ou cancelados não podem compor o carnê.";
             }
 
-            $venc = Carbon::parse($titulo->data_vencimento);
-            if ($venc->isPast() && !$venc->isToday()) {
-                $motivos[] = "Título #{$titulo->id} está vencido ({$venc->format('d/m/Y')}). Boletos vencidos devem ser quitados ou reemitidos separadamente.";
-            }
-
-            if ($titulo->cobrancaGateway && !empty($titulo->cobrancaGateway->gateway_charge_id) && $titulo->cobrancaGateway->ativa) {
-                $motivos[] = "Título #{$titulo->id} já possui uma cobrança ativa individual emitida (#{$titulo->cobrancaGateway->gateway_charge_id}).";
+            // Se o título já possuía uma cobrança individual avulsa ativa que já foi paga no gateway, não pode compor o carnê
+            if ($titulo->cobrancaGateway && in_array($titulo->cobrancaGateway->status_externo, ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'])) {
+                $motivos[] = "Título #{$titulo->id} já foi liquidado no gateway Asaas.";
             }
         }
 
@@ -220,4 +216,13 @@ class CarneService
 
         return $this->gerar($contrato, $titulosAbertos->all(), $usuarioId);
     }
+
+    /**
+     * Alias para compatibilidade de chamada
+     */
+    public function gerarCarneInstallment(Contrato $contrato, array $titulos, ?int $usuarioId = null): CarneGateway
+    {
+        return $this->gerar($contrato, $titulos, $usuarioId);
+    }
 }
+
