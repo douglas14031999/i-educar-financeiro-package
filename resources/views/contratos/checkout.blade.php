@@ -81,6 +81,35 @@
             text-align: center;
         }
 
+        /* --- Pix Layout & Spacing --- */
+        .co-pix-container {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+        .co-pix-qr-col {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .co-pix-details-col {
+            flex: 1;
+            min-width: 0;
+            width: 100%;
+        }
+        @media (min-width: 768px) {
+            .co-pix-container {
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 36px !important;
+            }
+            .co-pix-qr-col {
+                margin-right: 36px !important; /* Espaçamento garantido mesmo sem suporte a flex-gap */
+            }
+        }
+
         /* --- Pix Countdown --- */
         .co-countdown {
             display: inline-flex;
@@ -454,9 +483,9 @@
 
                             {{-- SUB-CENÁRIO B: PIX --}}
                             @elseif($forma === 'pix')
-                                <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
+                                <div class="co-pix-container flex flex-col md:flex-row items-center md:items-start" style="gap: 36px;">
                                     {{-- QR Code --}}
-                                    <div class="flex-shrink-0 flex flex-col items-center gap-3">
+                                    <div class="co-pix-qr-col flex-shrink-0 flex flex-col items-center gap-3" style="margin-right: 36px;">
                                         <div class="co-qr-wrapper">
                                             @if($cobranca && ($cobranca->qr_code_base64 || $cobranca->pix_qr_code_base64))
                                                 <img src="data:image/png;base64,{{ $cobranca->qr_code_base64 ?? $cobranca->pix_qr_code_base64 }}"
@@ -477,7 +506,7 @@
                                     </div>
 
                                     {{-- Ações Pix --}}
-                                    <div class="flex-1 w-full space-y-4">
+                                    <div class="co-pix-details-col flex-1 w-full space-y-4">
                                         {{-- Copia e Cola --}}
                                         <div>
                                             <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-2">
@@ -913,10 +942,10 @@
                 </div>
 
                 <div class="co-panel-body">
-                    <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
+                    <div class="co-pix-container flex flex-col md:flex-row items-center md:items-start" style="gap: 36px;">
 
                         {{-- QR CODE --}}
-                        <div class="flex-shrink-0 flex flex-col items-center gap-3">
+                        <div class="co-pix-qr-col flex-shrink-0 flex flex-col items-center gap-3" style="margin-right: 36px;">
                             <div class="co-qr-wrapper">
                                 @if($cobrancaAtiva && ($cobrancaAtiva->qr_code_base64 || $cobrancaAtiva->pix_qr_code_base64))
                                     <img src="data:image/png;base64,{{ $cobrancaAtiva->qr_code_base64 ?? $cobrancaAtiva->pix_qr_code_base64 }}"
@@ -938,7 +967,7 @@
                         </div>
 
                         {{-- AÇÕES --}}
-                        <div class="flex-1 w-full space-y-5">
+                        <div class="co-pix-details-col flex-1 w-full space-y-5">
 
                             {{-- Pix Copia e Cola --}}
                             <div>
