@@ -99,10 +99,10 @@
                 <div class="p-3 bg-slate-50 border border-slate-200">
                     <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Parcelamento</div>
                     <div class="font-mono font-bold text-slate-900 mt-1 text-base">
-                        {{ $plano->qtd_parcelas }}x parcelas
+                        Flexível no Contrato
                     </div>
                     <div class="text-xs text-slate-500 mt-0.5">
-                        Média de R$ {{ number_format($plano->qtd_parcelas > 0 ? $plano->valor_total / $plano->qtd_parcelas : 0, 2, ',', '.') }} / mês
+                        De 1x até 12x (definido pelo responsável)
                     </div>
                 </div>
 
@@ -132,65 +132,67 @@
                         <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     <h2 class="text-sm font-semibold tracking-wide" style="margin: 0; color: white;">
-                        Grade de Parcelas Geradas ({{ $plano->itens->count() }})
+                        Estrutura do Plano e Itens Cadastrados ({{ $plano->itens->count() }})
                     </h2>
                 </div>
                 <div class="text-xs text-slate-300">
-                    Itens e competências que serão gerados ao vincular este plano a uma matrícula
+                    Parcelamento gerado na emissão do contrato
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs md:text-sm">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-[11px] font-semibold tracking-wider">
-                            <th class="py-3 px-4 text-center">Parcela</th>
-                            <th class="py-3 px-4">Descrição do Item</th>
-                            <th class="py-3 px-4 text-center">Tipo</th>
-                            <th class="py-3 px-4 text-center">Competência</th>
-                            <th class="py-3 px-4 text-center">Vencimento Padrão</th>
-                            <th class="py-3 px-4 text-right">Valor</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 text-slate-700">
-                        @forelse($plano->itens as $item)
-                            <tr class="hover:bg-slate-50/80 transition duration-150">
-                                <td class="py-3.5 px-4 text-center font-mono font-bold text-slate-800">
-                                    {{ $item->numero_parcela == 0 ? 'Matrícula' : sprintf('%02d', $item->numero_parcela) }}
-                                </td>
-                                <td class="py-3.5 px-4 font-medium text-slate-900">
-                                    {{ $item->descricao }}
-                                </td>
-                                <td class="py-3.5 px-4 text-center">
-                                    @if($item->tipo_item === 'matricula')
+            @if($plano->itens->isNotEmpty())
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs md:text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-[11px] font-semibold tracking-wider">
+                                <th class="py-3 px-4 text-center">Item</th>
+                                <th class="py-3 px-4">Descrição</th>
+                                <th class="py-3 px-4 text-center">Tipo</th>
+                                <th class="py-3 px-4 text-center">Vencimento Padrão</th>
+                                <th class="py-3 px-4 text-right">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-700">
+                            @foreach($plano->itens as $item)
+                                <tr class="hover:bg-slate-50/80 transition duration-150">
+                                    <td class="py-3.5 px-4 text-center font-mono font-bold text-slate-800">
+                                        {{ $item->numero_parcela == 0 ? 'Matrícula' : sprintf('%02d', $item->numero_parcela) }}
+                                    </td>
+                                    <td class="py-3.5 px-4 font-medium text-slate-900">
+                                        {{ $item->descricao }}
+                                    </td>
+                                    <td class="py-3.5 px-4 text-center">
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                                            Matrícula
+                                            {{ ucfirst($item->tipo_item) }}
                                         </span>
-                                    @else
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
-                                            Mensalidade
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="py-3.5 px-4 text-center font-mono text-slate-600">
-                                    Mês {{ sprintf('%02d', $item->mes_competencia) }}
-                                </td>
-                                <td class="py-3.5 px-4 text-center font-mono text-slate-600">
-                                    Dia {{ sprintf('%02d', $item->dia_vencimento_padrao) }}
-                                </td>
-                                <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
-                                    R$ {{ number_format($item->valor, 2, ',', '.') }}
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="py-8 text-center text-slate-400">
-                                    Nenhuma parcela configurada para este plano de cobrança.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                                    </td>
+                                    <td class="py-3.5 px-4 text-center font-mono text-slate-600">
+                                        Dia {{ sprintf('%02d', $item->dia_vencimento_padrao ?? 10) }}
+                                    </td>
+                                    <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
+                                        R$ {{ number_format($item->valor, 2, ',', '.') }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+
+            <div class="p-6 bg-slate-50 border-t border-slate-200 flex items-start gap-4">
+                <div class="p-2.5 bg-blue-100 text-[#47728f] rounded-sm shrink-0">
+                    <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                        Parcelamento Dinâmico no Contrato
+                    </h3>
+                    <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                        Este plano não fixa previamente as parcelas. Ao criar o <strong>Contrato Financeiro</strong> da matrícula, o responsável financeiro escolhe a modalidade de pagamento (Cartão, Carnê, Boleto ou Pix) e define em quantas prestações pagar (de <strong>1x até 12x</strong>). As parcelas e vencimentos mensais serão gerados a partir do mês atual.
+                    </p>
+                </div>
             </div>
         </section>
 

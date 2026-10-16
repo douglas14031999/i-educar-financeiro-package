@@ -181,28 +181,8 @@ class PlanoPagamentoController extends Controller
                 ]);
             }
 
-            // Distribuição das mensalidades regulares
-            $valorParcela = round($valorMensalidades / $qtd, 2);
-            $centavosAjuste = round($valorMensalidades - ($valorParcela * $qtd), 2);
-
-            for ($i = 1; $i <= $qtd; $i++) {
-                // FIN-007: Mês de competência nunca pode ser 0. Para parcelas > 12 avança ciclicamente de 1 a 12
-                $mesComp = (($i - 1) % 12) + 1;
-                $valorFinalItem = ($i === 1) ? ($valorParcela + $centavosAjuste) : $valorParcela;
-
-                PlanoItem::create([
-                    'plano_id' => $plano->id,
-                    'tipo_item' => 'mensalidade',
-                    'descricao' => sprintf('Mensalidade %02d/%02d', $i, $qtd),
-                    'numero_parcela' => $i,
-                    'valor' => $valorFinalItem,
-                    'mes_competencia' => $mesComp,
-                    'dia_vencimento_padrao' => $diaVencimento,
-                ]);
-            }
-
             return redirect()->route('financeiro.planos.show', $plano->id)
-                ->with('success', 'Plano de cobrança e parcelas gerados com sucesso.');
+                ->with('success', 'Plano de cobrança cadastrado com sucesso. As parcelas serão geradas na emissão de cada contrato.');
         });
     }
 
@@ -286,7 +266,7 @@ class PlanoPagamentoController extends Controller
                 'qtd_parcelas' => $qtd,
             ]);
 
-            // Remove itens antigos e recria
+            // Remove itens antigos e recria apenas taxa de matrícula se houver
             $plano->itens()->delete();
 
             if ($temMatricula) {
@@ -297,24 +277,6 @@ class PlanoPagamentoController extends Controller
                     'numero_parcela' => 0,
                     'valor' => $valorMatricula,
                     'mes_competencia' => 1,
-                    'dia_vencimento_padrao' => $diaVencimento,
-                ]);
-            }
-
-            $valorParcela = round($valorMensalidades / $qtd, 2);
-            $centavosAjuste = round($valorMensalidades - ($valorParcela * $qtd), 2);
-
-            for ($i = 1; $i <= $qtd; $i++) {
-                $mesComp = (($i - 1) % 12) + 1;
-                $valorFinalItem = ($i === 1) ? ($valorParcela + $centavosAjuste) : $valorParcela;
-
-                PlanoItem::create([
-                    'plano_id' => $plano->id,
-                    'tipo_item' => 'mensalidade',
-                    'descricao' => sprintf('Mensalidade %02d/%02d', $i, $qtd),
-                    'numero_parcela' => $i,
-                    'valor' => $valorFinalItem,
-                    'mes_competencia' => $mesComp,
                     'dia_vencimento_padrao' => $diaVencimento,
                 ]);
             }
@@ -348,15 +310,18 @@ class PlanoPagamentoController extends Controller
             ]);
 
             foreach ($origem->itens as $item) {
-                PlanoItem::create([
-                    'plano_id'              => $novoPlano->id,
-                    'tipo_item'             => $item->tipo_item,
-                    'descricao'             => $item->descricao,
-                    'numero_parcela'        => $item->numero_parcela,
-                    'valor'                 => $item->valor,
-                    'mes_competencia'       => $item->mes_competencia,
-                    'dia_vencimento_padrao' => $item->dia_vencimento_padrao,
-                ]);
+                // Copia apenas taxas de matrícula
+                if ($item->tipo_item === 'matricula') {
+                    PlanoItem::create([
+                        'plano_id'              => $novoPlano->id,
+                        'tipo_item'             => $item->tipo_item,
+                        'descricao'             => $item->descricao,
+                        'numero_parcela'        => $item->numero_parcela,
+                        'valor'                 => $item->valor,
+                        'mes_competencia'       => $item->mes_competencia,
+                        'dia_vencimento_padrao' => $item->dia_vencimento_padrao,
+                    ]);
+                }
             }
 
             return redirect()->route('financeiro.planos.show', $novoPlano->id)
