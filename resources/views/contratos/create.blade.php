@@ -6,6 +6,204 @@
 @push('styles')
     @include('financeiro::dashboard.styles')
     <style>
+        /* ==========================================================================
+           RESET E BLINDAGEM CONTRA O CSS GLOBAL DO I-EDUCAR
+           ========================================================================== */
+        .financeiro-dashboard-container * {
+            box-sizing: border-box !important;
+        }
+
+        /* Estilização dos passos do Stepper */
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .step-item.active {
+            border-color: #47728f !important;
+            background: #f0f7fa !important;
+            box-shadow: 0 1px 3px rgba(71, 114, 143, 0.12) !important;
+        }
+        .step-item.completed {
+            border-color: #a7f3d0 !important;
+            background: #f0fdf4 !important;
+        }
+        .step-circle {
+            width: 30px !important;
+            height: 30px !important;
+            min-width: 30px !important;
+            min-height: 30px !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            flex-shrink: 0 !important;
+            box-sizing: border-box !important;
+            transition: all 0.2s ease;
+        }
+        .step-circle.pending {
+            background-color: #f1f5f9 !important;
+            color: #64748b !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+        .step-circle.current {
+            background-color: #47728f !important;
+            color: #ffffff !important;
+            border: 1px solid #355972 !important;
+        }
+        .step-circle.done {
+            background-color: #059669 !important;
+            color: #ffffff !important;
+            border: 1px solid #047857 !important;
+        }
+
+        /* Input Groups Blindados (Prepend Addon) */
+        .financeiro-input-group {
+            display: flex !important;
+            align-items: stretch !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 4px !important;
+            overflow: hidden !important;
+            background-color: #ffffff !important;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+        }
+        .financeiro-input-group:focus-within {
+            border-color: #47728f !important;
+            box-shadow: 0 0 0 1px #47728f !important;
+        }
+        .financeiro-input-addon {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 0 12px !important;
+            background-color: #f8fafc !important;
+            border-right: 1px solid #e2e8f0 !important;
+            color: #47728f !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            flex-shrink: 0 !important;
+            user-select: none !important;
+        }
+        .financeiro-input-field {
+            flex: 1 1 0% !important;
+            width: 100% !important;
+            border: none !important;
+            outline: none !important;
+            padding: 10px 14px !important;
+            font-size: 13px !important;
+            color: #1e293b !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            font-family: inherit !important;
+            line-height: 1.4 !important;
+        }
+        .financeiro-input-field:focus {
+            outline: none !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+
+        /* Atalhos do dia de vencimento (Pills elegantes) */
+        .btn-dia-preset {
+            padding: 3px 12px !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            border-radius: 12px !important;
+            border: 1px solid #cbd5e1 !important;
+            background-color: #f8fafc !important;
+            color: #475569 !important;
+            cursor: pointer !important;
+            transition: all 0.15s ease !important;
+            line-height: 1.5 !important;
+        }
+        .btn-dia-preset:hover {
+            background-color: #e2e8f0 !important;
+            color: #0f172a !important;
+            border-color: #94a3b8 !important;
+        }
+        .btn-dia-preset.active {
+            background-color: #47728f !important;
+            color: #ffffff !important;
+            border-color: #355972 !important;
+            box-shadow: 0 1px 2px rgba(71, 114, 143, 0.25) !important;
+        }
+
+        /* Botões do Card Lateral */
+        .btn-emitir-contrato {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            width: 100% !important;
+            padding: 12px 18px !important;
+            background-color: #059669 !important;
+            border: 1px solid #047857 !important;
+            border-radius: 4px !important;
+            color: #ffffff !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.01em !important;
+            cursor: pointer !important;
+            box-shadow: 0 1px 3px rgba(5, 150, 105, 0.3) !important;
+            transition: background-color 0.15s ease, transform 0.05s ease !important;
+            text-decoration: none !important;
+        }
+        .btn-emitir-contrato:hover {
+            background-color: #047857 !important;
+            color: #ffffff !important;
+        }
+        .btn-emitir-contrato:active {
+            transform: scale(0.99) !important;
+        }
+        .btn-cancelar-operacao {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            padding: 9px 16px !important;
+            background-color: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 4px !important;
+            color: #475569 !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.15s ease !important;
+            text-decoration: none !important;
+        }
+        .btn-cancelar-operacao:hover {
+            background-color: #f8fafc !important;
+            border-color: #94a3b8 !important;
+            color: #0f172a !important;
+        }
+
+        /* Radio Cards de Pagamento */
+        .payment-radio-card {
+            position: relative;
+            cursor: pointer;
+            border: 1px solid #cbd5e1;
+            background-color: #ffffff;
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 4px;
+        }
+        .payment-radio-card:hover {
+            border-color: #47728f;
+            box-shadow: 0 2px 6px rgba(71, 114, 143, 0.08);
+            transform: translateY(-1px);
+        }
+        .payment-radio-card.selected {
+            border-color: #47728f !important;
+            background-color: #f0f7fa !important;
+            box-shadow: 0 0 0 1px #47728f, 0 3px 8px rgba(71, 114, 143, 0.12) !important;
+        }
+
         .aluno-search-dropdown {
             max-height: 320px;
             overflow-y: auto;
@@ -19,38 +217,8 @@
             border-radius: 3px;
         }
         .resp-card-selected {
-            border-color: #0ac336 !important;
+            border-color: #059669 !important;
             background-color: #f0fdf4 !important;
-        }
-        .btn-dia-preset.active {
-            background-color: #47728f !important;
-            color: #ffffff !important;
-            border-color: #355972 !important;
-            font-weight: 700;
-        }
-        /* Radio cards de pagamento modernos */
-        .payment-radio-card {
-            position: relative;
-            cursor: pointer;
-            border: 1.5px solid #e2e8f0;
-            background-color: #ffffff;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 4px;
-        }
-        .payment-radio-card:hover {
-            border-color: #47728f;
-            box-shadow: 0 2px 8px rgba(71, 114, 143, 0.08);
-            transform: translateY(-1px);
-        }
-        .payment-radio-card.selected {
-            border-color: #47728f !important;
-            background-color: #f0f7fa !important;
-            box-shadow: 0 0 0 1px #47728f, 0 4px 12px rgba(71, 114, 143, 0.12) !important;
-        }
-        .payment-radio-card.selected .check-indicator {
-            background-color: #47728f !important;
-            border-color: #47728f !important;
-            color: #ffffff !important;
         }
         .sticky-summary-card {
             position: sticky;
@@ -81,52 +249,54 @@
             '
         ])
 
-        {{-- Stepper de Progresso Operacional (4 Etapas) --}}
-        <div class="bg-white border border-slate-200 shadow-xs rounded-sm p-4">
+        {{-- Stepper de Progresso Operacional (4 Etapas com layout blindado) --}}
+        <div class="bg-white border border-slate-200 shadow-xs rounded-sm p-3.5">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {{-- Etapa 1 --}}
-                <div id="step_indicator_1" class="flex items-center gap-3 p-2.5 rounded-sm bg-[#f0f7fa] border border-[#47728f] transition">
-                    <div id="step_circle_1" class="w-7 h-7 rounded-full bg-[#47728f] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                
+                {{-- Passo 1 --}}
+                <div id="step_indicator_1" class="step-item active">
+                    <div id="step_circle_1" class="step-circle current">
                         1
                     </div>
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-1">
                         <span class="block text-[10px] font-bold uppercase tracking-wider text-[#47728f]">Passo 1</span>
                         <span id="step_label_1" class="block text-xs font-semibold text-slate-900 truncate">Aluno & Matrícula</span>
                     </div>
                 </div>
 
-                {{-- Etapa 2 --}}
-                <div id="step_indicator_2" class="flex items-center gap-3 p-2.5 rounded-sm bg-white border border-slate-200 transition opacity-80">
-                    <div id="step_circle_2" class="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
+                {{-- Passo 2 --}}
+                <div id="step_indicator_2" class="step-item">
+                    <div id="step_circle_2" class="step-circle pending">
                         2
                     </div>
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-1">
                         <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Passo 2</span>
                         <span id="step_label_2" class="block text-xs font-semibold text-slate-600 truncate">Responsável Financeiro</span>
                     </div>
                 </div>
 
-                {{-- Etapa 3 --}}
-                <div id="step_indicator_3" class="flex items-center gap-3 p-2.5 rounded-sm bg-white border border-slate-200 transition opacity-80">
-                    <div id="step_circle_3" class="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
+                {{-- Passo 3 --}}
+                <div id="step_indicator_3" class="step-item">
+                    <div id="step_circle_3" class="step-circle pending">
                         3
                     </div>
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-1">
                         <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Passo 3</span>
                         <span id="step_label_3" class="block text-xs font-semibold text-slate-600 truncate">Plano & Parcelas</span>
                     </div>
                 </div>
 
-                {{-- Etapa 4 --}}
-                <div id="step_indicator_4" class="flex items-center gap-3 p-2.5 rounded-sm bg-white border border-slate-200 transition opacity-80">
-                    <div id="step_circle_4" class="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
+                {{-- Passo 4 --}}
+                <div id="step_indicator_4" class="step-item">
+                    <div id="step_circle_4" class="step-circle pending">
                         4
                     </div>
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-1">
                         <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Passo 4</span>
                         <span id="step_label_4" class="block text-xs font-semibold text-slate-600 truncate">Forma de Pagamento</span>
                     </div>
                 </div>
+
             </div>
         </div>
 
@@ -164,15 +334,15 @@
                         </div>
 
                         <div class="p-5 md:p-6 space-y-4">
-                            {{-- Campo de Busca com Autocomplete Integrado --}}
+                            {{-- Campo de Busca com Input Group Addon (Zero Sobreposição) --}}
                             <div id="bloco_busca_aluno" class="relative">
                                 <label for="termo_busca_aluno" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                                     Localizar Aluno Matriculado (Base Oficial i-Educar) <span class="text-rose-500">*</span>
                                 </label>
                                 
-                                <div class="relative flex items-center">
-                                    <div class="absolute left-3.5 text-slate-400 pointer-events-none">
-                                        <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="financeiro-input-group">
+                                    <div class="financeiro-input-addon">
+                                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                         </svg>
                                     </div>
@@ -181,11 +351,11 @@
                                            id="termo_busca_aluno" 
                                            placeholder="Digite ao menos 2 letras do nome ou dígitos do CPF do aluno..." 
                                            autocomplete="off"
-                                           class="w-full pl-11 pr-11 py-3 bg-white border border-slate-300 text-slate-800 text-sm rounded-sm focus:outline-none focus:border-[#47728f] focus:ring-2 focus:ring-[#47728f]/20 transition shadow-2xs">
+                                           class="financeiro-input-field">
 
-                                    {{-- Spinner de Carregamento --}}
-                                    <div id="busca_spinner" class="absolute right-3.5 hidden text-[#47728f]">
-                                        <svg class="animate-spin w-5 h-5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    {{-- Spinner de Carregamento integrado ao input group --}}
+                                    <div id="busca_spinner" class="hidden items-center justify-center px-3.5 text-[#47728f] bg-white">
+                                        <svg class="animate-spin" width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
@@ -194,7 +364,7 @@
 
                                 <div class="flex items-center justify-between text-[11px] text-slate-500 mt-2">
                                     <span class="flex items-center gap-1 text-slate-600">
-                                        <svg class="w-3.5 h-3.5 text-[#47728f]" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg width="14" height="14" fill="none" stroke="#47728f" viewBox="0 0 24 24">
                                             <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                         </svg>
                                         Dica: Busca instantânea conectada aos registros do ano letivo {{ $anoAtual }}.
@@ -204,7 +374,7 @@
 
                                 {{-- Dropdown de Resultados da Busca --}}
                                 <div id="dropdown_resultados_aluno" class="aluno-search-dropdown absolute z-30 inset-x-0 mt-1 bg-white border border-slate-200 shadow-xl rounded-sm hidden">
-                                    <ul id="lista_resultados_aluno" class="divide-y divide-slate-100 text-sm"></ul>
+                                    <ul id="lista_resultados_aluno" class="divide-y divide-slate-100 text-sm m-0 p-0"></ul>
                                 </div>
                             </div>
 
@@ -222,7 +392,7 @@
                                 </a>
                             </div>
 
-                            {{-- Card de Aluno Selecionado (Exibido com destaque) --}}
+                            {{-- Card de Aluno Selecionado --}}
                             <div id="card_aluno_selecionado" class="hidden bg-[#f0f7fa] border border-[#47728f]/40 p-4 md:p-5 rounded-sm relative overflow-hidden">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                     <div class="flex items-start gap-4">
@@ -245,7 +415,7 @@
                                     </div>
 
                                     <button type="button" id="btn_trocar_aluno" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-outline text-xs self-start sm:self-center">
-                                        <svg class="w-3.5 h-3.5 text-slate-500" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                         </svg>
                                         Alterar Aluno
@@ -261,7 +431,7 @@
                                         {{-- Populado dinamicamente via JS --}}
                                     </select>
                                     <p class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1" id="matricula_detalhes_helper">
-                                        <svg class="w-3.5 h-3.5 text-[#47728f]" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg width="14" height="14" fill="none" stroke="#47728f" viewBox="0 0 24 24">
                                             <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                         </svg>
                                         Os títulos e cobranças serão vinculados a esta matrícula e escola no ano letivo ativo.
@@ -277,7 +447,7 @@
                     <div class="bg-white border border-slate-200 shadow-xs rounded-sm overflow-hidden">
                         <div class="bg-[#47728f] px-5 py-3 text-white flex items-center justify-between">
                             <div class="flex items-center gap-2.5">
-                                <span id="passo2_badge" class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">2</span>
+                                <span class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">2</span>
                                 <h2 class="text-sm font-bold tracking-wide" style="margin: 0; color: white;">
                                     Responsável Financeiro (Titular da Cobrança)
                                 </h2>
@@ -289,7 +459,7 @@
                             {{-- Placeholder Inicial (quando nenhum aluno foi selecionado) --}}
                             <div id="placeholder_sem_aluno" class="py-8 px-4 bg-slate-50 border border-dashed border-slate-300 rounded-sm text-center text-slate-500 flex flex-col items-center justify-center gap-2">
                                 <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                                    <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                     </svg>
                                 </div>
@@ -343,7 +513,7 @@
                     <div class="bg-white border border-slate-200 shadow-xs rounded-sm overflow-hidden">
                         <div class="bg-[#47728f] px-5 py-3 text-white flex items-center justify-between">
                             <div class="flex items-center gap-2.5">
-                                <span id="passo3_badge" class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">3</span>
+                                <span class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">3</span>
                                 <h2 class="text-sm font-bold tracking-wide" style="margin: 0; color: white;">
                                     Plano de Cobrança e Condições Comerciais
                                 </h2>
@@ -356,7 +526,7 @@
                                 <label for="plano_id" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                                     Plano de Pagamento / Anuidade <span class="text-rose-500">*</span>
                                 </label>
-                                <select name="plano_id" id="plano_id" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 text-slate-800 text-xs md:text-sm rounded-sm focus:outline-none focus:border-[#47728f] focus:ring-2 focus:ring-[#47728f]/20 transition shadow-2xs font-semibold">
+                                <select name="plano_id" id="plano_id" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 text-slate-800 text-xs md:text-sm rounded-sm focus:outline-none focus:border-[#47728f] focus:ring-1 focus:ring-[#47728f] transition shadow-2xs font-semibold">
                                     <option value="">Selecione o plano configurado...</option>
                                     @foreach($planos as $plano)
                                         <option value="{{ $plano->id }}" 
@@ -374,31 +544,56 @@
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                                {{-- Dia de Vencimento com Segmented Control e Input --}}
                                 <div>
                                     <label for="dia_vencimento" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                                         Dia de Vencimento Mensal <span class="text-rose-500">*</span>
                                     </label>
-                                    <input type="number" name="dia_vencimento" id="dia_vencimento" min="1" max="31" value="{{ old('dia_vencimento', 10) }}" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 text-slate-800 text-sm rounded-sm focus:outline-none focus:border-[#47728f] focus:ring-1 focus:ring-[#47728f] transition shadow-2xs font-bold">
                                     
-                                    {{-- Botões de Atalho para o Dia de Vencimento --}}
-                                    <div class="flex items-center gap-1.5 mt-2">
-                                        <span class="text-[11px] text-slate-400">Atalhos:</span>
-                                        <button type="button" class="btn-dia-preset px-2.5 py-1 text-xs bg-slate-100 hover:bg-[#47728f] hover:text-white border border-slate-200 rounded-sm transition text-slate-700" data-dia="5">Dia 05</button>
-                                        <button type="button" class="btn-dia-preset px-2.5 py-1 text-xs bg-slate-100 hover:bg-[#47728f] hover:text-white border border-slate-200 rounded-sm transition text-slate-700 active" data-dia="10">Dia 10</button>
-                                        <button type="button" class="btn-dia-preset px-2.5 py-1 text-xs bg-slate-100 hover:bg-[#47728f] hover:text-white border border-slate-200 rounded-sm transition text-slate-700" data-dia="15">Dia 15</button>
-                                        <button type="button" class="btn-dia-preset px-2.5 py-1 text-xs bg-slate-100 hover:bg-[#47728f] hover:text-white border border-slate-200 rounded-sm transition text-slate-700" data-dia="20">Dia 20</button>
+                                    <div class="financeiro-input-group">
+                                        <div class="financeiro-input-addon" style="font-size: 11px;">
+                                            Dia
+                                        </div>
+                                        <input type="number" 
+                                               name="dia_vencimento" 
+                                               id="dia_vencimento" 
+                                               min="1" 
+                                               max="31" 
+                                               value="{{ old('dia_vencimento', 10) }}" 
+                                               required 
+                                               class="financeiro-input-field font-bold">
+                                    </div>
+                                    
+                                    {{-- Botões de Atalho Estilizados como Pills --}}
+                                    <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+                                        <span class="text-[11px] text-slate-400 mr-1">Atalhos:</span>
+                                        <button type="button" class="btn-dia-preset" data-dia="5">Dia 05</button>
+                                        <button type="button" class="btn-dia-preset active" data-dia="10">Dia 10</button>
+                                        <button type="button" class="btn-dia-preset" data-dia="15">Dia 15</button>
+                                        <button type="button" class="btn-dia-preset" data-dia="20">Dia 20</button>
                                     </div>
                                 </div>
 
+                                {{-- Desconto Total Concedido (Blindado com Prepend R$) --}}
                                 <div>
                                     <label for="valor_total_descontos" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                                         Desconto Total Concedido (R$)
                                     </label>
-                                    <div class="relative flex items-center">
-                                        <span class="absolute left-3.5 text-xs font-bold text-slate-400 pointer-events-none">R$</span>
-                                        <input type="number" name="valor_total_descontos" id="valor_total_descontos" step="0.01" min="0" value="{{ old('valor_total_descontos', '0.00') }}" class="w-full pl-10 pr-3.5 py-2.5 bg-white border border-slate-300 text-slate-800 text-sm rounded-sm focus:outline-none focus:border-[#47728f] focus:ring-1 focus:ring-[#47728f] transition shadow-2xs font-semibold">
+                                    
+                                    <div class="financeiro-input-group">
+                                        <div class="financeiro-input-addon" style="background-color: #f1f5f9; color: #475569;">
+                                            R$
+                                        </div>
+                                        <input type="number" 
+                                               name="valor_total_descontos" 
+                                               id="valor_total_descontos" 
+                                               step="0.01" 
+                                               min="0" 
+                                               value="{{ old('valor_total_descontos', '0.00') }}" 
+                                               class="financeiro-input-field font-semibold text-slate-900">
                                     </div>
-                                    <p class="text-[11px] text-slate-500 mt-1.5">
+                                    
+                                    <p class="text-[11px] text-slate-500 mt-2">
                                         Bolsa de estudos, convênio empresarial ou desconto comercial direto.
                                     </p>
                                 </div>
@@ -412,13 +607,13 @@
                     <div class="bg-white border border-slate-200 shadow-xs rounded-sm overflow-hidden">
                         <div class="bg-[#47728f] px-5 py-3 text-white flex items-center justify-between">
                             <div class="flex items-center gap-2.5">
-                                <span id="passo4_badge" class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">4</span>
+                                <span class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">4</span>
                                 <h2 class="text-sm font-bold tracking-wide" style="margin: 0; color: white;">
                                     Condição de Pagamento e Checkout da Matrícula
                                 </h2>
                             </div>
                             <span class="text-xs text-emerald-200 font-semibold flex items-center gap-1">
-                                <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                 </svg>
                                 6 Modalidades Integradas
@@ -437,7 +632,7 @@
                                 <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_dinheiro">
                                     <div class="flex items-start gap-3">
                                         <div class="w-9 h-9 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
-                                            <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                             </svg>
                                         </div>
@@ -459,7 +654,7 @@
                                 <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_cartao_presencial">
                                     <div class="flex items-start gap-3">
                                         <div class="w-9 h-9 rounded-full bg-cyan-50 text-cyan-700 flex items-center justify-center shrink-0 border border-cyan-200">
-                                            <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                             </svg>
                                         </div>
@@ -481,7 +676,7 @@
                                 <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_cartao_credito">
                                     <div class="flex items-start gap-3">
                                         <div class="w-9 h-9 rounded-full bg-blue-50 text-[#47728f] flex items-center justify-center shrink-0 border border-blue-200">
-                                            <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                             </svg>
                                         </div>
@@ -503,7 +698,7 @@
                                 <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_pix">
                                     <div class="flex items-start gap-3">
                                         <div class="w-9 h-9 rounded-full bg-teal-50 text-teal-700 flex items-center justify-center shrink-0 border border-teal-200">
-                                            <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                             </svg>
                                         </div>
@@ -525,7 +720,7 @@
                                 <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_boleto">
                                     <div class="flex items-start gap-3">
                                         <div class="w-9 h-9 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200">
-                                            <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                             </svg>
                                         </div>
@@ -547,7 +742,7 @@
                                 <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_carne">
                                     <div class="flex items-start gap-3">
                                         <div class="w-9 h-9 rounded-full bg-slate-100 text-[#47728f] flex items-center justify-center shrink-0 border border-slate-300">
-                                            <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                             </svg>
                                         </div>
@@ -570,7 +765,7 @@
                             {{-- Bloco Condicional: Detalhes do Cartão Presencial (POS) --}}
                             <div id="bloco_cartao_presencial_detalhes" class="p-4 bg-slate-50 border border-slate-200 rounded-sm space-y-3 hidden">
                                 <div class="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                    <svg class="w-4 h-4 text-[#47728f]" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg width="16" height="16" fill="none" stroke="#47728f" viewBox="0 0 24 24">
                                         <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                     </svg>
                                     <span>Dados do Comprovante da Maquininha (POS)</span>
@@ -605,7 +800,7 @@
                             {{-- Bloco Condicional: Detalhes do Cartão Online Link --}}
                             <div id="bloco_cartao_credito_detalhes" class="p-4 bg-slate-50 border border-slate-200 rounded-sm space-y-2 hidden">
                                 <div class="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                    <svg class="w-4 h-4 text-[#47728f]" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg width="16" height="16" fill="none" stroke="#47728f" viewBox="0 0 24 24">
                                         <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                     </svg>
                                     <span>Configuração do Link de Pagamento Asaas</span>
@@ -634,15 +829,15 @@
                 <div class="lg:col-span-4 space-y-4">
                     <div class="bg-white border border-slate-200 shadow-md rounded-sm overflow-hidden sticky-summary-card">
                         
-                        {{-- Topo do Resumo --}}
+                        {{-- Topo do Resumo com Azul Oficial do i-Educar --}}
                         <div class="bg-[#47728f] px-4 py-3 text-white flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg width="20" height="20" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
                                     <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                 </svg>
                                 <span class="text-xs font-bold uppercase tracking-wider text-white">Espelho do Contrato</span>
                             </div>
-                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 bg-white/20 text-white rounded-full">Resumo em Tempo Real</span>
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 bg-white/20 text-white rounded-full">Tempo Real</span>
                         </div>
 
                         <div class="p-4 space-y-4 text-xs">
@@ -693,27 +888,27 @@
                             <div class="pt-2 border-t border-slate-100">
                                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Modalidade Escolhida</span>
                                 <div id="resumo_forma_pagamento" class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm flex items-center justify-between">
-                                    <span class="font-bold text-slate-800" id="resumo_forma_label">Não selecionada</span>
-                                    <span class="text-[10px] font-semibold text-slate-500" id="resumo_forma_badge">--</span>
+                                    <span class="font-bold text-slate-800" id="resumo_forma_label">Carnê Escolar (Asaas)</span>
+                                    <span class="text-[10px] font-semibold text-slate-600" id="resumo_forma_badge">Contrato Ativo</span>
                                 </div>
                             </div>
 
                             {{-- Botões Oficiais i-Educar de Ação --}}
                             <div class="pt-3 border-t border-slate-200 space-y-2">
-                                <button type="submit" id="btn_submit_contrato" class="w-full inline-flex items-center justify-center gap-2 py-3 px-4 btn-ieducar-action btn-ieducar-green text-sm font-bold shadow-sm">
-                                    <svg class="w-4 h-4 text-white" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <button type="submit" id="btn_submit_contrato" class="btn-emitir-contrato">
+                                    <svg width="18" height="18" fill="none" stroke="#ffffff" viewBox="0 0 24 24">
                                         <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                     </svg>
                                     <span>Emitir Contrato e Gerar Parcelas</span>
                                 </button>
 
-                                <a href="{{ route('financeiro.contratos.index') }}" class="w-full block text-center py-2 px-3 btn-ieducar-action btn-ieducar-outline text-xs" style="text-decoration: none;">
+                                <a href="{{ route('financeiro.contratos.index') }}" class="btn-cancelar-operacao">
                                     Cancelar Operação
                                 </a>
                             </div>
 
                             <div class="p-2 bg-slate-50 text-[11px] text-slate-500 rounded-sm flex items-center gap-1.5 border border-slate-200">
-                                <svg class="w-4 h-4 text-emerald-600 shrink-0" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg width="16" height="16" fill="none" stroke="#059669" viewBox="0 0 24 24">
                                     <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                 </svg>
                                 <span>Operação registrada no ano letivo ativo {{ $anoAtual }}.</span>
@@ -881,7 +1076,7 @@
                  style="display:none; font-size:12px; color:#991b1b; background:#fef2f2;
                         border:1px solid #fecaca; padding:10px 14px; border-radius:3px; font-weight:600;"></div>
 
-            {{-- Botões --}}
+            {{-- Botões do Modal --}}
             <div style="display:flex; justify-content:flex-end; gap:10px;
                         padding-top:14px; border-top:1px solid #e2e8f0; flex-shrink:0; margin-top:auto;">
                 <button type="button" id="btn_cancelar_modal" class="px-4 py-2 btn-ieducar-action btn-ieducar-outline text-xs">
@@ -912,21 +1107,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const nomeRespSelecionado = document.getElementById('nome_responsavel_selecionado');
 
     // Stepper Indicators
+    const stepInd1 = document.getElementById('step_indicator_1');
     const stepCircle1 = document.getElementById('step_circle_1');
     const stepLabel1 = document.getElementById('step_label_1');
-    const stepInd1 = document.getElementById('step_indicator_1');
+
+    const stepInd2 = document.getElementById('step_indicator_2');
     const stepCircle2 = document.getElementById('step_circle_2');
     const stepLabel2 = document.getElementById('step_label_2');
-    const stepInd2 = document.getElementById('step_indicator_2');
+
+    const stepInd3 = document.getElementById('step_indicator_3');
     const stepCircle3 = document.getElementById('step_circle_3');
     const stepLabel3 = document.getElementById('step_label_3');
-    const stepInd3 = document.getElementById('step_indicator_3');
+
+    const stepInd4 = document.getElementById('step_indicator_4');
     const stepCircle4 = document.getElementById('step_circle_4');
     const stepLabel4 = document.getElementById('step_label_4');
-    const stepInd4 = document.getElementById('step_indicator_4');
-    const passo2Badge = document.getElementById('passo2_badge');
-    const passo3Badge = document.getElementById('passo3_badge');
-    const passo4Badge = document.getElementById('passo4_badge');
 
     // Resumo Lateral Elements
     const resumoAlunoBox = document.getElementById('resumo_aluno_box');
@@ -989,15 +1184,31 @@ document.addEventListener('DOMContentLoaded', function () {
         simGradeParcelas.textContent = `${parcelas}x de ${formatMoney(valorParcela)}`;
         simDiaVencimento.textContent = `Vencimento todo dia ${dia < 10 ? '0' + dia : dia}`;
 
-        // Atualiza Stepper Etapa 3
-        stepCircle3.innerHTML = '✓';
-        stepCircle3.classList.remove('bg-slate-200', 'text-slate-700', 'bg-[#47728f]');
-        stepCircle3.classList.add('bg-emerald-600', 'text-white');
-        stepLabel3.textContent = `${parcelas}x de ${formatMoney(valorParcela)}`;
+        // Se aluno e responsável já foram definidos, marca o Passo 3 como completo
+        if (inputAlunoId.value && inputResponsavelId.value) {
+            stepInd3.className = 'step-item completed';
+            stepCircle3.className = 'step-circle done';
+            stepCircle3.innerHTML = '✓';
+            stepLabel3.textContent = `${parcelas}x de ${formatMoney(valorParcela)}`;
+
+            // Libera Passo 4 como Ativo
+            stepInd4.className = 'step-item active';
+            stepCircle4.className = 'step-circle current';
+        }
     }
 
     selectPlano.addEventListener('change', atualizarSimulacao);
-    inputVencimento.addEventListener('input', atualizarSimulacao);
+    inputVencimento.addEventListener('input', function() {
+        const val = parseInt(this.value);
+        document.querySelectorAll('.btn-dia-preset').forEach(b => {
+            if (parseInt(b.dataset.dia) === val) {
+                b.classList.add('active');
+            } else {
+                b.classList.remove('active');
+            }
+        });
+        atualizarSimulacao();
+    });
     inputDesconto.addEventListener('input', atualizarSimulacao);
 
     // Atalhos para dia de vencimento
@@ -1022,6 +1233,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         spinner.classList.remove('hidden');
+        spinner.style.display = 'flex';
 
         debounceTimer = setTimeout(() => {
             fetch(`{{ route('financeiro.api.alunos.buscar') }}?q=${encodeURIComponent(termo)}`, {
@@ -1030,6 +1242,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(res => res.json())
             .then(alunos => {
                 spinner.classList.add('hidden');
+                spinner.style.display = 'none';
                 listaResultados.innerHTML = '';
 
                 if (alunos.length === 0) {
@@ -1057,6 +1270,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(() => {
                 spinner.classList.add('hidden');
+                spinner.style.display = 'none';
             });
         }, 300);
     });
@@ -1072,6 +1286,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function carregarDetalhesAluno(alunoId) {
         dropdown.classList.add('hidden');
         spinner.classList.remove('hidden');
+        spinner.style.display = 'flex';
 
         fetch(`{{ url('financeiro/api/alunos') }}/${alunoId}/detalhes`, {
             headers: { 'Accept': 'application/json' }
@@ -1079,6 +1294,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(res => res.json())
         .then(data => {
             spinner.classList.add('hidden');
+            spinner.style.display = 'none';
             if (data.error) {
                 alert(data.error);
                 return;
@@ -1131,18 +1347,14 @@ document.addEventListener('DOMContentLoaded', function () {
             cardAlunoSelecionado.classList.remove('hidden');
             document.getElementById('bloco_busca_aluno').classList.add('hidden');
 
-            // Atualiza stepper - Etapa 1 completa, Etapa 2 ativa
+            // Atualiza Stepper - Passo 1 Concluído, Passo 2 Ativo
+            stepInd1.className = 'step-item completed';
+            stepCircle1.className = 'step-circle done';
             stepCircle1.innerHTML = '✓';
-            stepCircle1.classList.remove('bg-[#47728f]');
-            stepCircle1.classList.add('bg-emerald-600');
             stepLabel1.textContent = aluno.nome;
 
-            stepCircle2.classList.remove('bg-slate-200', 'text-slate-700');
-            stepCircle2.classList.add('bg-[#47728f]', 'text-white');
-            stepInd2.classList.remove('opacity-80');
-            stepInd2.classList.add('border-[#47728f]');
-            passo2Badge.classList.remove('bg-white/20');
-            passo2Badge.classList.add('bg-white', 'text-[#47728f]');
+            stepInd2.className = 'step-item active';
+            stepCircle2.className = 'step-circle current';
 
             // Renderiza responsáveis
             placeholderSemAluno.classList.add('hidden');
@@ -1151,6 +1363,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch(err => {
             spinner.classList.add('hidden');
+            spinner.style.display = 'none';
             alert('Erro ao carregar dados do aluno: ' + err.message);
         });
     }
@@ -1188,18 +1401,24 @@ document.addEventListener('DOMContentLoaded', function () {
         resumoRespBox.innerHTML = '<span class="text-slate-500 italic">Aguardando seleção do titular...</span>';
 
         // Reset Stepper
+        stepInd1.className = 'step-item active';
+        stepCircle1.className = 'step-circle current';
         stepCircle1.innerHTML = '1';
-        stepCircle1.classList.add('bg-[#47728f]');
-        stepCircle1.classList.remove('bg-emerald-600');
         stepLabel1.textContent = 'Aluno & Matrícula';
 
-        stepCircle2.classList.add('bg-slate-200', 'text-slate-700');
-        stepCircle2.classList.remove('bg-[#47728f]', 'text-white', 'bg-emerald-600');
-        stepInd2.classList.add('opacity-80');
-        stepInd2.classList.remove('border-[#47728f]');
-        passo2Badge.classList.add('bg-white/20');
-        passo2Badge.classList.remove('bg-white', 'text-[#47728f]');
+        stepInd2.className = 'step-item';
+        stepCircle2.className = 'step-circle pending';
+        stepCircle2.innerHTML = '2';
         stepLabel2.textContent = 'Responsável Financeiro';
+
+        stepInd3.className = 'step-item';
+        stepCircle3.className = 'step-circle pending';
+        stepCircle3.innerHTML = '3';
+        stepLabel3.textContent = 'Plano & Parcelas';
+
+        stepInd4.className = 'step-item';
+        stepCircle4.className = 'step-circle pending';
+        stepCircle4.innerHTML = '4';
     });
 
     // 3. Renderizar Tabela de Responsáveis Identificados
@@ -1286,6 +1505,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // 4. Selecionar ou Criar Responsável Direto
     function selecionarOuCriarResponsavel(resp) {
         spinner.classList.remove('hidden');
+        spinner.style.display = 'flex';
 
         fetch(`{{ route('financeiro.api.responsaveis.vincular-ou-criar') }}`, {
             method: 'POST',
@@ -1315,6 +1535,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(res => res.json())
         .then(data => {
             spinner.classList.add('hidden');
+            spinner.style.display = 'none';
             if (data.error) {
                 alert(data.error);
                 return;
@@ -1339,24 +1560,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 item.cadastro_completo = true;
             }
 
-            // Atualiza Stepper Etapa 2
+            // Atualiza Stepper: Passo 2 Completo, Passo 3 Ativo
+            stepInd2.className = 'step-item completed';
+            stepCircle2.className = 'step-circle done';
             stepCircle2.innerHTML = '✓';
-            stepCircle2.classList.remove('bg-[#47728f]');
-            stepCircle2.classList.add('bg-emerald-600');
             stepLabel2.textContent = data.responsavel.nome;
 
-            // Etapa 3 Ativa
-            stepCircle3.classList.remove('bg-slate-200', 'text-slate-700');
-            stepCircle3.classList.add('bg-[#47728f]', 'text-white');
-            stepInd3.classList.remove('opacity-80');
-            stepInd3.classList.add('border-[#47728f]');
-            passo3Badge.classList.remove('bg-white/20');
-            passo3Badge.classList.add('bg-white', 'text-[#47728f]');
+            stepInd3.className = 'step-item active';
+            stepCircle3.className = 'step-circle current';
 
             renderizarTabelaResponsaveis();
+            atualizarSimulacao();
         })
         .catch(err => {
             spinner.classList.add('hidden');
+            spinner.style.display = 'none';
             alert('Erro ao vincular responsável: ' + err.message);
         });
     }
@@ -1540,20 +1758,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 item.cadastro_completo = true;
             }
 
-            // Atualiza Stepper
+            // Atualiza Stepper: Passo 2 Concluído, Passo 3 Ativo
+            stepInd2.className = 'step-item completed';
+            stepCircle2.className = 'step-circle done';
             stepCircle2.innerHTML = '✓';
-            stepCircle2.classList.remove('bg-[#47728f]');
-            stepCircle2.classList.add('bg-emerald-600');
             stepLabel2.textContent = data.responsavel.nome;
 
-            stepCircle3.classList.remove('bg-slate-200', 'text-slate-700');
-            stepCircle3.classList.add('bg-[#47728f]', 'text-white');
-            stepInd3.classList.remove('opacity-80');
-            stepInd3.classList.add('border-[#47728f]');
-            passo3Badge.classList.remove('bg-white/20');
-            passo3Badge.classList.add('bg-white', 'text-[#47728f]');
+            stepInd3.className = 'step-item active';
+            stepCircle3.className = 'step-circle current';
 
             renderizarTabelaResponsaveis();
+            atualizarSimulacao();
         })
         .catch(err => {
             btnSalvar.disabled = false;
@@ -1581,7 +1796,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnSubmit = document.getElementById('btn_submit_contrato');
         btnSubmit.disabled = true;
         btnSubmit.innerHTML = `
-            <svg class="animate-spin w-4 h-4 mr-2 text-white" width="16" height="16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin" width="16" height="16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -1627,11 +1842,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 resumoFormaBadge.textContent = formasInfo[selecionado.value].badge;
             }
 
-            // Stepper Passo 4
-            stepCircle4.innerHTML = '✓';
-            stepCircle4.classList.remove('bg-slate-200', 'text-slate-700', 'bg-[#47728f]');
-            stepCircle4.classList.add('bg-emerald-600', 'text-white');
-            stepLabel4.textContent = formasInfo[selecionado.value] ? formasInfo[selecionado.value].label : 'Forma Escolhida';
+            // O Passo 4 só fica com check verde se os passos 1, 2 e 3 estiverem preenchidos!
+            if (inputAlunoId.value && inputResponsavelId.value && selectPlano.value) {
+                stepInd4.className = 'step-item completed';
+                stepCircle4.className = 'step-circle done';
+                stepCircle4.innerHTML = '✓';
+                stepLabel4.textContent = formasInfo[selecionado.value] ? formasInfo[selecionado.value].label : 'Forma Escolhida';
+            } else {
+                stepLabel4.textContent = formasInfo[selecionado.value] ? formasInfo[selecionado.value].label : 'Forma de Pagamento';
+            }
         }
     }
 
