@@ -514,139 +514,6 @@
                                     </div>
                                 </div>
 
-                                {{-- Bloco de Configuração de Rateio Duplo --}}
-                                <div id="painel_config_rateio" class="p-4 bg-blue-50/40 border border-[#47728f]/30 rounded-sm space-y-4 hidden">
-                                    <div class="flex items-center justify-between pb-2 border-b border-[#47728f]/20">
-                                        <div class="flex items-center gap-2">
-                                            <span class="w-6 h-6 rounded-full bg-[#47728f] text-white flex items-center justify-center font-bold text-xs">👥</span>
-                                            <span class="text-xs font-bold text-slate-900 uppercase tracking-wider">Configuração de Rateio Financeiro</span>
-                                        </div>
-                                        <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
-                                            Soma: <span id="rateio_soma_display">100,00%</span>
-                                        </span>
-                                    </div>
-
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {{-- Card Responsável 1 --}}
-                                        <div class="p-4 bg-white border border-slate-200 rounded-sm shadow-2xs space-y-3">
-                                            <div class="flex items-center justify-between">
-                                                <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Responsável 1 (Titular Principal)</span>
-                                                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Titular 1</span>
-                                            </div>
-
-                                            <div>
-                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Selecione o Responsável</label>
-                                                <select id="rateio_select_resp_0" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-semibold">
-                                                    {{-- Populado via JS --}}
-                                                </select>
-                                            </div>
-
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <div>
-                                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">% Rateio</label>
-                                                    <div class="relative">
-                                                        <input type="number" id="rateio_input_pct_0" value="50.00" min="1" max="99" step="0.01" class="w-full text-xs font-mono font-bold p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] pr-6">
-                                                        <span class="absolute right-2 top-2 text-xs text-slate-400 font-bold">%</span>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Dia Vencimento</label>
-                                                    <select id="rateio_select_venc_0" class="w-full text-xs p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
-                                                        <option value="5">Dia 05</option>
-                                                        <option value="10" selected>Dia 10</option>
-                                                        <option value="15">Dia 15</option>
-                                                        <option value="20">Dia 20</option>
-                                                        <option value="25">Dia 25</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Forma de Pagamento (Resp. 1)</label>
-                                                <select id="rateio_select_forma_0" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-medium text-slate-800">
-                                                    <option value="carne" selected>Carnê Escolar (Asaas)</option>
-                                                    <option value="pix">PIX Instantâneo (24h)</option>
-                                                    <option value="boleto">Boleto à Vista (1x)</option>
-                                                    <option value="cartao_credito">Cartão Online (Link até 12x)</option>
-                                                    <option value="cartao_presencial">Cartão Presencial (POS)</option>
-                                                    <option value="dinheiro">Dinheiro (Balcão)</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-center">
-                                                <span class="block text-[10px] text-slate-500 uppercase font-semibold">Valor da Cota Resp. 1</span>
-                                                <span id="rateio_valor_display_0" class="block text-sm font-extrabold text-[#47728f]">R$ 0,00</span>
-                                                <span id="rateio_parcelas_display_0" class="block text-[11px] text-slate-500">12x de R$ 0,00</span>
-                                            </div>
-
-                                            <div id="rateio_btn_completar_0_box" class="hidden">
-                                                <button type="button" class="w-full py-1.5 px-3 btn-ieducar-action btn-ieducar-outline text-xs text-amber-800 border-amber-300 font-semibold" id="btn_completar_rateio_0">
-                                                    ⚠️ Completar Cadastro deste Responsável
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {{-- Card Responsável 2 --}}
-                                        <div class="p-4 bg-white border border-slate-200 rounded-sm shadow-2xs space-y-3">
-                                            <div class="flex items-center justify-between">
-                                                <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Responsável 2 (Co-titular)</span>
-                                                <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">Titular 2</span>
-                                            </div>
-
-                                            <div>
-                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Selecione o Responsável</label>
-                                                <select id="rateio_select_resp_1" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-semibold">
-                                                    {{-- Populado via JS --}}
-                                                </select>
-                                            </div>
-
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <div>
-                                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">% Rateio</label>
-                                                    <div class="relative">
-                                                        <input type="number" id="rateio_input_pct_1" value="50.00" min="1" max="99" step="0.01" class="w-full text-xs font-mono font-bold p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] pr-6">
-                                                        <span class="absolute right-2 top-2 text-xs text-slate-400 font-bold">%</span>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Dia Vencimento</label>
-                                                    <select id="rateio_select_venc_1" class="w-full text-xs p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
-                                                        <option value="5">Dia 05</option>
-                                                        <option value="10" selected>Dia 10</option>
-                                                        <option value="15">Dia 15</option>
-                                                        <option value="20">Dia 20</option>
-                                                        <option value="25">Dia 25</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Forma de Pagamento (Resp. 2)</label>
-                                                <select id="rateio_select_forma_1" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-medium text-slate-800">
-                                                    <option value="carne">Carnê Escolar (Asaas)</option>
-                                                    <option value="pix" selected>PIX Instantâneo (24h)</option>
-                                                    <option value="boleto">Boleto à Vista (1x)</option>
-                                                    <option value="cartao_credito">Cartão Online (Link até 12x)</option>
-                                                    <option value="cartao_presencial">Cartão Presencial (POS)</option>
-                                                    <option value="dinheiro">Dinheiro (Balcão)</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-center">
-                                                <span class="block text-[10px] text-slate-500 uppercase font-semibold">Valor da Cota Resp. 2</span>
-                                                <span id="rateio_valor_display_1" class="block text-sm font-extrabold text-[#47728f]">R$ 0,00</span>
-                                                <span id="rateio_parcelas_display_1" class="block text-[11px] text-slate-500">12x de R$ 0,00</span>
-                                            </div>
-
-                                            <div id="rateio_btn_completar_1_box" class="hidden">
-                                                <button type="button" class="w-full py-1.5 px-3 btn-ieducar-action btn-ieducar-outline text-xs text-amber-800 border-amber-300 font-semibold" id="btn_completar_rateio_1">
-                                                    ⚠️ Completar Cadastro deste Responsável
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 {{-- Card de Confirmação do Responsável Selecionado (Modo Titular Único) --}}
                                 <div id="alerta_responsavel_selecionado" class="p-3.5 bg-emerald-50 border border-emerald-300 rounded-sm text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hidden">
                                     <div class="flex items-center gap-2.5">
@@ -705,208 +572,365 @@
                         </div>
 
                         <div class="p-5 md:p-6 space-y-4">
-                            {{-- Aviso quando Rateio estiver Ativo --}}
-                            <div id="alerta_rateio_step3" class="hidden p-3.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-sm flex items-center gap-2.5 text-xs font-semibold">
-                                <span class="text-base">ℹ️</span>
-                                <span>Rateio Financeiro Ativo: As formas de pagamento de cada responsável foram definidas individualmente no Passo 2 acima.</span>
-                            </div>
+                            {{-- MODO 1: PAGAMENTO GLOBAL (TITULAR ÚNICO) --}}
+                            <div id="container_pagamento_unico" class="space-y-4">
+                                <p class="text-xs text-slate-600 m-0" id="texto_instrucao_pagamento_global">
+                                    Escolha a forma de quitação para automatizar a baixa no caixa da escola e a emissão dos títulos no gateway Asaas:
+                                </p>
 
-                            <p class="text-xs text-slate-600 m-0" id="texto_instrucao_pagamento_global">
-                                Escolha a forma de quitação para automatizar a baixa no caixa da escola e a emissão dos títulos no gateway Asaas:
-                            </p>
-
-                            {{-- Grid das 6 Opções de Pagamento com Cards Modernos --}}
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                                
-                                {{-- 1. Dinheiro à Vista --}}
-                                <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_dinheiro">
-                                    <div class="flex items-start gap-3">
-                                        <div class="w-9 h-9 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
-                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                            </svg>
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex items-center justify-between">
-                                                <span class="block text-xs font-bold text-slate-900">Dinheiro (À Vista)</span>
-                                                <input type="radio" name="forma_pagamento" value="dinheiro" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'dinheiro' ? 'checked' : '' }}>
+                                {{-- Grid das 6 Opções de Pagamento com Cards Modernos --}}
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                                    
+                                    {{-- 1. Dinheiro à Vista --}}
+                                    <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_dinheiro">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-9 h-9 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
+                                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                </svg>
                                             </div>
-                                            <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Baixa imediata no caixa de balcão e recibo autenticado.</span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                                        <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Nasce Quitado</span>
-                                        <span class="text-[10px] text-slate-400">Balcão</span>
-                                    </div>
-                                </label>
-
-                                {{-- 2. Cartão Presencial (Maquininha POS) --}}
-                                <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_cartao_presencial">
-                                    <div class="flex items-start gap-3">
-                                        <div class="w-9 h-9 rounded-full bg-cyan-50 text-cyan-700 flex items-center justify-center shrink-0 border border-cyan-200">
-                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                            </svg>
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex items-center justify-between">
-                                                <span class="block text-xs font-bold text-slate-900">Cartão Presencial</span>
-                                                <input type="radio" name="forma_pagamento" value="cartao_presencial" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'cartao_presencial' ? 'checked' : '' }}>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="block text-xs font-bold text-slate-900">Dinheiro (À Vista)</span>
+                                                    <input type="radio" name="forma_pagamento" value="dinheiro" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'dinheiro' ? 'checked' : '' }}>
+                                                </div>
+                                                <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Baixa imediata no caixa de balcão e recibo autenticado.</span>
                                             </div>
-                                            <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Passado na maquininha física da escola (coleta NSU).</span>
                                         </div>
-                                    </div>
-                                    <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                                        <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Nasce Quitado</span>
-                                        <span class="text-[10px] text-slate-400">POS Escola</span>
-                                    </div>
-                                </label>
+                                        <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                            <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Nasce Quitado</span>
+                                            <span class="text-[10px] text-slate-400">Balcão</span>
+                                        </div>
+                                    </label>
 
-                                {{-- 3. Cartão Online (Link Asaas até 12x) --}}
-                                <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_cartao_credito">
-                                    <div class="flex items-start gap-3">
-                                        <div class="w-9 h-9 rounded-full bg-blue-50 text-[#47728f] flex items-center justify-center shrink-0 border border-blue-200">
-                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                            </svg>
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex items-center justify-between">
-                                                <span class="block text-xs font-bold text-slate-900">Cartão Online (Link)</span>
-                                                <input type="radio" name="forma_pagamento" value="cartao_credito" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'cartao_credito' ? 'checked' : '' }}>
+                                    {{-- 2. Cartão Presencial (Maquininha POS) --}}
+                                    <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_cartao_presencial">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-9 h-9 rounded-full bg-cyan-50 text-cyan-700 flex items-center justify-center shrink-0 border border-cyan-200">
+                                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                </svg>
                                             </div>
-                                            <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Link de crédito em até 12x com repasse de juros (5 dias úteis).</span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                                        <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Aguardando Webhook</span>
-                                        <span class="text-[10px] text-slate-400">Até 12x</span>
-                                    </div>
-                                </label>
-
-                                {{-- 4. PIX Instantâneo (Validade 24h) --}}
-                                <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_pix">
-                                    <div class="flex items-start gap-3">
-                                        <div class="w-9 h-9 rounded-full bg-teal-50 text-teal-700 flex items-center justify-center shrink-0 border border-teal-200">
-                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                            </svg>
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex items-center justify-between">
-                                                <span class="block text-xs font-bold text-slate-900">PIX Instantâneo (24h)</span>
-                                                <input type="radio" name="forma_pagamento" value="pix" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'pix' ? 'checked' : '' }}>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="block text-xs font-bold text-slate-900">Cartão Presencial</span>
+                                                    <input type="radio" name="forma_pagamento" value="cartao_presencial" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'cartao_presencial' ? 'checked' : '' }}>
+                                                </div>
+                                                <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Passado na maquininha física da escola (coleta NSU).</span>
                                             </div>
-                                            <span class="block text-[11px] text-slate-500 mt-1 leading-snug">QR Code dinâmico na tela com monitoramento em tempo real.</span>
                                         </div>
-                                    </div>
-                                    <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                                        <span class="text-[10px] font-bold text-teal-700 uppercase tracking-wider">Confirmação em 3s</span>
-                                        <span class="text-[10px] text-slate-400">24 Horas</span>
-                                    </div>
-                                </label>
+                                        <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                            <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Nasce Quitado</span>
+                                            <span class="text-[10px] text-slate-400">POS Escola</span>
+                                        </div>
+                                    </label>
 
-                                {{-- 5. Boleto Bancário (1x) --}}
-                                <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_boleto">
-                                    <div class="flex items-start gap-3">
-                                        <div class="w-9 h-9 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200">
-                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                            </svg>
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex items-center justify-between">
-                                                <span class="block text-xs font-bold text-slate-900">Boleto à Vista (1x)</span>
-                                                <input type="radio" name="forma_pagamento" value="boleto" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'boleto' ? 'checked' : '' }}>
+                                    {{-- 3. Cartão Online (Link Asaas até 12x) --}}
+                                    <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_cartao_credito">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-9 h-9 rounded-full bg-blue-50 text-[#47728f] flex items-center justify-center shrink-0 border border-blue-200">
+                                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                </svg>
                                             </div>
-                                            <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Boleto único do Asaas com PDF e envio imediato no WhatsApp.</span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                                        <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Compensação D+1</span>
-                                        <span class="text-[10px] text-slate-400">À Vista</span>
-                                    </div>
-                                </label>
-
-                                {{-- 6. Carnê Escolar (2x a 12x) --}}
-                                <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_carne">
-                                    <div class="flex items-start gap-3">
-                                        <div class="w-9 h-9 rounded-full bg-slate-100 text-[#47728f] flex items-center justify-center shrink-0 border border-slate-300">
-                                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                            </svg>
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex items-center justify-between">
-                                                <span class="block text-xs font-bold text-slate-900">Carnê Escolar (Asaas)</span>
-                                                <input type="radio" name="forma_pagamento" value="carne" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'carne' ? 'checked' : '' }}>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="block text-xs font-bold text-slate-900">Cartão Online (Link)</span>
+                                                    <input type="radio" name="forma_pagamento" value="cartao_credito" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'cartao_credito' ? 'checked' : '' }}>
+                                                </div>
+                                                <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Link de crédito em até 12x com repasse de juros (5 dias úteis).</span>
                                             </div>
-                                            <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Todas as mensalidades do ano em carnê PDF do Asaas.</span>
                                         </div>
-                                    </div>
-                                    <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                                        <span class="text-[10px] font-bold text-[#47728f] uppercase tracking-wider">Contrato Ativo</span>
-                                        <span class="text-[10px] text-slate-400">Parcelado</span>
-                                    </div>
-                                </label>
+                                        <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                            <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Aguardando Webhook</span>
+                                            <span class="text-[10px] text-slate-400">Até 12x</span>
+                                        </div>
+                                    </label>
 
-                            </div>
+                                    {{-- 4. PIX Instantâneo (Validade 24h) --}}
+                                    <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_pix">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-9 h-9 rounded-full bg-teal-50 text-teal-700 flex items-center justify-center shrink-0 border border-teal-200">
+                                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="block text-xs font-bold text-slate-900">PIX Instantâneo (24h)</span>
+                                                    <input type="radio" name="forma_pagamento" value="pix" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'pix' ? 'checked' : '' }}>
+                                                </div>
+                                                <span class="block text-[11px] text-slate-500 mt-1 leading-snug">QR Code dinâmico na tela com monitoramento em tempo real.</span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                            <span class="text-[10px] font-bold text-teal-700 uppercase tracking-wider">Confirmação em 3s</span>
+                                            <span class="text-[10px] text-slate-400">24 Horas</span>
+                                        </div>
+                                    </label>
 
-                            {{-- Bloco Condicional: Detalhes do Cartão Presencial (POS) --}}
-                            <div id="bloco_cartao_presencial_detalhes" class="p-4 bg-slate-50 border border-slate-200 rounded-sm space-y-3 hidden">
-                                <div class="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                    <svg width="16" height="16" fill="none" stroke="#47728f" viewBox="0 0 24 24">
-                                        <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                    </svg>
-                                    <span>Dados do Comprovante da Maquininha (POS)</span>
+                                    {{-- 5. Boleto Bancário (1x) --}}
+                                    <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_boleto">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-9 h-9 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200">
+                                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="block text-xs font-bold text-slate-900">Boleto à Vista (1x)</span>
+                                                    <input type="radio" name="forma_pagamento" value="boleto" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'boleto' ? 'checked' : '' }}>
+                                                </div>
+                                                <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Boleto único do Asaas com PDF e envio imediato no WhatsApp.</span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                            <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Compensação D+1</span>
+                                            <span class="text-[10px] text-slate-400">À Vista</span>
+                                        </div>
+                                    </label>
+
+                                    {{-- 6. Carnê Escolar (2x a 12x) --}}
+                                    <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_carne">
+                                        <div class="flex items-start gap-3">
+                                            <div class="w-9 h-9 rounded-full bg-slate-100 text-[#47728f] flex items-center justify-center shrink-0 border border-slate-300">
+                                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="block text-xs font-bold text-slate-900">Carnê Escolar (Asaas)</span>
+                                                    <input type="radio" name="forma_pagamento" value="carne" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'carne' ? 'checked' : '' }}>
+                                                </div>
+                                                <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Todas as mensalidades do ano em carnê PDF do Asaas.</span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                            <span class="text-[10px] font-bold text-[#47728f] uppercase tracking-wider">Contrato Ativo</span>
+                                            <span class="text-[10px] text-slate-400">Parcelado</span>
+                                        </div>
+                                    </label>
+
                                 </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Bandeira do Cartão</label>
-                                        <select name="cartao_bandeira" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
-                                            <option value="Visa">Visa</option>
-                                            <option value="Mastercard">Mastercard</option>
-                                            <option value="Elo">Elo</option>
-                                            <option value="Hipercard">Hipercard</option>
-                                            <option value="Amex">American Express</option>
-                                            <option value="Outra">Outra</option>
-                                        </select>
+
+                                {{-- Bloco Condicional: Detalhes do Cartão Presencial (POS) --}}
+                                <div id="bloco_cartao_presencial_detalhes" class="p-4 bg-slate-50 border border-slate-200 rounded-sm space-y-3 hidden">
+                                    <div class="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                        <svg width="16" height="16" fill="none" stroke="#47728f" viewBox="0 0 24 24">
+                                            <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                        </svg>
+                                        <span>Dados do Comprovante da Maquininha (POS)</span>
                                     </div>
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tipo de Operação</label>
-                                        <select name="cartao_tipo" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
-                                            <option value="credito_vista">Crédito à Vista</option>
-                                            <option value="debito">Débito</option>
-                                            <option value="credito_parcelado">Crédito Parcelado</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Código de Autorização / NSU</label>
-                                        <input type="text" name="cartao_nsu" placeholder="Ex: 082914" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Bandeira do Cartão</label>
+                                            <select name="cartao_bandeira" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
+                                                <option value="Visa">Visa</option>
+                                                <option value="Mastercard">Mastercard</option>
+                                                <option value="Elo">Elo</option>
+                                                <option value="Hipercard">Hipercard</option>
+                                                <option value="Amex">American Express</option>
+                                                <option value="Outra">Outra</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tipo de Operação</label>
+                                            <select name="cartao_tipo" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
+                                                <option value="credito_vista">Crédito à Vista</option>
+                                                <option value="debito">Débito</option>
+                                                <option value="credito_parcelado">Crédito Parcelado</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Código de Autorização / NSU</label>
+                                            <input type="text" name="cartao_nsu" placeholder="Ex: 082914" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
+                                        </div>
                                     </div>
                                 </div>
+
+                                {{-- Bloco Condicional: Detalhes do Cartão Online Link --}}
+                                <div id="bloco_cartao_credito_detalhes" class="p-4 bg-slate-50 border border-slate-200 rounded-sm space-y-2 hidden">
+                                    <div class="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                        <svg width="16" height="16" fill="none" stroke="#47728f" viewBox="0 0 24 24">
+                                            <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                        </svg>
+                                        <span>Configuração do Link de Pagamento Asaas</span>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Parcelamento Máximo Liberado</label>
+                                            <select name="cartao_parcelas" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
+                                                <option value="12" selected>Até 12x com repasse de juros ao pagador</option>
+                                                <option value="10">Até 10x com repasse de juros</option>
+                                                <option value="6">Até 6x com repasse de juros</option>
+                                                <option value="1">Apenas 1x (à vista no crédito)</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex items-center text-xs text-slate-500 pt-5">
+                                            <span>* Link gerado com validade de 5 dias úteis e repasse automático de taxas.</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            {{-- Bloco Condicional: Detalhes do Cartão Online Link --}}
-                            <div id="bloco_cartao_credito_detalhes" class="p-4 bg-slate-50 border border-slate-200 rounded-sm space-y-2 hidden">
-                                <div class="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                    <svg width="16" height="16" fill="none" stroke="#47728f" viewBox="0 0 24 24">
-                                        <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                    </svg>
-                                    <span>Configuração do Link de Pagamento Asaas</span>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Parcelamento Máximo Liberado</label>
-                                        <select name="cartao_parcelas" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
-                                            <option value="12" selected>Até 12x com repasse de juros ao pagador</option>
-                                            <option value="10">Até 10x com repasse de juros</option>
-                                            <option value="6">Até 6x com repasse de juros</option>
-                                            <option value="1">Apenas 1x (à vista no crédito)</option>
-                                        </select>
+                            {{-- MODO 2: CONFIGURAÇÃO DE RATEIO (SUBSTITUI AS OPÇÕES GLOBAIS QUANDO RATEIO ESTÁ ATIVO) --}}
+                            <div id="painel_config_rateio" class="p-4 bg-blue-50/40 border border-[#47728f]/30 rounded-sm space-y-4 hidden">
+                                <div class="flex items-center justify-between pb-2 border-b border-[#47728f]/20">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-full bg-[#47728f] text-white flex items-center justify-center font-bold text-xs">👥</span>
+                                        <div>
+                                            <span class="text-xs font-bold text-slate-900 uppercase tracking-wider block">Rateio Financeiro: Pagamento e Porcentagem por Responsável</span>
+                                            <span class="text-[11px] text-slate-500">Defina individualmente a porcentagem e modalidade de cada titular</span>
+                                        </div>
                                     </div>
-                                    <div class="flex items-center text-xs text-slate-500 pt-5">
-                                        <span>* Link gerado com validade de 5 dias úteis e repasse automático de taxas.</span>
+                                    <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                                        Soma: <span id="rateio_soma_display">100,00%</span>
+                                    </span>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {{-- Card Responsável 1 --}}
+                                    <div class="p-4 bg-white border border-slate-200 rounded-sm shadow-2xs space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Responsável 1 (Titular Principal)</span>
+                                            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Titular 1</span>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Selecione o Responsável</label>
+                                            <select id="rateio_select_resp_0" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-semibold">
+                                                {{-- Populado via JS --}}
+                                            </select>
+                                        </div>
+
+                                        {{-- Dados Cadastrais Puxados (CPF e Telefone) --}}
+                                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-xs flex items-center justify-between" id="box_dados_resp_0">
+                                            <div>
+                                                <span class="text-[10px] text-slate-400 font-bold block uppercase">CPF</span>
+                                                <span id="rateio_cpf_display_0" class="font-mono font-bold text-slate-800">--</span>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="text-[10px] text-slate-400 font-bold block uppercase">WhatsApp / Fone</span>
+                                                <span id="rateio_tel_display_0" class="font-medium text-slate-600">--</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">% Rateio</label>
+                                                <div class="relative">
+                                                    <input type="number" id="rateio_input_pct_0" value="50.00" min="1" max="99" step="0.01" class="w-full text-xs font-mono font-bold p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] pr-6">
+                                                    <span class="absolute right-2 top-2 text-xs text-slate-400 font-bold">%</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Dia Vencimento</label>
+                                                <select id="rateio_select_venc_0" class="w-full text-xs p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
+                                                    <option value="5">Dia 05</option>
+                                                    <option value="10" selected>Dia 10</option>
+                                                    <option value="15">Dia 15</option>
+                                                    <option value="20">Dia 20</option>
+                                                    <option value="25">Dia 25</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Forma de Pagamento (Resp. 1)</label>
+                                            <select id="rateio_select_forma_0" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-medium text-slate-800">
+                                                <option value="carne" selected>Carnê Escolar (Asaas)</option>
+                                                <option value="pix">PIX Instantâneo (24h)</option>
+                                                <option value="boleto">Boleto à Vista (1x)</option>
+                                                <option value="cartao_credito">Cartão Online (Link até 12x)</option>
+                                                <option value="cartao_presencial">Cartão Presencial (POS)</option>
+                                                <option value="dinheiro">Dinheiro (Balcão)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-center">
+                                            <span class="block text-[10px] text-slate-500 uppercase font-semibold">Valor da Cota Resp. 1</span>
+                                            <span id="rateio_valor_display_0" class="block text-sm font-extrabold text-[#47728f]">R$ 0,00</span>
+                                            <span id="rateio_parcelas_display_0" class="block text-[11px] text-slate-500">12x de R$ 0,00</span>
+                                        </div>
+
+                                        <div id="rateio_btn_completar_0_box" class="hidden">
+                                            <button type="button" class="w-full py-1.5 px-3 btn-ieducar-action btn-ieducar-outline text-xs text-amber-800 border-amber-300 font-semibold" id="btn_completar_rateio_0">
+                                                ⚠️ Completar Cadastro / Endereço
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {{-- Card Responsável 2 --}}
+                                    <div class="p-4 bg-white border border-slate-200 rounded-sm shadow-2xs space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Responsável 2 (Co-titular)</span>
+                                            <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">Titular 2</span>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Selecione o Responsável</label>
+                                            <select id="rateio_select_resp_1" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-semibold">
+                                                {{-- Populado via JS --}}
+                                            </select>
+                                        </div>
+
+                                        {{-- Dados Cadastrais Puxados (CPF e Telefone) --}}
+                                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-xs flex items-center justify-between" id="box_dados_resp_1">
+                                            <div>
+                                                <span class="text-[10px] text-slate-400 font-bold block uppercase">CPF</span>
+                                                <span id="rateio_cpf_display_1" class="font-mono font-bold text-slate-800">--</span>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="text-[10px] text-slate-400 font-bold block uppercase">WhatsApp / Fone</span>
+                                                <span id="rateio_tel_display_1" class="font-medium text-slate-600">--</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">% Rateio</label>
+                                                <div class="relative">
+                                                    <input type="number" id="rateio_input_pct_1" value="50.00" min="1" max="99" step="0.01" class="w-full text-xs font-mono font-bold p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] pr-6">
+                                                    <span class="absolute right-2 top-2 text-xs text-slate-400 font-bold">%</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Dia Vencimento</label>
+                                                <select id="rateio_select_venc_1" class="w-full text-xs p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
+                                                    <option value="5">Dia 05</option>
+                                                    <option value="10" selected>Dia 10</option>
+                                                    <option value="15">Dia 15</option>
+                                                    <option value="20">Dia 20</option>
+                                                    <option value="25">Dia 25</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Forma de Pagamento (Resp. 2)</label>
+                                            <select id="rateio_select_forma_1" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-medium text-slate-800">
+                                                <option value="carne">Carnê Escolar (Asaas)</option>
+                                                <option value="pix" selected>PIX Instantâneo (24h)</option>
+                                                <option value="boleto">Boleto à Vista (1x)</option>
+                                                <option value="cartao_credito">Cartão Online (Link até 12x)</option>
+                                                <option value="cartao_presencial">Cartão Presencial (POS)</option>
+                                                <option value="dinheiro">Dinheiro (Balcão)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-center">
+                                            <span class="block text-[10px] text-slate-500 uppercase font-semibold">Valor da Cota Resp. 2</span>
+                                            <span id="rateio_valor_display_1" class="block text-sm font-extrabold text-[#47728f]">R$ 0,00</span>
+                                            <span id="rateio_parcelas_display_1" class="block text-[11px] text-slate-500">12x de R$ 0,00</span>
+                                        </div>
+
+                                        <div id="rateio_btn_completar_1_box" class="hidden">
+                                            <button type="button" class="w-full py-1.5 px-3 btn-ieducar-action btn-ieducar-outline text-xs text-amber-800 border-amber-300 font-semibold" id="btn_completar_rateio_1">
+                                                ⚠️ Completar Cadastro / Endereço
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1354,12 +1378,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const painelOpcaoDivisao = document.getElementById('painel_opcao_divisao');
     const painelConfigRateio = document.getElementById('painel_config_rateio');
+    const containerPagamentoUnico = document.getElementById('container_pagamento_unico');
     const containerTabelaUnico = document.getElementById('container_tabela_responsaveis_unico');
     const alertaRateioStep3 = document.getElementById('alerta_rateio_step3');
     const textoInstrucaoPagamentoGlobal = document.getElementById('texto_instrucao_pagamento_global');
     const rateioSomaDisplay = document.getElementById('rateio_soma_display');
 
     const rateioSelectResp0 = document.getElementById('rateio_select_resp_0');
+    const rateioCpfDisplay0 = document.getElementById('rateio_cpf_display_0');
+    const rateioTelDisplay0 = document.getElementById('rateio_tel_display_0');
     const rateioInputPct0 = document.getElementById('rateio_input_pct_0');
     const rateioSelectVenc0 = document.getElementById('rateio_select_venc_0');
     const rateioSelectForma0 = document.getElementById('rateio_select_forma_0');
@@ -1369,6 +1396,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnCompletarRateio0 = document.getElementById('btn_completar_rateio_0');
 
     const rateioSelectResp1 = document.getElementById('rateio_select_resp_1');
+    const rateioCpfDisplay1 = document.getElementById('rateio_cpf_display_1');
+    const rateioTelDisplay1 = document.getElementById('rateio_tel_display_1');
     const rateioInputPct1 = document.getElementById('rateio_input_pct_1');
     const rateioSelectVenc1 = document.getElementById('rateio_select_venc_1');
     const rateioSelectForma1 = document.getElementById('rateio_select_forma_1');
@@ -1502,6 +1531,28 @@ document.addEventListener('DOMContentLoaded', function () {
     // LÓGICA DE RATEIO ENTRE DOIS RESPONSÁVEIS
     // =========================================================================
 
+    function atualizarCardsRateioInfo() {
+        if (!rateioSelectResp0 || !rateioSelectResp1) return;
+        const idx0 = parseInt(rateioSelectResp0.value);
+        const idx1 = parseInt(rateioSelectResp1.value);
+
+        if (!isNaN(idx0) && responsaveisCache[idx0]) {
+            const resp0 = responsaveisCache[idx0];
+            const cpf0 = resp0.cpf || resp0.cpf_puro || resp0.cpf_cnpj || 'Não informado';
+            const tel0 = resp0.telefone_celular || resp0.telefone || '--';
+            if (rateioCpfDisplay0) rateioCpfDisplay0.textContent = cpf0;
+            if (rateioTelDisplay0) rateioTelDisplay0.textContent = tel0;
+        }
+
+        if (!isNaN(idx1) && responsaveisCache[idx1]) {
+            const resp1 = responsaveisCache[idx1];
+            const cpf1 = resp1.cpf || resp1.cpf_puro || resp1.cpf_cnpj || 'Não informado';
+            const tel1 = resp1.telefone_celular || resp1.telefone || '--';
+            if (rateioCpfDisplay1) rateioCpfDisplay1.textContent = cpf1;
+            if (rateioTelDisplay1) rateioTelDisplay1.textContent = tel1;
+        }
+    }
+
     function popularSelectsRateio() {
         if (!rateioSelectResp0 || !rateioSelectResp1) return;
 
@@ -1511,14 +1562,18 @@ document.addEventListener('DOMContentLoaded', function () {
         if (responsaveisCache.length === 0) return;
 
         responsaveisCache.forEach((resp, idx) => {
+            const cpfVal = resp.cpf || resp.cpf_puro || resp.cpf_cnpj || '';
+            const cpfTxt = cpfVal ? ` (${cpfVal})` : '';
+            const parentescoTxt = resp.parentesco ? ` - ${resp.parentesco}` : '';
+
             const opt0 = document.createElement('option');
             opt0.value = idx;
-            opt0.textContent = `${resp.nome} (${resp.parentesco})${resp.cpf ? ' - ' + resp.cpf : ' [Sem CPF]'}`;
+            opt0.textContent = `${resp.nome}${cpfTxt}${parentescoTxt}`;
             rateioSelectResp0.appendChild(opt0);
 
             const opt1 = document.createElement('option');
             opt1.value = idx;
-            opt1.textContent = `${resp.nome} (${resp.parentesco})${resp.cpf ? ' - ' + resp.cpf : ' [Sem CPF]'}`;
+            opt1.textContent = `${resp.nome}${cpfTxt}${parentescoTxt}`;
             rateioSelectResp1.appendChild(opt1);
         });
 
@@ -1529,6 +1584,7 @@ document.addEventListener('DOMContentLoaded', function () {
             rateioSelectResp1.selectedIndex = 0;
         }
 
+        atualizarCardsRateioInfo();
         verificarStatusCadastralRateio();
         atualizarSimulacaoRateio();
     }
@@ -1540,7 +1596,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!isNaN(idx0) && responsaveisCache[idx0]) {
             const resp0 = responsaveisCache[idx0];
-            const incomplet0 = !resp0.responsavel_financeiro_id || !resp0.cpf;
+            const temCpf0 = !!(resp0.cpf || resp0.cpf_puro || resp0.cpf_cnpj);
+            const incomplet0 = !resp0.responsavel_financeiro_id || !temCpf0;
             if (incomplet0 && rateioBtnCompletar0Box) {
                 rateioBtnCompletar0Box.classList.remove('hidden');
             } else if (rateioBtnCompletar0Box) {
@@ -1550,7 +1607,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!isNaN(idx1) && responsaveisCache[idx1]) {
             const resp1 = responsaveisCache[idx1];
-            const incomplet1 = !resp1.responsavel_financeiro_id || !resp1.cpf;
+            const temCpf1 = !!(resp1.cpf || resp1.cpf_puro || resp1.cpf_cnpj);
+            const incomplet1 = !resp1.responsavel_financeiro_id || !temCpf1;
             if (incomplet1 && rateioBtnCompletar1Box) {
                 rateioBtnCompletar1Box.classList.remove('hidden');
             } else if (rateioBtnCompletar1Box) {
@@ -1670,6 +1728,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const outroIdx = Array.from(rateioSelectResp1.options).find(o => o.value !== this.value);
                 if (outroIdx) rateioSelectResp1.value = outroIdx.value;
             }
+            atualizarCardsRateioInfo();
             verificarStatusCadastralRateio();
             atualizarSimulacaoRateio();
         });
@@ -1681,6 +1740,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const outroIdx = Array.from(rateioSelectResp0.options).find(o => o.value !== this.value);
                 if (outroIdx) rateioSelectResp0.value = outroIdx.value;
             }
+            atualizarCardsRateioInfo();
             verificarStatusCadastralRateio();
             atualizarSimulacaoRateio();
         });
@@ -1714,21 +1774,24 @@ document.addEventListener('DOMContentLoaded', function () {
         radio.addEventListener('change', function () {
             if (this.value === 'rateio') {
                 inputAplicarRateio.value = '1';
-                painelConfigRateio.classList.remove('hidden');
-                containerTabelaUnico.classList.add('hidden');
-                alertaRespSelecionado.classList.add('hidden');
-                alertaRateioStep3.classList.remove('hidden');
+                if (containerPagamentoUnico) containerPagamentoUnico.classList.add('hidden');
+                if (painelConfigRateio) painelConfigRateio.classList.remove('hidden');
+                if (containerTabelaUnico) containerTabelaUnico.classList.remove('hidden');
+                if (alertaRespSelecionado) alertaRespSelecionado.classList.add('hidden');
+                if (alertaRateioStep3) alertaRateioStep3.classList.remove('hidden');
                 if (textoInstrucaoPagamentoGlobal) textoInstrucaoPagamentoGlobal.classList.add('hidden');
+                atualizarCardsRateioInfo();
                 verificarStatusCadastralRateio();
                 atualizarSimulacaoRateio();
             } else {
                 inputAplicarRateio.value = '0';
-                painelConfigRateio.classList.add('hidden');
-                containerTabelaUnico.classList.remove('hidden');
-                if (inputResponsavelId.value) {
+                if (containerPagamentoUnico) containerPagamentoUnico.classList.remove('hidden');
+                if (painelConfigRateio) painelConfigRateio.classList.add('hidden');
+                if (containerTabelaUnico) containerTabelaUnico.classList.remove('hidden');
+                if (inputResponsavelId.value && alertaRespSelecionado) {
                     alertaRespSelecionado.classList.remove('hidden');
                 }
-                alertaRateioStep3.classList.add('hidden');
+                if (alertaRateioStep3) alertaRateioStep3.classList.add('hidden');
                 if (textoInstrucaoPagamentoGlobal) textoInstrucaoPagamentoGlobal.classList.remove('hidden');
                 atualizarSimulacao();
             }
@@ -1917,6 +1980,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (radioUnico) radioUnico.checked = true;
                 if (inputAplicarRateio) inputAplicarRateio.value = '0';
                 if (painelConfigRateio) painelConfigRateio.classList.add('hidden');
+                if (containerPagamentoUnico) containerPagamentoUnico.classList.remove('hidden');
                 if (containerTabelaUnico) containerTabelaUnico.classList.remove('hidden');
                 if (alertaRateioStep3) alertaRateioStep3.classList.add('hidden');
                 if (textoInstrucaoPagamentoGlobal) textoInstrucaoPagamentoGlobal.classList.remove('hidden');
@@ -2040,6 +2104,7 @@ document.addEventListener('DOMContentLoaded', function () {
         alertaRespSelecionado.classList.add('hidden');
         if (painelOpcaoDivisao) painelOpcaoDivisao.classList.add('hidden');
         if (painelConfigRateio) painelConfigRateio.classList.add('hidden');
+        if (containerPagamentoUnico) containerPagamentoUnico.classList.remove('hidden');
         if (containerTabelaUnico) containerTabelaUnico.classList.remove('hidden');
         if (alertaRateioStep3) alertaRateioStep3.classList.add('hidden');
         if (textoInstrucaoPagamentoGlobal) textoInstrucaoPagamentoGlobal.classList.remove('hidden');
