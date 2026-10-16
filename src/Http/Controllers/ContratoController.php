@@ -97,6 +97,7 @@ class ContratoController extends Controller
             'cartao_nsu'                => 'nullable|string|max:100',
             'cartao_tipo'               => 'nullable|string|max:20',
             'cartao_parcelas'           => 'nullable|integer|min:1|max:12',
+            'repassar_juros'            => 'nullable',
         ];
 
         if ($aplicarRateio) {
@@ -107,6 +108,8 @@ class ContratoController extends Controller
             $rules['rateio_responsaveis.*.dia_vencimento'] = 'nullable|integer|min:1|max:31';
             $rules['rateio_responsaveis.*.qtd_parcelas'] = 'nullable|integer|min:1|max:12';
             $rules['rateio_responsaveis.*.data_vencimento'] = 'nullable|string';
+            $rules['rateio_responsaveis.*.repassar_juros'] = 'nullable';
+            $rules['rateio_responsaveis.*.valor_taxa_repasse'] = 'nullable|numeric';
         } else {
             $rules['responsavel_financeiro_id'] = 'required|integer';
         }
@@ -543,5 +546,44 @@ class ContratoController extends Controller
         }
 
         return view('financeiro::contratos.matriculas-sem-contrato', compact('pendencias', 'anoLetivo'));
+    }
+
+    /**
+     * Simula as taxas do Asaas para repasse de juros/custos de parcelamento
+     */
+    public function simularTaxas(\Illuminate\Http\Request $request)
+    {
+        $valor = (float) $request->input('valor', 0);
+        $parcelas = (int) $request->input('parcelas', 1);
+        $forma = strtolower(trim((string) $request->input('forma', 'cartao_credito')));
+
+        if ($valor <= 0) {
+            return response()->json([
+                'sucesso'  => false,
+                'mensagem' => 'O valor para simulação deve ser maior que zero.',
+            ], 422);
+        }
+
+        try {
+            $gateway = app(\iEducar\Financeiro\Gateways\GatewayManager::class)->driver();
+            if (!method_exists($gateway, 'simularTaxas')) {
+                return response()->json([
+                    'sucesso'  => false,
+                    'mensagem' => 'O gateway atual não suporta simulação de taxas.',
+                ], 400);
+            }
+
+            $simulacao = $gateway->simularTaxas($valor, $parcelas, $forma);
+
+            return response()->json([
+                'sucesso' => true,
+                'dados'   => $simulacao,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'sucesso'  => false,
+                'mensagem' => $e->getMessage(),
+            ], 400);
+        }
     }
 }

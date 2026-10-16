@@ -139,6 +139,8 @@ class ContratoService
                         $qtdResp = 1;
                     }
                     $dataVencCustom = !empty($rc['data_vencimento']) ? Carbon::parse($rc['data_vencimento']) : null;
+                    $repassarJuros  = !empty($rc['repassar_juros']);
+                    $taxaRepasse    = (float) ($rc['valor_taxa_repasse'] ?? 0.0);
 
                     $vinculos->push((object) [
                         'responsavel_id'        => $respId,
@@ -147,6 +149,8 @@ class ContratoService
                         'dia_vencimento'        => !empty($rc['dia_vencimento']) ? (int) $rc['dia_vencimento'] : $diaVencimento,
                         'qtd_parcelas'          => $qtdResp,
                         'data_vencimento'       => $dataVencCustom,
+                        'repassar_juros'        => $repassarJuros,
+                        'valor_taxa_repasse'    => $taxaRepasse,
                         'responsavel_principal' => $isPrincipal,
                     ]);
                 }
@@ -166,6 +170,8 @@ class ContratoService
 
                 $responsavelPrincipalId = $respId;
                 $formaUnica = strtolower(trim((string) ($dados['forma_pagamento'] ?? 'carne')));
+                $repassarJurosUnico = !empty($dados['repassar_juros']);
+                $taxaRepasseUnico   = (float) ($dados['valor_taxa_repasse'] ?? 0.0);
 
                 // Garante vínculo na base
                 AlunoResponsavel::updateOrCreate(
@@ -182,6 +188,9 @@ class ContratoService
                         'percentual_rateio'     => 100.00,
                         'forma_pagamento'       => $formaUnica,
                         'dia_vencimento'        => $diaVencimento,
+                        'qtd_parcelas'          => $qtdParcelasPadrao,
+                        'repassar_juros'        => $repassarJurosUnico,
+                        'valor_taxa_repasse'    => $taxaRepasseUnico,
                         'responsavel_principal' => true,
                     ]
                 ]);
@@ -285,6 +294,9 @@ class ContratoService
 
             foreach ($vinculos as $idx => $vinculo) {
                 $valorVinculoTotal = $valoresRateioTotal[$idx];
+                if (!empty($vinculo->repassar_juros) && !empty($vinculo->valor_taxa_repasse)) {
+                    $valorVinculoTotal = round($valorVinculoTotal + (float) $vinculo->valor_taxa_repasse, 2);
+                }
                 if ($valorVinculoTotal <= 0) {
                     continue;
                 }

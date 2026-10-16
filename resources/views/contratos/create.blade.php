@@ -317,18 +317,23 @@
             
             {{-- Campos de Rateio entre Responsáveis --}}
             <input type="hidden" name="aplicar_rateio" id="input_aplicar_rateio" value="0">
+            <input type="hidden" name="valor_taxa_repasse" id="input_valor_taxa_repasse_unico" value="0.00">
             <input type="hidden" name="rateio_responsaveis[0][responsavel_id]" id="input_rateio_0_id">
             <input type="hidden" name="rateio_responsaveis[0][percentual]" id="input_rateio_0_pct" value="50.00">
             <input type="hidden" name="rateio_responsaveis[0][forma_pagamento]" id="input_rateio_0_forma" value="carne">
             <input type="hidden" name="rateio_responsaveis[0][qtd_parcelas]" id="input_rateio_0_parcelas" value="12">
             <input type="hidden" name="rateio_responsaveis[0][dia_vencimento]" id="input_rateio_0_venc" value="10">
             <input type="hidden" name="rateio_responsaveis[0][data_vencimento]" id="input_rateio_0_data_venc" value="">
+            <input type="hidden" name="rateio_responsaveis[0][repassar_juros]" id="input_rateio_0_repassar_juros" value="0">
+            <input type="hidden" name="rateio_responsaveis[0][valor_taxa_repasse]" id="input_rateio_0_valor_taxa_repasse" value="0.00">
             <input type="hidden" name="rateio_responsaveis[1][responsavel_id]" id="input_rateio_1_id">
             <input type="hidden" name="rateio_responsaveis[1][percentual]" id="input_rateio_1_pct" value="50.00">
             <input type="hidden" name="rateio_responsaveis[1][forma_pagamento]" id="input_rateio_1_forma" value="carne">
             <input type="hidden" name="rateio_responsaveis[1][qtd_parcelas]" id="input_rateio_1_parcelas" value="12">
             <input type="hidden" name="rateio_responsaveis[1][dia_vencimento]" id="input_rateio_1_venc" value="10">
             <input type="hidden" name="rateio_responsaveis[1][data_vencimento]" id="input_rateio_1_data_venc" value="">
+            <input type="hidden" name="rateio_responsaveis[1][repassar_juros]" id="input_rateio_1_repassar_juros" value="0">
+            <input type="hidden" name="rateio_responsaveis[1][valor_taxa_repasse]" id="input_rateio_1_valor_taxa_repasse" value="0.00">
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
@@ -874,6 +879,17 @@
                                                 </div>
                                             </div>
                                             <span class="text-[10px] text-slate-500 block">Grade de parcelas mensais geradas no Asaas.</span>
+                                            
+                                            {{-- Opção de Repasse de Juros / Taxas do Asaas ao Responsável --}}
+                                            <div class="pt-2 border-t border-[#47728f]/20">
+                                                <label class="flex items-center gap-2 cursor-pointer select-none">
+                                                    <input type="checkbox" id="rateio_check_repasse_0" class="rounded text-[#47728f] focus:ring-[#47728f]">
+                                                    <span class="text-[11px] font-bold text-slate-700">Repassar taxas/juros ao responsável</span>
+                                                </label>
+                                                <div id="rateio_taxas_info_0" class="hidden mt-1 p-2 bg-amber-50 border border-amber-200 rounded text-[11px] text-amber-900 font-medium">
+                                                    <span id="rateio_taxas_texto_0">Calculando taxas do Asaas...</span>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         {{-- Container para Boleto Único (Vencimento 2 dias após hoje) --}}
@@ -1002,6 +1018,17 @@
                                                 </div>
                                             </div>
                                             <span class="text-[10px] text-slate-500 block">Grade de parcelas mensais geradas no Asaas.</span>
+
+                                            {{-- Opção de Repasse de Juros / Taxas do Asaas ao Responsável 2 --}}
+                                            <div class="pt-2 border-t border-[#47728f]/20">
+                                                <label class="flex items-center gap-2 cursor-pointer select-none">
+                                                    <input type="checkbox" id="rateio_check_repasse_1" class="rounded text-[#47728f] focus:ring-[#47728f]">
+                                                    <span class="text-[11px] font-bold text-slate-700">Repassar taxas/juros ao responsável</span>
+                                                </label>
+                                                <div id="rateio_taxas_info_1" class="hidden mt-1 p-2 bg-amber-50 border border-amber-200 rounded text-[11px] text-amber-900 font-medium">
+                                                    <span id="rateio_taxas_texto_1">Calculando taxas do Asaas...</span>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         {{-- Container para Boleto Único (Vencimento 2 dias após hoje) --}}
@@ -1107,6 +1134,17 @@
                                 <p class="text-[11px] text-slate-500 mt-1.5">
                                     As parcelas serão geradas a partir do mês atual com vencimento no dia selecionado.
                                 </p>
+
+                                {{-- Opção de Repasse de Juros / Taxas do Asaas ao Responsável (Modo Individual) --}}
+                                <div class="mt-2.5 pt-2 border-t border-slate-200">
+                                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                                        <input type="checkbox" name="repassar_juros" id="check_repassar_juros_unico" value="1" {{ old('repassar_juros') ? 'checked' : '' }} class="rounded text-[#47728f] focus:ring-[#47728f]">
+                                        <span class="text-xs font-bold text-slate-700">Repassar taxas/juros ao responsável</span>
+                                    </label>
+                                    <div id="unico_taxas_info" class="hidden mt-1.5 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900 font-medium">
+                                        <span id="unico_taxas_texto">Calculando taxas do Asaas...</span>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1" id="grid_vencimento_desconto">
@@ -1542,6 +1580,59 @@ document.addEventListener('DOMContentLoaded', function () {
     const rateioBtnCompletar1Box = document.getElementById('rateio_btn_completar_1_box');
     const btnCompletarRateio1 = document.getElementById('btn_completar_rateio_1');
 
+    // Repasse de Juros / Taxas
+    const inputValorTaxaRepasseUnico = document.getElementById('input_valor_taxa_repasse_unico');
+    const inputRateio0RepassarJuros = document.getElementById('input_rateio_0_repassar_juros');
+    const inputRateio0ValorTaxaRepasse = document.getElementById('input_rateio_0_valor_taxa_repasse');
+    const inputRateio1RepassarJuros = document.getElementById('input_rateio_1_repassar_juros');
+    const inputRateio1ValorTaxaRepasse = document.getElementById('input_rateio_1_valor_taxa_repasse');
+
+    const rateioCheckRepasse0 = document.getElementById('rateio_check_repasse_0');
+    const rateioTaxasInfo0 = document.getElementById('rateio_taxas_info_0');
+    const rateioTaxasTexto0 = document.getElementById('rateio_taxas_texto_0');
+
+    const rateioCheckRepasse1 = document.getElementById('rateio_check_repasse_1');
+    const rateioTaxasInfo1 = document.getElementById('rateio_taxas_info_1');
+    const rateioTaxasTexto1 = document.getElementById('rateio_taxas_texto_1');
+
+    const checkRepassarJurosUnico = document.getElementById('check_repassar_juros_unico');
+    const unicoTaxasInfo = document.getElementById('unico_taxas_info');
+    const unicoTaxasTexto = document.getElementById('unico_taxas_texto');
+
+    let taxaRepasseUnico = 0;
+    let taxaRepasseRateio0 = 0;
+    let taxaRepasseRateio1 = 0;
+    let simulacoesTaxasCache = {};
+
+    async function consultarTaxasAsaas(valor, parcelas, forma) {
+        if (!valor || valor <= 0 || !parcelas || parcelas <= 0 || !['carne', 'cartao_credito'].includes(forma)) {
+            return null;
+        }
+        const key = `${forma}_${valor.toFixed(2)}_${parcelas}`;
+        if (simulacoesTaxasCache[key]) {
+            return simulacoesTaxasCache[key];
+        }
+        try {
+            const resp = await fetch('{{ route("financeiro.contratos.simular-taxas") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ valor, parcelas, forma })
+            });
+            const data = await resp.json();
+            if (data.sucesso && data.dados) {
+                simulacoesTaxasCache[key] = data.dados;
+                return data.dados;
+            }
+        } catch (e) {
+            console.warn('Erro ao consultar taxas do Asaas:', e);
+        }
+        return null;
+    }
+
     // Simulação Financeira
     const selectPlano = document.getElementById('plano_id');
     const selectQtdParcelas = document.getElementById('qtd_parcelas');
@@ -1646,6 +1737,29 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             simGradeParcelas.textContent = `${parcelas}x de ${formatMoney(valorParcela)}`;
             simDiaVencimento.textContent = `Vencimento todo dia ${dia < 10 ? '0' + dia : dia} (${periodoStr})`;
+        }
+
+        // Simulação e Repasse de Taxas do Asaas no Modo Individual
+        const isParceladoUnico = ['carne', 'cartao_credito'].includes(formaVal);
+        const repassarUnico = checkRepassarJurosUnico && checkRepassarJurosUnico.checked && isParceladoUnico;
+        if (repassarUnico) {
+            if (unicoTaxasInfo) unicoTaxasInfo.classList.remove('hidden');
+            if (unicoTaxasTexto) unicoTaxasTexto.innerHTML = 'Calculando taxas no Asaas...';
+            consultarTaxasAsaas(valorLiquido, parcelas, formaVal).then(dados => {
+                if (!dados) return;
+                taxaRepasseUnico = dados.taxa_total;
+                const valorFinal = Math.round((valorLiquido + taxaRepasseUnico) * 100) / 100;
+                const parcFinal = Math.round((valorFinal / parcelas) * 100) / 100;
+                if (unicoTaxasTexto) {
+                    unicoTaxasTexto.innerHTML = `Taxa estimada Asaas: <strong>+ ${formatMoney(taxaRepasseUnico)}</strong> (+ ${formatMoney(dados.taxa_parcela)}/mês). Novo total: <strong>${formatMoney(valorFinal)}</strong> (${parcelas}x de ${formatMoney(parcFinal)}).`;
+                }
+                simGradeParcelas.textContent = `${parcelas}x de ${formatMoney(parcFinal)} (com repasse de juros)`;
+                if (inputValorTaxaRepasseUnico) inputValorTaxaRepasseUnico.value = taxaRepasseUnico.toFixed(2);
+            });
+        } else {
+            taxaRepasseUnico = 0;
+            if (unicoTaxasInfo) unicoTaxasInfo.classList.add('hidden');
+            if (inputValorTaxaRepasseUnico) inputValorTaxaRepasseUnico.value = '0.00';
         }
 
         // Stepper: Se aluno, responsável e forma de pagamento já foram preenchidos, Passo 4 Concluído!
@@ -1840,6 +1954,31 @@ document.addEventListener('DOMContentLoaded', function () {
             rateioParcelasDisplay0.textContent = `1x de ${formatMoney(v0)} (À vista - Balcão)`;
         }
 
+        // Repasse de taxas Resp 0
+        const repassar0 = rateioCheckRepasse0 && rateioCheckRepasse0.checked && isParcelado0;
+        if (repassar0) {
+            if (rateioTaxasInfo0) rateioTaxasInfo0.classList.remove('hidden');
+            if (rateioTaxasTexto0) rateioTaxasTexto0.innerHTML = 'Calculando taxas no Asaas...';
+            consultarTaxasAsaas(v0, parc0, forma0).then(dados => {
+                if (!dados) return;
+                taxaRepasseRateio0 = dados.taxa_total;
+                const v0Final = Math.round((v0 + taxaRepasseRateio0) * 100) / 100;
+                const parc0Final = Math.round((v0Final / parc0) * 100) / 100;
+                if (rateioTaxasTexto0) {
+                    rateioTaxasTexto0.innerHTML = `Taxa Asaas: <strong>+ ${formatMoney(taxaRepasseRateio0)}</strong> (+ ${formatMoney(dados.taxa_parcela)}/mês). Total: <strong>${formatMoney(v0Final)}</strong> (${parc0}x de ${formatMoney(parc0Final)}).`;
+                }
+                rateioValorDisplay0.textContent = formatMoney(v0Final);
+                rateioParcelasDisplay0.textContent = `${parc0}x de ${formatMoney(parc0Final)} (com repasse • Venc. dia ${rateioSelectVenc0.value})`;
+                if (inputRateio0RepassarJuros) inputRateio0RepassarJuros.value = '1';
+                if (inputRateio0ValorTaxaRepasse) inputRateio0ValorTaxaRepasse.value = taxaRepasseRateio0.toFixed(2);
+            });
+        } else {
+            taxaRepasseRateio0 = 0;
+            if (rateioTaxasInfo0) rateioTaxasInfo0.classList.add('hidden');
+            if (inputRateio0RepassarJuros) inputRateio0RepassarJuros.value = '0';
+            if (inputRateio0ValorTaxaRepasse) inputRateio0ValorTaxaRepasse.value = '0.00';
+        }
+
         // Resp 1
         const forma1 = rateioSelectForma1.value;
         const isParcelado1 = ['carne', 'cartao_credito'].includes(forma1);
@@ -1857,6 +1996,31 @@ document.addEventListener('DOMContentLoaded', function () {
             rateioParcelasDisplay1.textContent = `1x de ${formatMoney(v1)} (À vista - PIX 24h)`;
         } else {
             rateioParcelasDisplay1.textContent = `1x de ${formatMoney(v1)} (À vista - Balcão)`;
+        }
+
+        // Repasse de taxas Resp 1
+        const repassar1 = rateioCheckRepasse1 && rateioCheckRepasse1.checked && isParcelado1;
+        if (repassar1) {
+            if (rateioTaxasInfo1) rateioTaxasInfo1.classList.remove('hidden');
+            if (rateioTaxasTexto1) rateioTaxasTexto1.innerHTML = 'Calculando taxas no Asaas...';
+            consultarTaxasAsaas(v1, parc1, forma1).then(dados => {
+                if (!dados) return;
+                taxaRepasseRateio1 = dados.taxa_total;
+                const v1Final = Math.round((v1 + taxaRepasseRateio1) * 100) / 100;
+                const parc1Final = Math.round((v1Final / parc1) * 100) / 100;
+                if (rateioTaxasTexto1) {
+                    rateioTaxasTexto1.innerHTML = `Taxa Asaas: <strong>+ ${formatMoney(taxaRepasseRateio1)}</strong> (+ ${formatMoney(dados.taxa_parcela)}/mês). Total: <strong>${formatMoney(v1Final)}</strong> (${parc1}x de ${formatMoney(parc1Final)}).`;
+                }
+                rateioValorDisplay1.textContent = formatMoney(v1Final);
+                rateioParcelasDisplay1.textContent = `${parc1}x de ${formatMoney(parc1Final)} (com repasse • Venc. dia ${rateioSelectVenc1.value})`;
+                if (inputRateio1RepassarJuros) inputRateio1RepassarJuros.value = '1';
+                if (inputRateio1ValorTaxaRepasse) inputRateio1ValorTaxaRepasse.value = taxaRepasseRateio1.toFixed(2);
+            });
+        } else {
+            taxaRepasseRateio1 = 0;
+            if (rateioTaxasInfo1) rateioTaxasInfo1.classList.add('hidden');
+            if (inputRateio1RepassarJuros) inputRateio1RepassarJuros.value = '0';
+            if (inputRateio1ValorTaxaRepasse) inputRateio1ValorTaxaRepasse.value = '0.00';
         }
 
         // Atualiza Resumo Lateral no Modo Rateio
@@ -1978,6 +2142,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (rateioSelectParcelas1) rateioSelectParcelas1.addEventListener('change', atualizarSimulacaoRateio);
     if (rateioSelectVenc0) rateioSelectVenc0.addEventListener('change', atualizarSimulacaoRateio);
     if (rateioSelectVenc1) rateioSelectVenc1.addEventListener('change', atualizarSimulacaoRateio);
+
+    if (rateioCheckRepasse0) rateioCheckRepasse0.addEventListener('change', atualizarSimulacaoRateio);
+    if (rateioCheckRepasse1) rateioCheckRepasse1.addEventListener('change', atualizarSimulacaoRateio);
+    if (checkRepassarJurosUnico) checkRepassarJurosUnico.addEventListener('change', atualizarSimulacao);
 
     if (btnCompletarRateio0) {
         btnCompletarRateio0.addEventListener('click', function () {
@@ -2830,6 +2998,8 @@ document.addEventListener('DOMContentLoaded', function () {
             inputRateio0Parcelas.disabled = false;
             inputRateio0Venc.disabled = false;
             inputRateio0DataVenc.disabled = false;
+            inputRateio0RepassarJuros.disabled = false;
+            inputRateio0ValorTaxaRepasse.disabled = false;
 
             inputRateio1Id.disabled = false;
             inputRateio1Pct.disabled = false;
@@ -2837,6 +3007,8 @@ document.addEventListener('DOMContentLoaded', function () {
             inputRateio1Parcelas.disabled = false;
             inputRateio1Venc.disabled = false;
             inputRateio1DataVenc.disabled = false;
+            inputRateio1RepassarJuros.disabled = false;
+            inputRateio1ValorTaxaRepasse.disabled = false;
 
             const d2 = getVencimentoBoletoD2();
             const f0 = rateioSelectForma0.value;
@@ -2850,6 +3022,8 @@ document.addEventListener('DOMContentLoaded', function () {
             inputRateio0Parcelas.value = ['carne', 'cartao_credito'].includes(f0) ? (rateioSelectParcelas0 ? rateioSelectParcelas0.value : 12) : 1;
             inputRateio0Venc.value = (f0 === 'boleto') ? d2.dia : rateioSelectVenc0.value;
             inputRateio0DataVenc.value = (f0 === 'boleto') ? d2.dataSql : '';
+            inputRateio0RepassarJuros.value = (rateioCheckRepasse0 && rateioCheckRepasse0.checked) ? '1' : '0';
+            inputRateio0ValorTaxaRepasse.value = (rateioCheckRepasse0 && rateioCheckRepasse0.checked) ? taxaRepasseRateio0.toFixed(2) : '0.00';
 
             inputRateio1Id.value = resp1.responsavel_financeiro_id;
             inputRateio1Pct.value = p1.toFixed(2);
@@ -2857,11 +3031,19 @@ document.addEventListener('DOMContentLoaded', function () {
             inputRateio1Parcelas.value = ['carne', 'cartao_credito'].includes(f1) ? (rateioSelectParcelas1 ? rateioSelectParcelas1.value : 12) : 1;
             inputRateio1Venc.value = (f1 === 'boleto') ? d2.dia : rateioSelectVenc1.value;
             inputRateio1DataVenc.value = (f1 === 'boleto') ? d2.dataSql : '';
+            inputRateio1RepassarJuros.value = (rateioCheckRepasse1 && rateioCheckRepasse1.checked) ? '1' : '0';
+            inputRateio1ValorTaxaRepasse.value = (rateioCheckRepasse1 && rateioCheckRepasse1.checked) ? taxaRepasseRateio1.toFixed(2) : '0.00';
         } else {
             if (!inputResponsavelId.value) {
                 e.preventDefault();
                 alert('Selecione o responsável financeiro titular da cobrança no Passo 2.');
                 return false;
+            }
+
+            if (checkRepassarJurosUnico && checkRepassarJurosUnico.checked) {
+                inputValorTaxaRepasseUnico.value = taxaRepasseUnico.toFixed(2);
+            } else {
+                inputValorTaxaRepasseUnico.value = '0.00';
             }
 
             // Desabilita inputs de rateio para não enviar lixo no POST de titular único
@@ -2871,6 +3053,8 @@ document.addEventListener('DOMContentLoaded', function () {
             inputRateio0Parcelas.disabled = true;
             inputRateio0Venc.disabled = true;
             inputRateio0DataVenc.disabled = true;
+            inputRateio0RepassarJuros.disabled = true;
+            inputRateio0ValorTaxaRepasse.disabled = true;
 
             inputRateio1Id.disabled = true;
             inputRateio1Pct.disabled = true;
@@ -2878,6 +3062,8 @@ document.addEventListener('DOMContentLoaded', function () {
             inputRateio1Parcelas.disabled = true;
             inputRateio1Venc.disabled = true;
             inputRateio1DataVenc.disabled = true;
+            inputRateio1RepassarJuros.disabled = true;
+            inputRateio1ValorTaxaRepasse.disabled = true;
         }
 
         const btnSubmit = document.getElementById('btn_submit_contrato');

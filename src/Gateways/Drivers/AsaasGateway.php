@@ -677,5 +677,49 @@ class AsaasGateway implements GatewayInterface
             ];
         }
     }
+
+    /**
+     * Simula as taxas do Asaas para parcelamento em cartão de crédito ou carnê/boleto
+     *
+     * @param  float  $valor
+     * @param  int    $parcelas
+     * @param  string $forma ('carne' ou 'cartao_credito')
+     * @return array
+     * @throws Exception
+     */
+    public function simularTaxas(float $valor, int $parcelas = 1, string $forma = 'cartao_credito'): array
+    {
+        $billingType = ($forma === 'carne') ? 'BOLETO' : 'CREDIT_CARD';
+        $payload = [
+            'value'            => round($valor, 2),
+            'installmentCount' => max(1, $parcelas),
+            'billingTypes'     => [$billingType],
+        ];
+
+        $response = $this->client()->post("{$this->baseUrl}/payments/simulate", $payload);
+
+        if (!$response->successful()) {
+            $erro = $response->json('errors.0.description') ?? $response->body();
+            Log::warning("AsaasGateway::simularTaxas falhou: {$erro}", ['payload' => $payload]);
+            throw new Exception("Falha ao simular taxas no Asaas: {$erro}");
+        }
+
+        $dados = $response->json();
+        $info = ($forma === 'carne') ? ($dados['bankSlip'] ?? []) : ($dados['creditCard'] ?? []);
+        $netValue = (float) ($info['netValue'] ?? $valor);
+        $taxaTotal = max(0, round($valor - $netValue, 2));
+        $taxaParcela = $parcelas > 0 ? round($taxaTotal / $parcelas, 2) : 0;
+
+        return [
+            'valor_original'      => round($valor, 2),
+            'taxa_total'          => $taxaTotal,
+            'taxa_parcela'        => $taxaParcela,
+            'valor_com_repasse'   => round($valor + $taxaTotal, 2),
+            'parcela_original'    => round($valor / max(1, $parcelas), 2),
+            'parcela_com_repasse' => round(($valor + $taxaTotal) / max(1, $parcelas), 2),
+            'fee_percentage'      => $info['feePercentage'] ?? null,
+            'operation_fee'       => $info['operationFee'] ?? ($info['feeValue'] ?? null),
+        ];
+    }
 }
 
