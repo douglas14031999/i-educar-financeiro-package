@@ -213,7 +213,7 @@
                 <table class="w-full text-left border-collapse text-xs md:text-sm">
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-[11px] font-semibold tracking-wider">
-                            <th class="py-3 px-4">Código / Aluno</th>
+                            <th class="py-3 px-4">Aluno</th>
                             <th class="py-3 px-4">Parentesco</th>
                             <th class="py-3 px-4 text-right">Rateio Financeiro (%)</th>
                             <th class="py-3 px-4 text-center">Responsável Principal</th>
