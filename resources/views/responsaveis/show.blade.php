@@ -276,13 +276,35 @@
                     Vincular Novo Aluno ao Responsável
                 </h4>
 
-                <form method="post" action="{{ route('financeiro.responsaveis.vincular-aluno', $responsavel->id) }}" class="flex flex-wrap items-end gap-3">
+                <form method="post" action="{{ route('financeiro.responsaveis.vincular-aluno', $responsavel->id) }}" id="form_vincular_aluno" class="flex flex-wrap items-end gap-3">
                     @csrf
-                    <div class="w-full sm:w-44">
+                    <input type="hidden" name="aluno_id" id="vincular_aluno_id" required>
+
+                    {{-- Campo de busca de aluno com autocomplete --}}
+                    <div class="w-full sm:flex-1 min-w-[280px] relative">
                         <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                            Código Aluno (i-Educar) <span class="text-red-500">*</span>
+                            Aluno (Nome ou CPF) <span class="text-red-500">*</span>
                         </label>
-                        <input type="number" name="aluno_id" required placeholder="Ex: 1042" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+                        <div class="relative">
+                            <input type="text" 
+                                   id="busca_aluno_input" 
+                                   autocomplete="off"
+                                   placeholder="Digite o nome ou CPF do aluno..." 
+                                   class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+                            <span id="busca_aluno_spinner" class="hidden absolute right-3 top-2.5 text-slate-400">
+                                <svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </span>
+                        </div>
+                        <div id="vincular_aluno_selecionado_tag" class="hidden mt-1 inline-flex items-center gap-1.5 px-2 py-1 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
+                            <span id="vincular_aluno_selecionado_texto"></span>
+                            <button type="button" id="btn_limpar_aluno_selecionado" class="text-emerald-700 hover:text-red-600 font-bold ml-1 text-sm">×</button>
+                        </div>
+                        <div id="dropdown_busca_aluno" class="hidden absolute z-30 left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-white border border-slate-200 shadow-xl rounded-sm">
+                            <ul id="lista_busca_aluno" class="divide-y divide-slate-100 text-xs m-0 p-0"></ul>
+                        </div>
                     </div>
 
                     <div class="w-full sm:w-40">
@@ -290,8 +312,8 @@
                             Parentesco <span class="text-red-500">*</span>
                         </label>
                         <select name="parentesco" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
-                            <option value="pai">Pai</option>
                             <option value="mae">Mãe</option>
+                            <option value="pai">Pai</option>
                             <option value="avo">Avô / Avó</option>
                             <option value="tutor">Tutor Legal</option>
                             <option value="empresa">Empresa</option>
@@ -299,7 +321,7 @@
                         </select>
                     </div>
 
-                    <div class="w-full sm:w-32">
+                    <div class="w-full sm:w-28">
                         <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
                             % Rateio <span class="text-red-500">*</span>
                         </label>
@@ -327,4 +349,114 @@
 
     </main>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const inputBusca = document.getElementById('busca_aluno_input');
+    const inputAlunoId = document.getElementById('vincular_aluno_id');
+    const spinner = document.getElementById('busca_aluno_spinner');
+    const dropdown = document.getElementById('dropdown_busca_aluno');
+    const lista = document.getElementById('lista_busca_aluno');
+    const tagSelecionado = document.getElementById('vincular_aluno_selecionado_tag');
+    const textoSelecionado = document.getElementById('vincular_aluno_selecionado_texto');
+    const btnLimpar = document.getElementById('btn_limpar_aluno_selecionado');
+    const form = document.getElementById('form_vincular_aluno');
+
+    let debounceTimer = null;
+
+    if (!inputBusca) return;
+
+    inputBusca.addEventListener('input', function () {
+        clearTimeout(debounceTimer);
+        const termo = this.value.trim();
+
+        if (termo.length < 2) {
+            dropdown.classList.add('hidden');
+            return;
+        }
+
+        spinner.classList.remove('hidden');
+
+        debounceTimer = setTimeout(() => {
+            fetch(`{{ route('financeiro.api.alunos.buscar') }}?q=${encodeURIComponent(termo)}`, {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(alunos => {
+                spinner.classList.add('hidden');
+                lista.innerHTML = '';
+
+                if (!alunos || alunos.length === 0) {
+                    const li = document.createElement('li');
+                    li.className = 'px-3 py-2 text-slate-400 italic text-center';
+                    li.textContent = 'Nenhum aluno encontrado';
+                    lista.appendChild(li);
+                } else {
+                    alunos.forEach(aluno => {
+                        const li = document.createElement('li');
+                        li.className = 'px-3 py-2 hover:bg-[#f0f7fa] cursor-pointer flex items-center justify-between border-b border-slate-100 last:border-0 transition';
+                        
+                        const labelExibicao = aluno.cpf 
+                            ? `${aluno.nome} (${aluno.cpf})` 
+                            : aluno.nome;
+
+                        li.innerHTML = `
+                            <div>
+                                <div class="font-bold text-slate-800">${aluno.nome}</div>
+                                <div class="text-[11px] text-slate-500">
+                                    Código: #${aluno.id} ${aluno.cpf ? '• CPF: ' + aluno.cpf : ''}
+                                </div>
+                            </div>
+                            <span class="text-[11px] font-bold text-[#47728f] bg-slate-50 border border-slate-200 px-2 py-0.5 rounded">Selecionar</span>
+                        `;
+
+                        li.addEventListener('click', () => {
+                            inputAlunoId.value = aluno.id;
+                            textoSelecionado.textContent = labelExibicao;
+                            tagSelecionado.classList.remove('hidden');
+                            inputBusca.value = '';
+                            inputBusca.classList.add('hidden');
+                            dropdown.classList.add('hidden');
+                        });
+
+                        lista.appendChild(li);
+                    });
+                }
+                dropdown.classList.remove('hidden');
+            })
+            .catch(() => {
+                spinner.classList.add('hidden');
+                dropdown.classList.add('hidden');
+            });
+        }, 250);
+    });
+
+    btnLimpar.addEventListener('click', function () {
+        inputAlunoId.value = '';
+        textoSelecionado.textContent = '';
+        tagSelecionado.classList.add('hidden');
+        inputBusca.classList.remove('hidden');
+        inputBusca.value = '';
+        inputBusca.focus();
+    });
+
+    // Fechar dropdown se clicar fora
+    document.addEventListener('click', function (e) {
+        if (!inputBusca.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.add('hidden');
+        }
+    });
+
+    // Validação ao enviar
+    form.addEventListener('submit', function (e) {
+        if (!inputAlunoId.value) {
+            e.preventDefault();
+            alert('Por favor, busque e selecione um aluno na lista antes de vincular.');
+            inputBusca.focus();
+        }
+    });
+});
+</script>
+@endpush
 @endsection
