@@ -291,10 +291,10 @@
                 badge.textContent = 'PAGO';
             }
 
-            // Atualiza coluna de saldo para R$ 0,00 se existir
+            // Não zera o saldo da parcela, mantém o valor nominal e atualiza o status para PAGO
             var saldoEl = row.querySelector('.col-saldo, [data-field="saldo"]');
-            if (saldoEl) {
-                saldoEl.textContent = 'R$ 0,00';
+            if (saldoEl && (t.saldo_formatado || t.valor_nominal_formatado)) {
+                saldoEl.textContent = t.saldo_formatado || t.valor_nominal_formatado;
             }
 
             // Adiciona/atualiza botão de recibo se houver pagamento ID
