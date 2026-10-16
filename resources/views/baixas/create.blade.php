@@ -105,7 +105,7 @@
                                     </td>
                                     <td class="py-3 px-4 text-slate-600">
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 mr-1.5">
-                                            Aluno #{{ $t->aluno_id }}
+                                            {{ \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($t->aluno_id) }}
                                         </span>
                                         {{ $t->observacoes }}
                                     </td>
@@ -175,7 +175,7 @@
                     <div class="p-5 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div class="p-3 bg-slate-50 border border-slate-200 rounded">
                             <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Aluno</span>
-                            <span class="text-sm font-semibold text-slate-900">Aluno #{{ $titulo->aluno_id }}</span>
+                            <span class="text-sm font-semibold text-slate-900">{{ \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($titulo->aluno_id) }}</span>
                             @if($titulo->contrato)
                                 <span class="block text-xs text-slate-500">Contrato: {{ $titulo->contrato->numero_contrato }}</span>
                             @endif
@@ -454,7 +454,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         </td>
                         <td class="py-3 px-4 text-slate-600">
                             <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 mr-1.5">
-                                Aluno #${t.aluno_id}
+                                ${t.aluno_identificacao || ('Aluno #' + t.aluno_id)}
                             </span>
                             ${t.observacoes}
                         </td>

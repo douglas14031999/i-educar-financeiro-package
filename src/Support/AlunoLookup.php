@@ -8,6 +8,12 @@ use Illuminate\Support\Facades\Schema;
 class AlunoLookup
 {
     /**
+     * Cache estático em memória para CPFs de alunos no ciclo da requisição
+     * Formato: [aluno_id => 'CPF Formatado ou Vazio']
+     */
+    protected static array $cacheCpfs = [];
+
+    /**
      * Cache estático em memória para nomes de alunos no ciclo da requisição
      * Formato: [aluno_id => 'Nome Completo']
      */
@@ -25,15 +31,34 @@ class AlunoLookup
     public static function limparCache(): void
     {
         static::$cacheNomes = [];
+        static::$cacheCpfs = [];
         static::$cacheTurmas = [];
     }
 
     /**
      * Define manualmente um nome no cache (útil para testes unitários/mock)
      */
-    public static function definirNome(int $alunoId, string $nome): void
+    public static function definirNome(int $alunoId, string $nome, ?string $cpf = null): void
     {
         static::$cacheNomes[$alunoId] = $nome;
+        if ($cpf !== null) {
+            static::$cacheCpfs[$alunoId] = static::formatarCpf($cpf);
+        }
+    }
+
+    /**
+     * Formata uma string de CPF para o padrão 000.000.000-00
+     */
+    public static function formatarCpf(?string $cpf): string
+    {
+        if (empty($cpf)) {
+            return '';
+        }
+        $digits = preg_replace('/\D/', '', (string) $cpf);
+        if (strlen($digits) === 11) {
+            return preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $digits);
+        }
+        return $cpf;
     }
 
     /**
@@ -46,7 +71,7 @@ class AlunoLookup
     }
 
     /**
-     * Resolve nomes de alunos em lote com uma única consulta SQL
+     * Resolve nomes e CPFs de alunos em lote com uma única consulta SQL
      *
      * @param array $alunoIds
      * @return array<int, string>
@@ -62,16 +87,24 @@ class AlunoLookup
 
         if (!empty($faltantes)) {
             $encontrados = [];
+            $cpfs = [];
             try {
                 if (Schema::hasTable('pmieducar.aluno') && Schema::hasTable('cadastro.pessoa')) {
-                    $rows = DB::table('pmieducar.aluno')
-                        ->join('cadastro.pessoa', 'cadastro.pessoa.idpes', '=', 'pmieducar.aluno.ref_idpes')
-                        ->whereIn('pmieducar.aluno.cod_aluno', $faltantes)
-                        ->select('pmieducar.aluno.cod_aluno as id', 'cadastro.pessoa.nome')
-                        ->get();
+                    $query = DB::table('pmieducar.aluno')
+                        ->join('cadastro.pessoa', 'cadastro.pessoa.idpes', '=', 'pmieducar.aluno.ref_idpes');
+
+                    if (Schema::hasTable('cadastro.fisica')) {
+                        $query->leftJoin('cadastro.fisica', 'cadastro.fisica.idpes', '=', 'cadastro.pessoa.idpes')
+                              ->select('pmieducar.aluno.cod_aluno as id', 'cadastro.pessoa.nome', 'cadastro.fisica.cpf');
+                    } else {
+                        $query->select('pmieducar.aluno.cod_aluno as id', 'cadastro.pessoa.nome', DB::raw("NULL as cpf"));
+                    }
+
+                    $rows = $query->whereIn('pmieducar.aluno.cod_aluno', $faltantes)->get();
 
                     foreach ($rows as $row) {
                         $encontrados[(int) $row->id] = (string) $row->nome;
+                        $cpfs[(int) $row->id] = static::formatarCpf($row->cpf ?? null);
                     }
                 }
             } catch (\Throwable $e) {
@@ -80,6 +113,7 @@ class AlunoLookup
 
             foreach ($faltantes as $id) {
                 static::$cacheNomes[$id] = $encontrados[$id] ?? ('Aluno #' . $id);
+                static::$cacheCpfs[$id] = $cpfs[$id] ?? '';
             }
         }
 
@@ -106,6 +140,41 @@ class AlunoLookup
 
         $res = static::nomes([$alunoId]);
         return $res[$alunoId] ?? ('Aluno #' . $alunoId);
+    }
+
+    /**
+     * Obtém o CPF formatado de um aluno
+     */
+    public static function cpf(?int $alunoId): string
+    {
+        if (empty($alunoId)) {
+            return '';
+        }
+
+        if (!isset(static::$cacheCpfs[$alunoId])) {
+            static::nomes([$alunoId]);
+        }
+
+        return static::$cacheCpfs[$alunoId] ?? '';
+    }
+
+    /**
+     * Retorna a exibição padronizada do aluno: "Nome do aluno(CPF)" ou apenas o nome / fallback
+     */
+    public static function nomeComCpf(?int $alunoId): string
+    {
+        if (empty($alunoId)) {
+            return '-';
+        }
+
+        $nome = static::nome($alunoId);
+        $cpf = static::cpf($alunoId);
+
+        if (!empty($cpf)) {
+            return "{$nome}({$cpf})";
+        }
+
+        return $nome;
     }
 
     /**

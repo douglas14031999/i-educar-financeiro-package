@@ -120,7 +120,7 @@
                                     #{{ $contrato->matricula_id }}
                                 </td>
                                 <td class="py-3.5 px-4 text-slate-600">
-                                    Aluno #{{ $contrato->aluno_id }}
+                                    {{ \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($contrato->aluno_id) }}
                                 </td>
                                 <td class="py-3.5 px-4">
                                     <div class="font-medium text-slate-900">

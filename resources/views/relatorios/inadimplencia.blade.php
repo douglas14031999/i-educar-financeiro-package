@@ -203,8 +203,8 @@
                                             <div class="font-semibold text-slate-900">
                                                 {{ $titulo->responsavel->nome ?? '-' }}
                                             </div>
-                                            <div class="text-[11px] text-slate-400">
-                                                Aluno #{{ $titulo->aluno_id }}
+                                            <div class="text-[11px] text-slate-500 font-medium">
+                                                {{ \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($titulo->aluno_id) }}
                                             </div>
                                         </td>
                                         <td class="py-3.5 px-4 font-mono text-slate-600">

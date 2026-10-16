@@ -222,7 +222,7 @@
                                         <span class="block text-[10px] text-slate-400">Em {{ $diasDiff }} dias</span>
                                     @endif
                                 </td>
-                                <td class="py-3 px-4 font-semibold text-slate-900">{{ $titulo->aluno_nome ?? ($titulo->aluno->nome ?? 'Aluno #' . $titulo->aluno_id) }}</td>
+                                <td class="py-3 px-4 font-semibold text-slate-900">{{ $titulo->aluno_identificacao ?? \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($titulo->aluno_id) }}</td>
                                 <td class="py-3 px-4 text-slate-600">{{ $titulo->responsavel->nome ?? 'Não informado' }}</td>
                                 <td class="py-3 px-4 whitespace-nowrap">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700">

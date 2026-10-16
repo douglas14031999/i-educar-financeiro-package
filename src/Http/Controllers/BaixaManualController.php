@@ -196,6 +196,7 @@ class BaixaManualController extends Controller
                 'responsavel'     => $t->responsavel?->nome ?? 'Não informado',
                 'cpf'             => $t->responsavel?->cpf_cnpj_formatado ?? '',
                 'aluno_id'        => $t->aluno_id,
+                'aluno_identificacao' => \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($t->aluno_id),
                 'observacoes'     => $t->observacoes ?? '',
                 'url_selecionar'  => route('financeiro.baixas.create', ['titulo_id' => $t->id]),
             ];

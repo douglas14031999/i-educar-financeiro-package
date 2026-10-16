@@ -250,7 +250,7 @@
         {{-- ── CABEÇALHO ── --}}
         @include('financeiro::partials.page-header', [
             'title'    => 'Fechamento e Pagamento da Matrícula',
-            'subtitle' => 'Contrato ' . $contrato->numero_contrato . ' · Aluno #' . $contrato->aluno_id . ' · ' . $contrato->ano_letivo,
+            'subtitle' => 'Contrato ' . $contrato->numero_contrato . ' · ' . \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($contrato->aluno_id) . ' · ' . $contrato->ano_letivo,
             'breadcrumbs' => [
                 ['label' => 'Contratos', 'url' => route('financeiro.contratos.index')],
                 ['label' => $contrato->numero_contrato, 'url' => route('financeiro.contratos.show', $contrato->id)],

@@ -206,7 +206,7 @@
                     @endif
                     @if($alunoId)
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-[#47728f] border border-blue-200 text-xs font-medium">
-                            Aluno #{{ $alunoId }}
+                            Aluno: {{ \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($alunoId) }}
                             <a href="{{ route('financeiro.titulos.index', request()->except('aluno_id')) }}" class="text-[#47728f] hover:text-red-600 font-bold ml-1" style="text-decoration: none;" title="Remover filtro">×</a>
                         </span>
                     @endif
@@ -343,7 +343,7 @@
                                 </td>
                                 <td class="py-3 px-4 text-slate-600">
                                     <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 mr-1.5">
-                                        Aluno #{{ $titulo->aluno_id }}
+                                        {{ \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($titulo->aluno_id) }}
                                     </span>
                                     {{ $titulo->observacoes ?? ucfirst($titulo->tipo) }}
                                 </td>

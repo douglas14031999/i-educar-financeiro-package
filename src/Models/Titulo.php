@@ -225,6 +225,18 @@ class Titulo extends Model
     }
 
     /**
+     * Retorna o nome do aluno com CPF formatado: "Nome do aluno(CPF)"
+     */
+    public function getAlunoIdentificacaoAttribute(): string
+    {
+        if (empty($this->aluno_id)) {
+            return '-';
+        }
+
+        return \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf((int) $this->aluno_id);
+    }
+
+    /**
      * Retorna o nome da turma do aluno no ano letivo do título via AlunoLookup.
      */
     public function getTurmaNomeAttribute(): string

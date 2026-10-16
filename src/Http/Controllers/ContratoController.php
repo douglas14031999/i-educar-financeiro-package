@@ -41,6 +41,8 @@ class ContratoController extends Controller
 
         $contratos = $query->orderBy('created_at', 'desc')->paginate(20);
 
+        \iEducar\Financeiro\Support\AlunoLookup::nomes($contratos->pluck('aluno_id')->toArray());
+
         return view('financeiro::contratos.index', compact('contratos', 'anoLetivo', 'status'));
     }
 

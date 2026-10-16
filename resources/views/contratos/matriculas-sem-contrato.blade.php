@@ -84,8 +84,7 @@
                                     #{{ $p->matricula_id }}
                                 </td>
                                 <td class="py-3 px-4 font-semibold text-slate-900">
-                                    {{ $p->aluno_nome ?? ('Aluno #' . $p->aluno_id) }}
-                                    <span class="block text-[11px] text-slate-500 font-normal">ID Aluno: {{ $p->aluno_id }}</span>
+                                    {{ \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($p->aluno_id) }}
                                 </td>
                                 <td class="py-3 px-4 text-slate-600">
                                     {{ $p->ano_letivo }}

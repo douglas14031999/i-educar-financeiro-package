@@ -224,7 +224,7 @@
                         @forelse($responsavel->alunoVinculos as $vinculo)
                             <tr class="hover:bg-slate-50/80 transition duration-150">
                                 <td class="py-3.5 px-4 font-semibold text-slate-900">
-                                    Aluno #{{ $vinculo->aluno_id }}
+                                    {{ \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($vinculo->aluno_id) }}
                                 </td>
                                 <td class="py-3.5 px-4 text-slate-600 capitalize">
                                     {{ $vinculo->parentesco }}

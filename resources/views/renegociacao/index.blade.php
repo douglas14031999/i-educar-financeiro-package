@@ -167,8 +167,8 @@
                                             <div class="font-semibold text-slate-900">
                                                 {{ $t->competencia }} — {{ $t->observacoes ?? 'Mensalidade Escolar' }}
                                             </div>
-                                            <div class="text-[11px] text-slate-400">
-                                                Aluno #{{ $t->aluno_id }}
+                                            <div class="text-[11px] text-slate-500 font-medium">
+                                                {{ \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($t->aluno_id) }}
                                             </div>
                                         </td>
                                         <td class="py-3.5 px-4 font-mono {{ $t->isVencido() ? 'text-red-600 font-bold' : 'text-slate-700' }}">

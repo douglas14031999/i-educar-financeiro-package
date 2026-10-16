@@ -236,7 +236,7 @@
         {{-- ── CABEÇALHO ── --}}
         @include('financeiro::partials.page-header', [
             'title'      => 'Contrato ' . $contrato->numero_contrato,
-            'subtitle'   => 'Matrícula #' . $contrato->matricula_id . ' · Aluno #' . $contrato->aluno_id . ' · Ano Letivo ' . $contrato->ano_letivo,
+            'subtitle'   => 'Matrícula #' . $contrato->matricula_id . ' · ' . \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($contrato->aluno_id) . ' · Ano Letivo ' . $contrato->ano_letivo,
             'breadcrumbs'=> [
                 ['label' => 'Contratos', 'url' => route('financeiro.contratos.index')],
                 ['label' => 'Contrato #' . $contrato->numero_contrato],
