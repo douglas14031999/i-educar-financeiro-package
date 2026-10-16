@@ -19,6 +19,100 @@
             } elseif ($contratoFiltro) {
                 $breadcrumbs[] = ['label' => 'Contrato #' . $contratoFiltro->numero_contrato];
             }
+            $actionsHtml = '<div class="flex flex-wrap items-center gap-2">';
+
+            // Botão Baixa de Balcão (sempre presente)
+            $actionsHtml .= '
+                <a href="' . route('financeiro.baixas.create') . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;" title="Baixar pagamento em dinheiro, cartão ou cheque na secretaria">
+                    <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                    Baixa de Balcão (Caixa)
+                </a>';
+
+            if ($contratoFiltro) {
+                $forma = $contratoFiltro->forma_pagamento ?? '';
+                $primeiroTituloContrato = $contratoFiltro->titulos->first();
+                $cobrancaContrato = $primeiroTituloContrato?->cobrancaGateway;
+
+                // Opções conforme a forma de pagamento do contrato filtrado
+                if ($forma === 'carne') {
+                    $actionsHtml .= '
+                        <a href="' . route('financeiro.contratos.imprimir-carne', $contratoFiltro->id) . '" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;" title="Imprimir carnê oficial com todas as lâminas escolares">
+                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            </svg>
+                            Imprimir Carnê
+                        </a>
+                        <a href="' . route('financeiro.contratos.checkout', $contratoFiltro->id) . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;" title="Ver resumo do carnê e cobranças">
+                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            </svg>
+                            Ver Checkout / Pagamento
+                        </a>';
+                } elseif ($forma === 'pix') {
+                    $actionsHtml .= '
+                        <a href="' . route('financeiro.contratos.checkout', $contratoFiltro->id) . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;" title="Ver QR Code Pix e Chave Copia e Cola">
+                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            </svg>
+                            Ver Checkout / Pix
+                        </a>';
+                } elseif ($forma === 'boleto') {
+                    if ($cobrancaContrato?->link_boleto_pdf) {
+                        $actionsHtml .= '
+                            <a href="' . $cobrancaContrato->link_boleto_pdf . '" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;" title="Baixar Boleto Bancário (PDF)">
+                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                </svg>
+                                Baixar Boleto (PDF)
+                            </a>';
+                    }
+                    $actionsHtml .= '
+                        <a href="' . route('financeiro.contratos.checkout', $contratoFiltro->id) . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;" title="Ver Boleto Bancário e Linha Digitável">
+                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            </svg>
+                            Ver Checkout / Boleto
+                        </a>';
+                } elseif ($forma === 'cartao_credito') {
+                    $actionsHtml .= '
+                        <a href="' . route('financeiro.contratos.checkout', $contratoFiltro->id) . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;" title="Acessar link para pagamento com Cartão">
+                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            </svg>
+                            Ver Checkout / Cartão
+                        </a>';
+                } elseif (in_array($forma, ['cartao_presencial', 'dinheiro'])) {
+                    $actionsHtml .= '
+                        <a href="' . route('financeiro.contratos.checkout', $contratoFiltro->id) . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;" title="Ver detalhes do pagamento e comprovante">
+                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            </svg>
+                            Comprovante / Detalhes
+                        </a>';
+                }
+
+                // Botão para voltar / ver o contrato
+                $actionsHtml .= '
+                    <a href="' . route('financeiro.contratos.show', $contratoFiltro->id) . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;" title="Ver detalhes do contrato #' . $contratoFiltro->numero_contrato . '">
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Ver Contrato
+                    </a>';
+            } else {
+                // Visualização geral sem filtro de contrato: opção de novo contrato
+                $actionsHtml .= '
+                    <a href="' . route('financeiro.contratos.create', array_filter(['responsavel_id' => $responsavelId])) . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;" title="Matricular e gerar parcelas">
+                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Novo Contrato
+                    </a>';
+            }
+
+            $actionsHtml .= '</div>';
         @endphp
 
         @include('financeiro::partials.page-header', [
@@ -29,28 +123,7 @@
                     ? 'Exibindo títulos do Contrato #' . $contratoFiltro->numero_contrato . ' (Ano Letivo: ' . $contratoFiltro->ano_letivo . ')'
                     : 'Gerenciamento operacional de cobranças, vencimentos, liquidações e taxas escolares'),
             'breadcrumbs' => $breadcrumbs,
-            'actions' => '
-                <div class="flex flex-wrap items-center gap-2">
-                    <a href="' . route('financeiro.baixas.create') . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;" title="Baixar pagamento em dinheiro, cartão ou cheque na secretaria">
-                        <svg aria-hidden="true" class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                        Baixa de Balcão (Caixa)
-                    </a>
-                    <a href="' . route('financeiro.contratos.create', array_filter(['responsavel_id' => $responsavelId])) . '" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;" title="Matricular e gerar parcelas">
-                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                        Novo Contrato
-                    </a>
-                    <a href="' . route('financeiro.titulos.imprimir-carne', array_filter(['contrato_id' => $contratoId, 'responsavel_id' => $responsavelId])) . '" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;" title="Imprimir carnê das parcelas">
-                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                        Imprimir Carnê
-                    </a>
-                </div>
-            '
+            'actions' => $actionsHtml
         ])
 
         <!-- Barra de Filtros e Busca -->
@@ -286,6 +359,39 @@
                                         </a>
 
                                         @if($titulo->status === 'aberto' || $titulo->status === 'parcial' || $titulo->status === 'vencido')
+                                            @if($titulo->contrato && $titulo->contrato->forma_pagamento === 'carne')
+                                                <a href="{{ route('financeiro.contratos.imprimir-carne', $titulo->contrato_id) }}" target="_blank" class="inline-flex items-center justify-center p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition" title="Imprimir Carnê Oficial Asaas">
+                                                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                    </svg>
+                                                </a>
+                                            @elseif($titulo->contrato && $titulo->contrato->forma_pagamento === 'pix')
+                                                <a href="{{ route('financeiro.contratos.checkout', $titulo->contrato_id) }}" class="inline-flex items-center justify-center p-1.5 text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded transition" title="Ver Cobrança / QR Code Pix">
+                                                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                    </svg>
+                                                </a>
+                                            @elseif($titulo->contrato && $titulo->contrato->forma_pagamento === 'boleto')
+                                                @if($titulo->cobrancaGateway && $titulo->cobrancaGateway->link_boleto_pdf)
+                                                    <a href="{{ $titulo->cobrancaGateway->link_boleto_pdf }}" target="_blank" class="inline-flex items-center justify-center p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition" title="Baixar Boleto Bancário (PDF)">
+                                                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                        </svg>
+                                                    </a>
+                                                @else
+                                                    <a href="{{ route('financeiro.contratos.checkout', $titulo->contrato_id) }}" class="inline-flex items-center justify-center p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition" title="Ver Cobrança / Boleto Bancário">
+                                                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                        </svg>
+                                                    </a>
+                                                @endif
+                                            @elseif($titulo->contrato_id)
+                                                <a href="{{ route('financeiro.contratos.checkout', $titulo->contrato_id) }}" class="inline-flex items-center justify-center p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded transition" title="Ver Checkout do Contrato">
+                                                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                    </svg>
+                                                </a>
+                                            @endif
                                             <a href="{{ route('financeiro.titulos.notificar-whatsapp', $titulo->id) }}" target="_blank" class="inline-flex items-center justify-center p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition" title="Enviar Cobrança / Link por WhatsApp">
                                                 <svg class="w-4 h-4" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                                                     <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.073.043.419-.101.824z"/>
@@ -340,12 +446,14 @@
             </div>
 
             <div class="flex items-center gap-2 ml-auto">
+                @if(!$contratoFiltro || $contratoFiltro->forma_pagamento === 'carne')
                 <button type="button" id="btn-imprimir-carne-lote" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded cursor-pointer transition">
                     <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Imprimir Carnê
                 </button>
+                @endif
 
                 <button type="button" id="btn-emitir-asaas-lote" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded cursor-pointer transition">
                     <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">

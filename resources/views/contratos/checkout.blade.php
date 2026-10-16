@@ -975,42 +975,80 @@
             setInterval(tick, 1000);
         })();
 
-        // ── POLLING REALTIME ──────────────────────────────────────────────────
+        // ── MONITORAMENTO REALTIME (SSE + POLLING FALLBACK) ───────────────────
         (function () {
-            var POLL_URL = '{{ route("financeiro.api.stream", ["titulo_id" => $primeiroTitulo?->id ?? 0]) }}';
+            var STATUS_URL = '{{ route("financeiro.contratos.status-pagamento", $contrato->id) }}';
+            var SSE_URL = '{{ route("financeiro.api.stream", ["contrato_id" => $contrato->id, "titulo_id" => $primeiroTitulo?->id ?? 0]) }}';
             var statusEl = document.getElementById('co-realtime-text');
+            var dotEl = document.getElementById('co-realtime-dot');
             var interval = null;
+            var sseSource = null;
+            var finalizado = false;
+
+            function confirmarPagamento() {
+                if (finalizado) return;
+                finalizado = true;
+                if (interval) clearInterval(interval);
+                if (sseSource) sseSource.close();
+
+                if (statusEl) {
+                    statusEl.textContent = '✅ Pagamento confirmado via Pix! Atualizando...';
+                    statusEl.style.color = '#059669';
+                    statusEl.style.fontWeight = '700';
+                }
+                if (dotEl) {
+                    dotEl.style.background = '#059669';
+                    dotEl.style.animation = 'none';
+                }
+                setTimeout(function () {
+                    window.location.reload();
+                }, 1000);
+            }
+
+            // 1. Escuta via Server-Sent Events (SSE) instantâneo
+            if (window.EventSource) {
+                try {
+                    sseSource = new EventSource(SSE_URL);
+                    sseSource.addEventListener('PAGAMENTO_CONFIRMADO', function () {
+                        confirmarPagamento();
+                    });
+                    sseSource.onerror = function () {
+                        // Se falhar o SSE, o polling abaixo continua garantindo a atualização
+                    };
+                } catch (e) {}
+            }
+
+            // 2. Polling leve a cada 3.5 segundos como redundância garantida
             var attempts = 0;
-            var MAX = 900; // 60 min (900 × 4s)
+            var MAX_ATTEMPTS = 1000; // ~60 min
 
             interval = setInterval(function () {
-                attempts++;
-                if (attempts > MAX) {
+                if (finalizado) {
                     clearInterval(interval);
-                    if (statusEl) statusEl.textContent = 'Monitoramento encerrado. Recarregue para verificar.';
+                    return;
+                }
+                attempts++;
+                if (attempts > MAX_ATTEMPTS) {
+                    clearInterval(interval);
+                    if (sseSource) sseSource.close();
+                    if (statusEl) statusEl.textContent = 'Monitoramento em pausa. Recarregue a página para verificar.';
                     return;
                 }
 
-                fetch(POLL_URL, { credentials: 'same-origin' })
+                fetch(STATUS_URL, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
                         if (data && (
-                            data.status === 'pago' ||
-                            data.status === 'liquidado' ||
-                            data.contrato_status === 'quitado' ||
-                            data.pago === true
+                            data.pago === true ||
+                            data.status === 'quitado' ||
+                            data.titulo_status === 'pago' ||
+                            data.titulo_status === 'liquidado'
                         )) {
-                            clearInterval(interval);
-                            if (statusEl) {
-                                statusEl.textContent = '✅ Pagamento confirmado! Recarregando...';
-                                statusEl.style.color = '#059669';
-                                statusEl.style.fontWeight = '600';
-                            }
-                            setTimeout(function () { window.location.reload(); }, 1200);
+                            confirmarPagamento();
                         }
                     })
-                    .catch(function () { /* silencia erros de rede */ });
-            }, 4000);
+                    .catch(function () {});
+            }, 3500);
         })();
     @endif
 

@@ -222,33 +222,15 @@ class ContratoService
                 'plano_snapshot'            => $planoSnapshot,
             ]);
 
-            $totalParcelas = $plano->itens->where('numero_parcela', '>', 0)->count();
             $titulosCriados = [];
+            $formaNormalizada = strtolower(trim((string) ($dados['forma_pagamento'] ?? '')));
 
-            foreach ($plano->itens as $item) {
-                // FIN-007: Se número da parcela for > 12, avança o ano letivo correspondente
-                $anosAdicionais = ($item->numero_parcela > 0) ? intdiv($item->numero_parcela - 1, 12) : 0;
-                $anoEfetivo     = $anoLetivo + $anosAdicionais;
-                $mesComp        = str_pad($item->mes_competencia, 2, '0', STR_PAD_LEFT);
-                $competencia    = "{$anoEfetivo}-{$mesComp}";
-
-                // Trata vencimento em dias 29/30/31 sem overflow de mês (T20)
-                $ultimoDiaMes   = Carbon::create($anoEfetivo, $item->mes_competencia, 1)->endOfMonth()->day;
-                $diaEfetivo     = min($diaVencimento, $ultimoDiaMes);
-                $dataVencimento = Carbon::create($anoEfetivo, $item->mes_competencia, $diaEfetivo);
-
-                // A01 — Valor líquido do item após desconto proporcional
-                $valorItemBruto   = (float) $item->valor;
-                $descontoItem     = round($valorItemBruto * $taxaDesconto, 2);
-                $valorItemLiquido = round($valorItemBruto - $descontoItem, 2);
-
-                // A02 — Distribui com resíduo de centavo (Largest Remainder)
-                $valoresRateio = $this->distribuirComResiduo($valorItemLiquido, $vinculos);
+            if ($formaNormalizada === 'pix') {
+                // Pagamento Instantâneo via Pix: gera parcela única (1/1) referente ao total líquido do contrato
+                $valoresRateio = $this->distribuirComResiduo($valorLiquido, $vinculos);
 
                 foreach ($vinculos as $idx => $vinculo) {
                     $valorVinculo = $valoresRateio[$idx];
-
-                    // RN22 — Percentual zero não gera cobrança
                     if ($valorVinculo <= 0) {
                         continue;
                     }
@@ -258,11 +240,11 @@ class ContratoService
                         'aluno_id'                  => $alunoId,
                         'responsavel_financeiro_id' => $vinculo->responsavel_id,
                         'escola_id'                 => $escolaId,
-                        'tipo'                      => $item->tipo_item,
-                        'numero_parcela'            => $item->numero_parcela,
-                        'total_parcelas'            => $totalParcelas ?: 1,
-                        'competencia'               => $competencia,
-                        'data_vencimento'           => $dataVencimento,
+                        'tipo'                      => 'mensalidade',
+                        'numero_parcela'            => 1,
+                        'total_parcelas'            => 1,
+                        'competencia'               => Carbon::today()->format('Y-m'),
+                        'data_vencimento'           => Carbon::today(),
                         'valor_nominal'             => $valorVinculo,
                         'valor_desconto'            => 0.00,
                         'valor_multa'               => 0.00,
@@ -271,11 +253,66 @@ class ContratoService
                         'valor_saldo'               => $valorVinculo,
                         'status'                    => 'aberto',
                         'observacoes'               => sprintf(
-                            '%s - %s',
-                            $contrato->numero_contrato,
-                            $item->descricao
+                            '%s - Pagamento Instantâneo via Pix',
+                            $contrato->numero_contrato
                         ),
                     ]);
+                }
+            } else {
+                $totalParcelas = $plano->itens->where('numero_parcela', '>', 0)->count();
+
+                foreach ($plano->itens as $item) {
+                    // FIN-007: Se número da parcela for > 12, avança o ano letivo correspondente
+                    $anosAdicionais = ($item->numero_parcela > 0) ? intdiv($item->numero_parcela - 1, 12) : 0;
+                    $anoEfetivo     = $anoLetivo + $anosAdicionais;
+                    $mesComp        = str_pad($item->mes_competencia, 2, '0', STR_PAD_LEFT);
+                    $competencia    = "{$anoEfetivo}-{$mesComp}";
+
+                    // Trata vencimento em dias 29/30/31 sem overflow de mês (T20)
+                    $ultimoDiaMes   = Carbon::create($anoEfetivo, $item->mes_competencia, 1)->endOfMonth()->day;
+                    $diaEfetivo     = min($diaVencimento, $ultimoDiaMes);
+                    $dataVencimento = Carbon::create($anoEfetivo, $item->mes_competencia, $diaEfetivo);
+
+                    // A01 — Valor líquido do item após desconto proporcional
+                    $valorItemBruto   = (float) $item->valor;
+                    $descontoItem     = round($valorItemBruto * $taxaDesconto, 2);
+                    $valorItemLiquido = round($valorItemBruto - $descontoItem, 2);
+
+                    // A02 — Distribui com resíduo de centavo (Largest Remainder)
+                    $valoresRateio = $this->distribuirComResiduo($valorItemLiquido, $vinculos);
+
+                    foreach ($vinculos as $idx => $vinculo) {
+                        $valorVinculo = $valoresRateio[$idx];
+
+                        // RN22 — Percentual zero não gera cobrança
+                        if ($valorVinculo <= 0) {
+                            continue;
+                        }
+
+                        $titulosCriados[] = Titulo::create([
+                            'contrato_id'               => $contrato->id,
+                            'aluno_id'                  => $alunoId,
+                            'responsavel_financeiro_id' => $vinculo->responsavel_id,
+                            'escola_id'                 => $escolaId,
+                            'tipo'                      => $item->tipo_item,
+                            'numero_parcela'            => $item->numero_parcela,
+                            'total_parcelas'            => $totalParcelas ?: 1,
+                            'competencia'               => $competencia,
+                            'data_vencimento'           => $dataVencimento,
+                            'valor_nominal'             => $valorVinculo,
+                            'valor_desconto'            => 0.00,
+                            'valor_multa'               => 0.00,
+                            'valor_juros'               => 0.00,
+                            'valor_pago'                => 0.00,
+                            'valor_saldo'               => $valorVinculo,
+                            'status'                    => 'aberto',
+                            'observacoes'               => sprintf(
+                                '%s - %s',
+                                $contrato->numero_contrato,
+                                $item->descricao
+                            ),
+                        ]);
+                    }
                 }
             }
 
@@ -291,7 +328,7 @@ class ContratoService
      */
     public function processarModalidadePagamento(Contrato $contrato, array $titulos, array $dados): void
     {
-        $formaPagamento = $dados['forma_pagamento'] ?? null;
+        $formaPagamento = strtolower(trim((string) ($dados['forma_pagamento'] ?? '')));
         if (empty($formaPagamento)) {
             return;
         }
@@ -631,6 +668,11 @@ class ContratoService
             $titulosExistentes = Titulo::where('contrato_id', $contratoLocked->id)
                 ->lockForUpdate()
                 ->get();
+
+            // Contratos Pix possuem cota única (1/1); se já existir título, não regenera parcelas do plano
+            if ($contratoLocked->forma_pagamento === 'pix' && $titulosExistentes->isNotEmpty()) {
+                return 0;
+            }
 
             $gerados = 0;
 

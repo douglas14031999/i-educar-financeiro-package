@@ -31,14 +31,50 @@
                             Renegociar Débito
                         </a>
                     ' : '') . '
-                    ' . ($titulo->contrato_id ? '
+                    ' . ($titulo->contrato_id ? (
+                        ($titulo->contrato && $titulo->contrato->forma_pagamento === 'carne' ? '
+                            <a href="' . route('financeiro.contratos.imprimir-carne', $titulo->contrato_id) . '" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;" title="Imprimir Carnê Oficial Asaas">
+                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                </svg>
+                                Carnê Asaas
+                            </a>' : '') .
+                        ($titulo->contrato && $titulo->contrato->forma_pagamento === 'pix' ? '
+                            <a href="' . route('financeiro.contratos.checkout', $titulo->contrato_id) . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;" title="Ver QR Code / Cobrança Pix">
+                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                </svg>
+                                Ver Pix / Checkout
+                            </a>' : '') .
+                        ($titulo->contrato && $titulo->contrato->forma_pagamento === 'boleto' ? (
+                            $titulo->cobrancaGateway && $titulo->cobrancaGateway->link_boleto_pdf ? '
+                                <a href="' . $titulo->cobrancaGateway->link_boleto_pdf . '" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;" title="Baixar Boleto Bancário (PDF)">
+                                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                    </svg>
+                                    Baixar Boleto (PDF)
+                                </a>' : '
+                                <a href="' . route('financeiro.contratos.checkout', $titulo->contrato_id) . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue" style="text-decoration: none;" title="Ver Boleto Bancário">
+                                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                    </svg>
+                                    Ver Boleto / Checkout
+                                </a>'
+                        ) : '') .
+                        ($titulo->contrato && in_array($titulo->contrato->forma_pagamento, ['cartao_credito', 'cartao_presencial', 'dinheiro']) ? '
+                            <a href="' . route('financeiro.contratos.checkout', $titulo->contrato_id) . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-green" style="text-decoration: none;" title="Ver Checkout do Contrato">
+                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                </svg>
+                                Checkout / Pagamento
+                            </a>' : '') . '
                         <a href="' . route('financeiro.contratos.show', $titulo->contrato_id) . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;" title="Ver detalhes do contrato deste título">
                             <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                             </svg>
                             Ver Contrato
-                        </a>
-                    ' : '') . '
+                        </a>'
+                    ) : '') . '
                     <a href="' . route('financeiro.responsaveis.show', $titulo->responsavel_financeiro_id) . '" class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;" title="Ver ficha cadastral do responsável">
                         <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>

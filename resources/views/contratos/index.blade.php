@@ -163,13 +163,46 @@
                                     @endif
                                 </td>
                                 <td class="py-3.5 px-4 text-center">
-                                    <a href="{{ route('financeiro.contratos.show', $contrato->id) }}" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-brand-petroleum hover:text-white text-slate-700 text-xs font-medium border border-slate-200 transition" title="Ver Detalhes do Contrato" style="text-decoration: none;">
-                                        <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                            <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                        </svg>
-                                        Detalhes
-                                    </a>
+                                    <div class="flex items-center justify-center gap-1.5">
+                                        <a href="{{ route('financeiro.contratos.show', $contrato->id) }}" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-brand-petroleum hover:text-white text-slate-700 text-xs font-medium border border-slate-200 transition" title="Ver Detalhes do Contrato" style="text-decoration: none;">
+                                            <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                            </svg>
+                                            Detalhes
+                                        </a>
+                                        @if(in_array($contrato->status, ['ativo', 'pendente', 'inadimplente']))
+                                            @if($contrato->forma_pagamento === 'carne')
+                                                <a href="{{ route('financeiro.contratos.imprimir-carne', $contrato->id) }}" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-medium border border-emerald-200 transition" title="Imprimir Carnê Oficial Asaas" style="text-decoration: none;">
+                                                    <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                    </svg>
+                                                    Carnê
+                                                </a>
+                                            @elseif($contrato->forma_pagamento === 'pix')
+                                                <a href="{{ route('financeiro.contratos.checkout', $contrato->id) }}" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-sky-50 hover:bg-sky-600 hover:text-white text-sky-700 text-xs font-medium border border-sky-200 transition" title="Ver Cobrança / QR Code Pix" style="text-decoration: none;">
+                                                    <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                    </svg>
+                                                    Pix
+                                                </a>
+                                            @elseif($contrato->forma_pagamento === 'boleto')
+                                                <a href="{{ route('financeiro.contratos.checkout', $contrato->id) }}" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 text-xs font-medium border border-blue-200 transition" title="Ver Boleto Bancário" style="text-decoration: none;">
+                                                    <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                    </svg>
+                                                    Boleto
+                                                </a>
+                                            @else
+                                                <a href="{{ route('financeiro.contratos.checkout', $contrato->id) }}" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-600 hover:text-white text-slate-700 text-xs font-medium border border-slate-200 transition" title="Ver Checkout do Contrato" style="text-decoration: none;">
+                                                    <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                    </svg>
+                                                    Checkout
+                                                </a>
+                                            @endif
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty

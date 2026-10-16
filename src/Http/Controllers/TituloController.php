@@ -22,7 +22,7 @@ class TituloController extends Controller
         $ano = $request->input('ano');
         $turmaId = $request->input('turma_id');
 
-        $query = Titulo::with(['responsavel', 'cobrancaGateway']);
+        $query = Titulo::with(['responsavel', 'cobrancaGateway', 'contrato']);
 
         if ($responsavelId) {
             $query->where('responsavel_financeiro_id', $responsavelId);
@@ -92,7 +92,7 @@ class TituloController extends Controller
         \iEducar\Financeiro\Support\AlunoLookup::carregarParaTitulos($titulos, $ano ? (int) $ano : null);
 
         $responsavelFiltro = $responsavelId ? \iEducar\Financeiro\Models\ResponsavelFinanceiro::find($responsavelId) : null;
-        $contratoFiltro = $contratoId ? \iEducar\Financeiro\Models\Contrato::find($contratoId) : null;
+        $contratoFiltro = $contratoId ? \iEducar\Financeiro\Models\Contrato::with(['titulos.cobrancaGateway'])->find($contratoId) : null;
 
         return view('financeiro::titulos.index', compact(
             'titulos',
@@ -479,7 +479,8 @@ class TituloController extends Controller
      * Emissão e Impressão de Carnê Escolar (FIN-004)
      *
      * Preserva estritamente a seleção enviada por IDs.
-     * Rejeita seleção vazia ou parâmetros ausentes sem imprimir títulos arbitrários.
+     * Gera e obtém o carnê oficial diretamente do Asaas (PDF com QR Code Pix e Linha Digitável)
+     * com fallback inteligente para títulos individuais ou renderização local.
      */
     public function imprimirCarne(Request $request)
     {
@@ -514,17 +515,100 @@ class TituloController extends Controller
             return redirect()->back()->with('error', 'Todos os títulos selecionados estão cancelados ou inelegíveis para impressão de carnê.');
         }
 
-        // Se o pedido foi expressamente de um contrato completo (sem IDs específicos)
-        // e existir carnê externo Asaas já emitido, pode direcionar diretamente
-        if (empty($ids) && !empty($contratoId)) {
-            $contrato = \iEducar\Financeiro\Models\Contrato::find($contratoId);
-            if ($contrato && $contrato->carne_asaas_url) {
+        // 1. Identificar contrato associado (por parâmetro explícito ou unânime entre os títulos)
+        $contrato = null;
+        if (!empty($contratoId)) {
+            $contrato = \iEducar\Financeiro\Models\Contrato::with(['responsavel', 'titulos.cobrancaGateway', 'titulos.responsavel'])->find($contratoId);
+        } elseif ($titulos->isNotEmpty()) {
+            $contratoIds = $titulos->pluck('contrato_id')->filter()->unique();
+            if ($contratoIds->count() === 1) {
+                $contrato = \iEducar\Financeiro\Models\Contrato::with(['responsavel', 'titulos.cobrancaGateway', 'titulos.responsavel'])->find($contratoIds->first());
+            }
+        }
+
+        if ($contrato) {
+            // Se o contrato tiver forma de pagamento diferente de 'carne', redireciona para a respectiva opção
+            if (!empty($contrato->forma_pagamento) && $contrato->forma_pagamento !== 'carne') {
+                if ($contrato->forma_pagamento === 'boleto' && $titulos->count() === 1 && $titulos->first()->cobrancaGateway?->link_boleto_pdf) {
+                    return redirect()->away($titulos->first()->cobrancaGateway->link_boleto_pdf);
+                }
+                return redirect()->route('financeiro.contratos.checkout', $contrato->id)
+                    ->with('aviso', 'Este contrato possui modalidade ' . ucfirst(str_replace('_', ' ', $contrato->forma_pagamento)) . ' e não possui emissão de Carnê.');
+            }
+
+            // Se foi pedido sem IDs específicos e tem link externo direto salvo
+            if (empty($ids) && !empty($contrato->carne_asaas_url)) {
                 return redirect()->away($contrato->carne_asaas_url);
+            }
+
+            // A. Verifica se já existe um carnê (installment) ativo no Asaas para este contrato
+            $carne = \iEducar\Financeiro\Models\CarneGateway::where('contrato_id', $contrato->id)
+                ->where('status', 'ativo')
+                ->first();
+
+            $cobrancaExistente = \iEducar\Financeiro\Models\CobrancaGateway::where('contrato_id', $contrato->id)
+                ->whereNotNull('installment_id')
+                ->first();
+
+            $installmentId = $carne?->installment_id ?? $cobrancaExistente?->installment_id;
+
+            // B. Se ainda não há installment registrado no Asaas, gera sob demanda apenas se a modalidade for carnê
+            if (empty($installmentId) && ($contrato->forma_pagamento === 'carne' || (empty($contrato->forma_pagamento) && count($titulos) >= 2))) {
+                try {
+                    /** @var \iEducar\Financeiro\Services\CarneService $carneService */
+                    $carneService = app(\iEducar\Financeiro\Services\CarneService::class);
+                    $novoCarne = $carneService->gerar($contrato, $titulos->all(), auth()->id() ?? null);
+                    $installmentId = $novoCarne->installment_id;
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('Erro ao gerar carnê sob demanda no Asaas via TituloController', [
+                        'contrato_id' => $contrato->id,
+                        'erro'        => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            // C. Obtém o PDF oficial do carnê gerado pelo Asaas (todas as lâminas com QR Code Pix e Linha Digitável)
+            if (!empty($installmentId)) {
+                try {
+                    /** @var \iEducar\Financeiro\Gateways\GatewayManager $manager */
+                    $manager = app(\iEducar\Financeiro\Gateways\GatewayManager::class);
+                    /** @var \iEducar\Financeiro\Gateways\Drivers\AsaasGateway $gateway */
+                    $gateway = $manager->driver('asaas');
+
+                    $pdfContent = $gateway->baixarCarnePdf($installmentId);
+
+                    if (!empty($pdfContent)) {
+                        $filename = 'carne-asaas-' . $contrato->numero_contrato . '.pdf';
+                        return response($pdfContent, 200, [
+                            'Content-Type'        => 'application/pdf',
+                            'Content-Disposition' => "inline; filename=\"{$filename}\"",
+                            'Cache-Control'       => 'no-store, no-cache',
+                        ]);
+                    }
+
+                    $carneUrl = $gateway->gerarCarneUrl($installmentId);
+                    if (!empty($carneUrl)) {
+                        return redirect()->away($carneUrl);
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Falha ao obter PDF do carnê Asaas via TituloController', [
+                        'contrato_id' => $contrato->id,
+                        'erro'        => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        // Se for um único título selecionado com boleto direto gerado no gateway
+        if ($titulos->count() === 1) {
+            $cobrancaUnica = $titulos->first()->cobrancaGateway;
+            if ($cobrancaUnica && !empty($cobrancaUnica->link_boleto_pdf)) {
+                return redirect()->away($cobrancaUnica->link_boleto_pdf);
             }
         }
 
         // Caso contrário, renderiza rigorosamente apenas os títulos selecionados na view do carnê
-        return view('financeiro::titulos.carne', compact('titulos'));
+        return view('financeiro::titulos.carne', compact('titulos', 'contrato'));
     }
 }
 

@@ -15,6 +15,7 @@ class RealtimeStreamController extends Controller
     public function stream(Request $request): StreamedResponse
     {
         $tituloId = $request->query('titulo_id') ? (int) $request->query('titulo_id') : null;
+        $contratoId = $request->query('contrato_id') ? (int) $request->query('contrato_id') : null;
         $sinceParam = $request->query('since') ? (int) $request->query('since') : 0;
 
         // Se o cliente não enviou 'since', inicializa a partir do momento atual menos 5 segundos
@@ -30,7 +31,7 @@ class RealtimeStreamController extends Controller
         @set_time_limit(35);
         @ini_set('max_execution_time', '35');
 
-        $response = new StreamedResponse(function () use ($tituloId, $since) {
+        $response = new StreamedResponse(function () use ($tituloId, $contratoId, $since) {
             $lastSince = $since;
             $start = time();
             $maxDuration = 25; // 25 segundos por conexão para reciclagem saudável dos workers
@@ -48,7 +49,7 @@ class RealtimeStreamController extends Controller
                     break;
                 }
 
-                $eventos = RealtimeEventService::obterNovosEventos($lastSince, $tituloId);
+                $eventos = RealtimeEventService::obterNovosEventos($lastSince, $tituloId, $contratoId);
 
                 if (! empty($eventos)) {
                     foreach ($eventos as $evento) {

@@ -88,6 +88,10 @@ class ContratoController extends Controller
             'cartao_parcelas' => 'nullable|integer|min:1|max:12',
         ]);
 
+        if ($request->filled('forma_pagamento')) {
+            $validated['forma_pagamento'] = strtolower(trim((string) $request->input('forma_pagamento')));
+        }
+
         try {
             $contrato = $this->contratoService->criarContratoEParcelas($validated);
 
@@ -113,6 +117,28 @@ class ContratoController extends Controller
         $cobrancaAtiva = $primeiroTitulo?->cobrancaGateway;
 
         return view('financeiro::contratos.checkout', compact('contrato', 'primeiroTitulo', 'cobrancaAtiva'));
+    }
+
+    /**
+     * Endpoint JSON leve para checagem de status de pagamento do contrato (Polling/Realtime).
+     */
+    public function statusPagamento($id)
+    {
+        $contrato = Contrato::with(['titulos.cobrancasGateway'])->findOrFail($id);
+        $primeiroTitulo = $contrato->titulos->first();
+        $todosPagos = $contrato->titulos->isNotEmpty() && $contrato->titulos->every(fn ($t) => in_array($t->status, ['pago', 'liquidado']));
+        $pago = ($contrato->status === 'quitado') || $todosPagos;
+
+        return response()->json([
+            'contrato_id'     => (int) $contrato->id,
+            'status'          => $contrato->status,
+            'pago'            => $pago,
+            'forma_pagamento' => $contrato->forma_pagamento,
+            'titulo_id'       => $primeiroTitulo?->id,
+            'titulo_status'   => $primeiroTitulo?->status,
+            'titulo_saldo'    => (float) ($primeiroTitulo?->valor_saldo ?? 0),
+            'quitado_em'      => $contrato->quitado_em?->toIso8601String(),
+        ]);
     }
 
     public function show($id)
@@ -193,6 +219,12 @@ class ContratoController extends Controller
             $titulos = $contrato->titulos()->orderBy('data_vencimento')->get();
         }
 
+        // Se o contrato possuir modalidade diferente de 'carne', redireciona para as opções adequadas
+        if (!empty($contrato->forma_pagamento) && $contrato->forma_pagamento !== 'carne') {
+            return redirect()->route('financeiro.contratos.checkout', $contrato->id)
+                ->with('aviso', 'Este contrato possui modalidade ' . ucfirst(str_replace('_', ' ', $contrato->forma_pagamento)) . ' e não possui emissão de Carnê.');
+        }
+
         // 1. Verifica se já existe um carnê (installment) ativo no Asaas para este contrato
         $carne = \iEducar\Financeiro\Models\CarneGateway::where('contrato_id', $contrato->id)
             ->where('status', 'ativo')
@@ -204,8 +236,8 @@ class ContratoController extends Controller
 
         $installmentId = $carne?->installment_id ?? $cobrancaExistente?->installment_id;
 
-        // 2. Se ainda não há installment registrado no Asaas, gera sob demanda imediatamente
-        if (empty($installmentId) && ($contrato->forma_pagamento === 'carne' || count($titulos) >= 2)) {
+        // 2. Se ainda não há installment registrado no Asaas, gera sob demanda apenas se a modalidade for carnê
+        if (empty($installmentId) && ($contrato->forma_pagamento === 'carne' || (empty($contrato->forma_pagamento) && count($titulos) >= 2))) {
             try {
                 /** @var \iEducar\Financeiro\Services\CarneService $carneService */
                 $carneService = app(\iEducar\Financeiro\Services\CarneService::class);

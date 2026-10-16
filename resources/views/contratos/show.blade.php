@@ -51,8 +51,91 @@
             /* ── Constrói ações do cabeçalho ── */
             $contratoActions = '<div class="flex flex-wrap items-center gap-2">';
 
-            // Botão de checkout se aguardando pagamento
-            if (in_array($contrato->status, ['aguardando_pagamento', 'ativo']) && $contrato->forma_pagamento) {
+            $primeiroTitulo = $contrato->titulos->first();
+            $cobrancaAtiva = $primeiroTitulo?->cobrancaGateway;
+            $forma = $contrato->forma_pagamento ?? '';
+
+            // Ações específicas conforme a forma de pagamento
+            if ($forma === 'carne') {
+                $contratoActions .= '
+                    <a href="' . route('financeiro.contratos.imprimir-carne', $contrato->id) . '"
+                       target="_blank"
+                       class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-green"
+                       style="text-decoration:none;" title="Imprimir carnê oficial com todas as lâminas escolares">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                                  stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                        Imprimir Carnê
+                    </a>';
+
+                if (in_array($contrato->status, ['aguardando_pagamento', 'ativo'])) {
+                    $contratoActions .= '
+                        <a href="' . route('financeiro.contratos.checkout', $contrato->id) . '"
+                           class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue"
+                           style="text-decoration:none;" title="Ver resumo do carnê e cobranças">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                            </svg>
+                            Ver Checkout / Pagamento
+                        </a>';
+                }
+            } elseif ($forma === 'pix') {
+                $contratoActions .= '
+                    <a href="' . route('financeiro.contratos.checkout', $contrato->id) . '"
+                       class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-green"
+                       style="text-decoration:none;" title="Ver QR Code Pix e Chave Copia e Cola">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                        Ver Checkout / Pagamento
+                    </a>';
+            } elseif ($forma === 'boleto') {
+                if ($cobrancaAtiva?->link_boleto_pdf) {
+                    $contratoActions .= '
+                        <a href="' . $cobrancaAtiva->link_boleto_pdf . '"
+                           target="_blank"
+                           class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-green"
+                           style="text-decoration:none;" title="Baixar Boleto Bancário (PDF)">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                            </svg>
+                            Baixar Boleto (PDF)
+                        </a>';
+                }
+                $contratoActions .= '
+                    <a href="' . route('financeiro.contratos.checkout', $contrato->id) . '"
+                       class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue"
+                       style="text-decoration:none;" title="Ver Boleto Bancário e Linha Digitável">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                        Ver Checkout / Boleto
+                    </a>';
+            } elseif ($forma === 'cartao_credito') {
+                $contratoActions .= '
+                    <a href="' . route('financeiro.contratos.checkout', $contrato->id) . '"
+                       class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-green"
+                       style="text-decoration:none;" title="Acessar link para pagamento com Cartão de Crédito">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                                  stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                        Ver Checkout / Cartão
+                    </a>';
+            } elseif (in_array($forma, ['cartao_presencial', 'dinheiro'])) {
+                $contratoActions .= '
+                    <a href="' . route('financeiro.contratos.checkout', $contrato->id) . '"
+                       class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-green"
+                       style="text-decoration:none;" title="Ver detalhes do pagamento e comprovante">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                        Comprovante / Detalhes
+                    </a>';
+            } elseif (in_array($contrato->status, ['aguardando_pagamento', 'ativo'])) {
                 $contratoActions .= '
                     <a href="' . route('financeiro.contratos.checkout', $contrato->id) . '"
                        class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-green"
@@ -65,6 +148,7 @@
                     </a>';
             }
 
+            // Botão Ver Títulos
             $contratoActions .= '
                 <a href="' . route('financeiro.titulos.index', ['contrato_id' => $contrato->id]) . '"
                    class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-blue"
@@ -74,20 +158,6 @@
                     </svg>
                     Ver Títulos
                 </a>';
-
-            if ($contrato->forma_pagamento === 'carne' || $contrato->titulos->count() > 1) {
-                $contratoActions .= '
-                    <a href="' . route('financeiro.contratos.imprimir-carne', $contrato->id) . '"
-                       target="_blank"
-                       class="inline-flex items-center gap-1.5 px-3.5 py-2 btn-ieducar-action btn-ieducar-green"
-                       style="text-decoration:none;">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                                  stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-                        </svg>
-                        Imprimir Carnê
-                    </a>';
-            }
 
             if (in_array($contrato->status, ['ativo', 'inadimplente'])) {
                 $contratoActions .= '
@@ -541,4 +611,49 @@
 
     </main>
 </div>
+
+@if(!in_array($contrato->status, ['quitado', 'cancelado']))
+@push('scripts')
+<script>
+(function() {
+    var STATUS_URL = '{{ route("financeiro.contratos.status-pagamento", $contrato->id) }}';
+    var SSE_URL = '{{ route("financeiro.api.stream", ["contrato_id" => $contrato->id]) }}';
+    var interval = null;
+    var sseSource = null;
+    var finalizado = false;
+
+    function recarregarPagina() {
+        if (finalizado) return;
+        finalizado = true;
+        if (interval) clearInterval(interval);
+        if (sseSource) sseSource.close();
+        setTimeout(function() {
+            window.location.reload();
+        }, 1000);
+    }
+
+    if (window.EventSource) {
+        try {
+            sseSource = new EventSource(SSE_URL);
+            sseSource.addEventListener('PAGAMENTO_CONFIRMADO', function() {
+                recarregarPagina();
+            });
+        } catch (e) {}
+    }
+
+    interval = setInterval(function() {
+        if (finalizado) return;
+        fetch(STATUS_URL, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data && (data.pago === true || data.status === 'quitado')) {
+                    recarregarPagina();
+                }
+            })
+            .catch(function() {});
+    }, 4000);
+})();
+</script>
+@endpush
+@endif
 @endsection

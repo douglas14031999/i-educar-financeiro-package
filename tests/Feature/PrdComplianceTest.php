@@ -2158,6 +2158,210 @@ class PrdComplianceTest extends TestCase
         $this->assertFalse((bool) $webhook->requer_acao);
         $this->assertStringContainsString('Diferença aceita pela diretoria', $webhook->motivo_acao);
     }
+
+    /** T49 — Botões específicos por forma de pagamento e restrição rigorosa de carnê */
+    public function test_t49_botoes_especificos_por_forma_de_pagamento_e_restricao_carne(): void
+    {
+        // 1. Contrato com forma_pagamento = 'pix'
+        $contratoPix = Contrato::create([
+            'numero_contrato' => 'CTR-TEST-PIX',
+            'aluno_id' => 1,
+            'matricula_id' => 991,
+            'responsavel_financeiro_id' => 1,
+            'ano_letivo' => 2026,
+            'data_inicio' => '2026-01-01',
+            'data_termino' => '2026-12-31',
+            'escola_id' => 1,
+            'valor_total_bruto' => 1200.00,
+            'valor_total_descontos' => 0.00,
+            'valor_total_liquido' => 1200.00,
+            'dia_vencimento' => 10,
+            'status' => 'ativo',
+            'forma_pagamento' => 'pix',
+        ]);
+
+        for ($i = 1; $i <= 3; $i++) {
+            Titulo::create([
+                'contrato_id' => $contratoPix->id,
+                'aluno_id' => 1,
+                'responsavel_financeiro_id' => 1,
+                'escola_id' => 1,
+                'tipo' => 'mensalidade',
+                'numero_parcela' => $i,
+                'total_parcelas' => 3,
+                'competencia' => sprintf('2026-%02d', $i),
+                'data_vencimento' => sprintf('2026-%02d-10', $i),
+                'valor_nominal' => 400.00,
+                'valor_saldo' => 400.00,
+                'status' => 'aberto',
+            ]);
+        }
+
+        // 2. Contrato com forma_pagamento = 'carne'
+        $contratoCarne = Contrato::create([
+            'numero_contrato' => 'CTR-TEST-CARNE',
+            'aluno_id' => 1,
+            'matricula_id' => 992,
+            'responsavel_financeiro_id' => 1,
+            'ano_letivo' => 2026,
+            'data_inicio' => '2026-01-01',
+            'data_termino' => '2026-12-31',
+            'escola_id' => 1,
+            'valor_total_bruto' => 1200.00,
+            'valor_total_descontos' => 0.00,
+            'valor_total_liquido' => 1200.00,
+            'dia_vencimento' => 10,
+            'status' => 'ativo',
+            'forma_pagamento' => 'carne',
+        ]);
+
+        for ($i = 1; $i <= 3; $i++) {
+            Titulo::create([
+                'contrato_id' => $contratoCarne->id,
+                'aluno_id' => 1,
+                'responsavel_financeiro_id' => 1,
+                'escola_id' => 1,
+                'tipo' => 'mensalidade',
+                'numero_parcela' => $i,
+                'total_parcelas' => 3,
+                'competencia' => sprintf('2026-%02d', $i),
+                'data_vencimento' => sprintf('2026-%02d-10', $i),
+                'valor_nominal' => 400.00,
+                'valor_saldo' => 400.00,
+                'status' => 'aberto',
+            ]);
+        }
+
+        // A. Verificação na tela do Contrato Pix: NÃO exibe Imprimir Carnê
+        $respContratoPix = $this->get(route('financeiro.contratos.show', $contratoPix->id));
+        $respContratoPix->assertOk();
+        $respContratoPix->assertDontSee('Imprimir Carnê');
+        $respContratoPix->assertSee('Ver Checkout / Pagamento');
+
+        // B. Verificação na tela do Contrato Carnê: EXIBE Imprimir Carnê
+        $respContratoCarne = $this->get(route('financeiro.contratos.show', $contratoCarne->id));
+        $respContratoCarne->assertOk();
+        $respContratoCarne->assertSee('Imprimir Carnê');
+
+        // C. Verificação na tela de Títulos filtrada pelo Contrato Pix: NÃO exibe Imprimir Carnê e exibe Ver Checkout / Pix
+        $respTitulosPix = $this->get(route('financeiro.titulos.index', ['contrato_id' => $contratoPix->id]));
+        $respTitulosPix->assertOk();
+        $respTitulosPix->assertDontSee('title="Imprimir carnê oficial com todas as lâminas escolares"', false);
+        $respTitulosPix->assertSee('Ver Checkout / Pix');
+
+        // D. Verificação na tela de Títulos filtrada pelo Contrato Carnê: EXIBE Imprimir Carnê
+        $respTitulosCarne = $this->get(route('financeiro.titulos.index', ['contrato_id' => $contratoCarne->id]));
+        $respTitulosCarne->assertOk();
+        $respTitulosCarne->assertSee('Imprimir Carnê');
+
+        // E. Tentativa de acessar imprimirCarne em contrato Pix deve redirecionar para checkout com aviso
+        $respImprimirPix = $this->get(route('financeiro.contratos.imprimir-carne', $contratoPix->id));
+        $respImprimirPix->assertRedirect(route('financeiro.contratos.checkout', $contratoPix->id));
+        $respImprimirPix->assertSessionHas('aviso');
+    }
+
+    /** T50 — Contrato Pix cria parcela única (1/1) e webhook atualiza status automaticamente */
+    public function test_t50_contrato_pix_cria_parcela_unica_e_webhook_liquida_com_status_automatico(): void
+    {
+        $resp = ResponsavelFinanceiro::create([
+            'nome' => 'Responsavel Pix Teste',
+            'cpf_cnpj' => '99887766554',
+            'ativo' => true,
+        ]);
+
+        $plano = PlanoPagamento::create([
+            'nome' => 'Plano Anual 12x Teste Pix',
+            'escola_id' => 1,
+            'ano_letivo' => 2026,
+            'valor_total' => 1200.00,
+            'qtd_parcelas' => 12,
+            'ativo' => true,
+        ]);
+
+        for ($p = 1; $p <= 12; $p++) {
+            PlanoItem::create([
+                'plano_id' => $plano->id,
+                'numero_parcela' => $p,
+                'mes_competencia' => $p,
+                'tipo_item' => 'mensalidade',
+                'descricao' => "Parcela {$p}/12",
+                'valor' => 100.00,
+            ]);
+        }
+
+        $contratoService = app(\iEducar\Financeiro\Services\ContratoService::class);
+
+        // 1. Criar contrato via Pix: deve gerar UMA ÚNICA parcela (1/1) de R$ 1200,00
+        $contrato = $contratoService->criarContratoEParcelas([
+            'numero_contrato' => 'CTR-PIX-UNICO-01',
+            'aluno_id' => 1,
+            'matricula_id' => 1,
+            'responsavel_financeiro_id' => $resp->id,
+            'plano_id' => $plano->id,
+            'ano_letivo' => 2026,
+            'dia_vencimento' => 10,
+            'valor_total_descontos' => 0.00,
+            'forma_pagamento' => 'pix',
+            'escola_id' => 1,
+        ]);
+
+        $this->assertEquals('pix', $contrato->forma_pagamento);
+        $this->assertEquals('aguardando_pagamento', $contrato->status);
+        $this->assertEquals(1, $contrato->titulos()->count(), 'Contrato Pix deve criar exatamente 1 parcela única.');
+
+        $tituloUnico = $contrato->titulos()->first();
+        $this->assertEquals(1, $tituloUnico->numero_parcela);
+        $this->assertEquals(1, $tituloUnico->total_parcelas);
+        $this->assertEquals(1200.00, (float) $tituloUnico->valor_nominal);
+        $this->assertEquals(1200.00, (float) $tituloUnico->valor_saldo);
+
+        // 2. Garantir que regenerarTitulosFaltantes não cria parcelas excedentes
+        $regenerados = $contratoService->regenerarTitulosFaltantes($contrato);
+        $this->assertEquals(0, $regenerados);
+        $this->assertEquals(1, $contrato->titulos()->count());
+
+        // 3. Testar endpoint de status de pagamento (deve estar aberto / não pago)
+        $respStatus = $this->getJson(route('financeiro.contratos.status-pagamento', $contrato->id));
+        $respStatus->assertOk();
+        $respStatus->assertJson([
+            'contrato_id' => $contrato->id,
+            'status' => 'aguardando_pagamento',
+            'pago' => false,
+            'forma_pagamento' => 'pix',
+        ]);
+
+        // 4. Simular recebimento de liquidação do webhook Asaas via BaixaTituloService
+        $baixaService = app(\iEducar\Financeiro\Services\BaixaTituloService::class);
+        $baixaService->realizarBaixa($tituloUnico, [
+            'valor_pago' => 1200.00,
+            'forma_pagamento' => 'pix',
+            'data_pagamento' => \Illuminate\Support\Carbon::today(),
+            'origem_baixa' => 'webhook_asaas',
+            'gateway_payment_id' => 'PAY-PIX-12345',
+        ]);
+
+        // 5. Verificar que contrato e título foram liquidados/quitados automaticamente
+        $contrato->refresh();
+        $tituloUnico->refresh();
+        $this->assertEquals('quitado', $contrato->status);
+        $this->assertEquals('pago', $tituloUnico->status);
+        $this->assertEquals(0.00, (float) $tituloUnico->valor_saldo);
+
+        // 6. Testar endpoint de status de pagamento após webhook (deve indicar pago e quitado)
+        $respStatusQuitado = $this->getJson(route('financeiro.contratos.status-pagamento', $contrato->id));
+        $respStatusQuitado->assertOk();
+        $respStatusQuitado->assertJson([
+            'contrato_id' => $contrato->id,
+            'status' => 'quitado',
+            'pago' => true,
+        ]);
+
+        // 7. Verificar que o evento SSE foi devidamente disparado e cacheado
+        $eventos = \iEducar\Financeiro\Services\RealtimeEventService::obterNovosEventos(0, null, $contrato->id);
+        $this->assertNotEmpty($eventos);
+        $this->assertEquals('PAGAMENTO_CONFIRMADO', $eventos[0]['tipo']);
+        $this->assertEquals($contrato->id, $eventos[0]['contrato_id']);
+    }
 }
 
 

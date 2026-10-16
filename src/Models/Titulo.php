@@ -99,6 +99,11 @@ class Titulo extends Model
         return $this->hasMany(CobrancaGateway::class, 'titulo_id');
     }
 
+    public function cobrancasGateway()
+    {
+        return $this->hasMany(CobrancaGateway::class, 'titulo_id');
+    }
+
     public function renegociacao()
     {
         return $this->belongsTo(Renegociacao::class, 'renegociacao_id');

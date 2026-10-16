@@ -63,10 +63,17 @@ class RealtimeEventService
                     : now()->format('d/m/Y'),
                 'forma_pagamento' => $pagamento ? (string) $pagamento->forma_pagamento : 'PIX/Boleto',
             ],
+            'contrato_id' => $titulo->contrato_id ? (int) $titulo->contrato_id : null,
+            'contrato_status' => $titulo->contrato?->status,
         ];
 
         // 1. Armazenar evento específico do título
         Cache::put(self::CACHE_PREFIX . "titulo:{$titulo->id}", $payload, now()->addMinutes(self::TTL_MINUTES));
+
+        // 1.1 Se vinculado a contrato, armazenar evento específico do contrato
+        if ($titulo->contrato_id) {
+            Cache::put(self::CACHE_PREFIX . "contrato:{$titulo->contrato_id}", $payload, now()->addMinutes(self::TTL_MINUTES));
+        }
 
         // 2. Adicionar na lista de eventos recentes para telas gerais (Dashboard, Listagem de Títulos)
         $eventos = Cache::get(self::RECENT_EVENTS_KEY, []);
@@ -92,14 +99,23 @@ class RealtimeEventService
      *
      * @param int $sinceTimestampMs Timestamp em ms da última verificação
      * @param int|null $tituloId Filtro opcional por ID de título específico
+     * @param int|null $contratoId Filtro opcional por ID de contrato específico
      * @return array Lista de eventos ocorridos após o timestamp
      */
-    public static function obterNovosEventos(int $sinceTimestampMs, ?int $tituloId = null): array
+    public static function obterNovosEventos(int $sinceTimestampMs, ?int $tituloId = null, ?int $contratoId = null): array
     {
         if ($tituloId) {
             $eventoTitulo = Cache::get(self::CACHE_PREFIX . "titulo:{$tituloId}");
             if (is_array($eventoTitulo) && isset($eventoTitulo['timestamp_ms']) && $eventoTitulo['timestamp_ms'] > $sinceTimestampMs) {
                 return [$eventoTitulo];
+            }
+            return [];
+        }
+
+        if ($contratoId) {
+            $eventoContrato = Cache::get(self::CACHE_PREFIX . "contrato:{$contratoId}");
+            if (is_array($eventoContrato) && isset($eventoContrato['timestamp_ms']) && $eventoContrato['timestamp_ms'] > $sinceTimestampMs) {
+                return [$eventoContrato];
             }
             return [];
         }

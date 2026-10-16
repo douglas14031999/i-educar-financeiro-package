@@ -1175,21 +1175,30 @@ document.addEventListener('DOMContentLoaded', function () {
         const parcelas = parseInt(opt.dataset.parcelas || 1);
         const desconto = Math.max(0, parseFloat(inputDesconto.value || 0));
         const valorLiquido = Math.max(0, valorBruto - desconto);
-        const valorParcela = parcelas > 0 ? (valorLiquido / parcelas) : valorLiquido;
         const dia = parseInt(inputVencimento.value || 10);
+
+        const formaSel = document.querySelector('input[name="forma_pagamento"]:checked');
+        const isPix = formaSel && formaSel.value === 'pix';
+        const valorParcela = (parcelas > 0 && !isPix) ? (valorLiquido / parcelas) : valorLiquido;
 
         simValorBruto.textContent = formatMoney(valorBruto);
         simValorDesconto.textContent = (desconto > 0 ? '- ' : '') + formatMoney(desconto);
         simValorLiquido.textContent = formatMoney(valorLiquido);
-        simGradeParcelas.textContent = `${parcelas}x de ${formatMoney(valorParcela)}`;
-        simDiaVencimento.textContent = `Vencimento todo dia ${dia < 10 ? '0' + dia : dia}`;
+
+        if (isPix) {
+            simGradeParcelas.textContent = `1x de ${formatMoney(valorLiquido)} (Cota Única Instantânea)`;
+            simDiaVencimento.textContent = 'Pagamento instantâneo no ato via Pix';
+        } else {
+            simGradeParcelas.textContent = `${parcelas}x de ${formatMoney(valorParcela)}`;
+            simDiaVencimento.textContent = `Vencimento todo dia ${dia < 10 ? '0' + dia : dia}`;
+        }
 
         // Se aluno e responsável já foram definidos, marca o Passo 3 como completo
         if (inputAlunoId.value && inputResponsavelId.value) {
             stepInd3.className = 'step-item completed';
             stepCircle3.className = 'step-circle done';
             stepCircle3.innerHTML = '✓';
-            stepLabel3.textContent = `${parcelas}x de ${formatMoney(valorParcela)}`;
+            stepLabel3.textContent = isPix ? `1x de ${formatMoney(valorLiquido)} (Pix)` : `${parcelas}x de ${formatMoney(valorParcela)}`;
 
             // Libera Passo 4 como Ativo
             stepInd4.className = 'step-item active';
@@ -1866,6 +1875,10 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 stepLabel4.textContent = formasInfo[selecionado.value] ? formasInfo[selecionado.value].label : 'Forma de Pagamento';
             }
+        }
+
+        if (typeof atualizarSimulacao === 'function') {
+            atualizarSimulacao();
         }
     }
 
