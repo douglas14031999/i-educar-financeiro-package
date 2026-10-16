@@ -758,6 +758,8 @@
                                         <option value="{{ $plano->id }}" 
                                                 data-valor="{{ $plano->valor_total }}" 
                                                 data-nome="{{ $plano->nome }}"
+                                                data-escola-id="{{ $plano->escola_id }}"
+                                                data-curso-id="{{ $plano->curso_id ?? '' }}"
                                                 {{ old('plano_id') == $plano->id ? 'selected' : '' }}>
                                             {{ $plano->nome }} — R$ {{ number_format($plano->valor_total, 2, ',', '.') }}
                                         </option>
@@ -1418,6 +1420,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     opt.value = m.cod_matricula;
                     opt.textContent = m.descricao_completa;
                     opt.dataset.escolaId = m.escola_id;
+                    opt.dataset.cursoId = m.curso_id || '';
                     opt.dataset.ano = m.ano;
                     if (matriculaDesejadaId && m.cod_matricula == matriculaDesejadaId) {
                         selecionadaIdx = idx;
@@ -1479,7 +1482,68 @@ document.addEventListener('DOMContentLoaded', function () {
                 inputEscolaId.value = opt.dataset.escolaId;
             }
             inputAnoLetivo.value = opt.dataset.ano || {{ $anoAtual }};
+
+            // Filtra os planos vinculados à escola da matrícula e seta o plano correspondente ao curso
+            filtrarPlanosPorEscola(opt.dataset.escolaId, opt.dataset.cursoId);
         }
+    }
+
+    // Filtra dropdown de planos pela escola da matrícula e auto-seleciona o plano do curso
+    function filtrarPlanosPorEscola(escolaId, cursoId) {
+        if (!selectPlano) return;
+
+        const options = Array.from(selectPlano.options);
+        let primeiroVisivel = null;
+        let planoCorrespondente = null;
+        let totalVisiveis = 0;
+
+        options.forEach((opt, idx) => {
+            if (idx === 0) {
+                // Opção default ("Selecione o plano...")
+                opt.style.display = '';
+                return;
+            }
+
+            const optEscola = opt.dataset.escolaId;
+            const optCurso = opt.dataset.cursoId;
+
+            // Exibe apenas os planos vinculados à escola da matrícula
+            if (escolaId && optEscola && String(optEscola) !== String(escolaId)) {
+                opt.style.display = 'none';
+                opt.disabled = true;
+                if (opt.selected) {
+                    opt.selected = false;
+                }
+            } else {
+                opt.style.display = '';
+                opt.disabled = false;
+                totalVisiveis++;
+
+                if (!primeiroVisivel) {
+                    primeiroVisivel = opt;
+                }
+
+                // Plano correspondente com base no curso da matrícula
+                if (cursoId && optCurso && String(optCurso) === String(cursoId)) {
+                    planoCorrespondente = opt;
+                }
+            }
+        });
+
+        // Auto-selecionar o plano correspondente à matrícula do aluno
+        if (planoCorrespondente) {
+            planoCorrespondente.selected = true;
+            selectPlano.value = planoCorrespondente.value;
+        } else if (primeiroVisivel && !selectPlano.value) {
+            // Se não encontrou plano específico com o mesmo curso_id, seleciona o primeiro plano da escola
+            primeiroVisivel.selected = true;
+            selectPlano.value = primeiroVisivel.value;
+        } else if (totalVisiveis === 0) {
+            selectPlano.value = '';
+        }
+
+        // Dispara recálculo da simulação financeira
+        atualizarSimulacao();
     }
 
     // Botão de trocar aluno
@@ -1487,6 +1551,14 @@ document.addEventListener('DOMContentLoaded', function () {
         inputAlunoId.value = '';
         inputMatriculaId.value = '';
         inputResponsavelId.value = '';
+        if (selectPlano) {
+            selectPlano.value = '';
+            Array.from(selectPlano.options).forEach(opt => {
+                opt.style.display = '';
+                opt.disabled = false;
+            });
+            atualizarSimulacao();
+        }
         cardAlunoSelecionado.classList.add('hidden');
         blocoResponsaveis.classList.add('hidden');
         placeholderSemAluno.classList.remove('hidden');

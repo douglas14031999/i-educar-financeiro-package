@@ -50,7 +50,12 @@ class ContratoController extends Controller
     public function create(Request $request)
     {
         $anoAtual = date('Y');
-        $planos = PlanoPagamento::where('ano_letivo', $anoAtual)->where('ativo', true)->get();
+        // Carrega os planos ativos do ano letivo com escola_id e curso_id para filtragem contextual
+        $planos = PlanoPagamento::where('ano_letivo', $anoAtual)
+            ->where('ativo', true)
+            ->orderBy('escola_id')
+            ->orderBy('nome')
+            ->get();
         $responsaveis = ResponsavelFinanceiro::where('ativo', true)->orderBy('nome')->limit(100)->get();
 
         $preResponsavelId = $request->input('responsavel_id') ? (int) $request->input('responsavel_id') : null;
