@@ -42,6 +42,9 @@ Route::group(['prefix' => $prefix, 'as' => 'financeiro.', 'middleware' => $middl
         ->middleware('financeiro.can:MENU_RESPONSAVEIS,cadastra');
 
     // 3. Planos de Cobrança e Tabela de Preços (BUG-024 / FEAT-08)
+    Route::get('api/escolas/{escola_id}/cursos', 'PlanoPagamentoController@cursosPorEscola')
+        ->name('api.escolas.cursos')
+        ->middleware('financeiro.can:MENU_PLANOS,visualiza');
     Route::post('planos/{id}/copiar', 'PlanoPagamentoController@copiar')
         ->name('planos.copiar')
         ->middleware('financeiro.can:MENU_PLANOS,cadastra');

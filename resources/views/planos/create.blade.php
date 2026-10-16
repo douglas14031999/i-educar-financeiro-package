@@ -56,22 +56,9 @@
                         </svg>
                         1. Dados Gerais do Plano
                     </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="md:col-span-2">
-                            <label for="nome" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                                Nome do Plano <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" name="nome" id="nome" value="{{ old('nome') }}" required placeholder="Ex: Ensino Fundamental I - Anual 2026 em 12x" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
-                        </div>
-
-                        <div>
-                            <label for="ano_letivo" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                                Ano Letivo <span class="text-red-500">*</span>
-                            </label>
-                            <input type="number" name="ano_letivo" id="ano_letivo" value="{{ old('ano_letivo', date('Y')) }}" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
-                        </div>
-
-                        <div>
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                        <!-- 1. ESCOLA VINCULADA (Vem primeiro) -->
+                        <div class="md:col-span-8">
                             <label for="escola_id" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                                 Escola Vinculada <span class="text-red-500">*</span>
                             </label>
@@ -82,12 +69,53 @@
                                             $escId = is_object($esc) ? ($esc->id ?? $esc->cod_escola ?? 1) : (is_array($esc) ? ($esc['id'] ?? $esc['cod_escola'] ?? 1) : $loop->iteration);
                                             $escNome = is_object($esc) ? ($esc->nome ?? 'Escola ' . $escId) : (is_array($esc) ? ($esc['nome'] ?? 'Escola ' . $escId) : $esc);
                                         @endphp
-                                        <option value="{{ $escId }}" {{ old('escola_id', 1) == $escId ? 'selected' : '' }}>{{ $escNome }} (ID: {{ $escId }})</option>
+                                        <option value="{{ $escId }}" {{ old('escola_id', $plano->escola_id ?? 1) == $escId ? 'selected' : '' }}>{{ $escNome }} (ID: {{ $escId }})</option>
                                     @endforeach
                                 </select>
                             @else
                                 <input type="number" name="escola_id" id="escola_id" value="{{ old('escola_id', 1) }}" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
                             @endif
+                        </div>
+
+                        <!-- 2. ANO LETIVO -->
+                        <div class="md:col-span-4">
+                            <label for="ano_letivo" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                                Ano Letivo <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" name="ano_letivo" id="ano_letivo" value="{{ old('ano_letivo', date('Y')) }}" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+                        </div>
+
+                        <!-- 3. NOME DO PLANO (DROPDOWN DE CURSOS VINCULADOS À ESCOLA E ANO LETIVO) -->
+                        <div class="md:col-span-12">
+                            <label for="curso_id" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center justify-between">
+                                <span>Nome do Plano / Curso Vinculado <span class="text-red-500">*</span></span>
+                                <span id="loading_cursos" class="text-[11px] text-[#47728f] font-normal" style="display: none;">
+                                    <svg class="animate-spin inline w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                                    Carregando cursos...
+                                </span>
+                            </label>
+                            
+                            <select name="curso_id" id="curso_id" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+                                <option value="">-- Selecione o Curso para o Plano --</option>
+                                @if(isset($cursosIniciais) && count($cursosIniciais) > 0)
+                                    @foreach($cursosIniciais as $cur)
+                                        @php
+                                            $curId = is_object($cur) ? $cur->id : $cur['id'];
+                                            $curNome = is_object($cur) ? $cur->nome : $cur['nome'];
+                                        @endphp
+                                        <option value="{{ $curId }}" data-nome="{{ $curNome }}" {{ old('curso_id') == $curId ? 'selected' : '' }}>
+                                            {{ $curNome }}
+                                        </option>
+                                    @endforeach
+                                @endif
+                            </select>
+
+                            <!-- Campo oculto com o nome do plano (sincronizado automaticamente) -->
+                            <input type="hidden" name="nome" id="nome_plano_hidden" value="{{ old('nome') }}">
+
+                            <p class="text-[11px] text-slate-400 mt-1">
+                                Cursos vinculados à escola selecionada para o ano letivo. O nome do plano adotará o nome do curso escolhido.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -175,3 +203,99 @@
     </main>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var escolaSelect = document.getElementById('escola_id');
+    var anoLetivoInput = document.getElementById('ano_letivo');
+    var cursoSelect = document.getElementById('curso_id');
+    var nomePlanoHidden = document.getElementById('nome_plano_hidden');
+    var loadingSpan = document.getElementById('loading_cursos');
+
+    function sincronizarNomePlano() {
+        if (!cursoSelect || !nomePlanoHidden) return;
+        var opt = cursoSelect.options[cursoSelect.selectedIndex];
+        if (opt && opt.value) {
+            nomePlanoHidden.value = opt.getAttribute('data-nome') || opt.text.trim();
+        } else {
+            nomePlanoHidden.value = '';
+        }
+    }
+
+    if (cursoSelect) {
+        cursoSelect.addEventListener('change', sincronizarNomePlano);
+        sincronizarNomePlano();
+    }
+
+    var debounceTimer = null;
+
+    function carregarCursos() {
+        if (!escolaSelect || !cursoSelect) return;
+        var escolaId = escolaSelect.value;
+        var anoLetivo = anoLetivoInput ? anoLetivoInput.value : new Date().getFullYear();
+
+        if (!escolaId) {
+            cursoSelect.innerHTML = '<option value="">-- Selecione uma escola primeiro --</option>';
+            sincronizarNomePlano();
+            return;
+        }
+
+        if (loadingSpan) loadingSpan.style.display = 'inline';
+
+        var url = '{{ route("financeiro.api.escolas.cursos", ["escola_id" => ":escola_id"]) }}'
+            .replace(':escola_id', encodeURIComponent(escolaId)) + '?ano_letivo=' + encodeURIComponent(anoLetivo);
+
+        fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+            .then(function(res) {
+                if (!res.ok) throw new Error('Erro HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function(cursos) {
+                cursoSelect.innerHTML = '';
+                if (!cursos || cursos.length === 0) {
+                    var opt = document.createElement('option');
+                    opt.value = '';
+                    opt.textContent = '-- Nenhum curso vinculado a esta escola neste ano --';
+                    cursoSelect.appendChild(opt);
+                } else {
+                    var optDefault = document.createElement('option');
+                    optDefault.value = '';
+                    optDefault.textContent = '-- Selecione o Curso para o Plano (' + cursos.length + ' cursos encontrados) --';
+                    cursoSelect.appendChild(optDefault);
+
+                    cursos.forEach(function(cur) {
+                        var opt = document.createElement('option');
+                        opt.value = cur.id;
+                        opt.setAttribute('data-nome', cur.nome);
+                        opt.textContent = cur.nome;
+                        cursoSelect.appendChild(opt);
+                    });
+
+                    if (cursos.length === 1) {
+                        cursoSelect.selectedIndex = 1;
+                    }
+                }
+                sincronizarNomePlano();
+            })
+            .catch(function(err) {
+                console.error('[Financeiro] Erro ao carregar cursos:', err);
+            })
+            .finally(function() {
+                if (loadingSpan) loadingSpan.style.display = 'none';
+            });
+    }
+
+    if (escolaSelect) {
+        escolaSelect.addEventListener('change', carregarCursos);
+    }
+
+    if (anoLetivoInput) {
+        anoLetivoInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(carregarCursos, 400);
+        });
+    }
+});
+</script>
+@endpush

@@ -33,13 +33,7 @@ class PlanoPagamentoController extends Controller
      */
     public function create()
     {
-        $plano = new PlanoPagamento([
-            'ano_letivo' => date('Y'),
-            'qtd_parcelas' => 12,
-            'valor_total' => 0.00,
-            'dia_vencimento_padrao' => 10,
-            'escola_id' => 1,
-        ]);
+        $anoLetivoAtual = (int) date('Y');
 
         try {
             $escolas = DB::table('pmieducar.escola')
@@ -51,7 +45,76 @@ class PlanoPagamentoController extends Controller
             $escolas = collect();
         }
 
-        return view('financeiro::planos.create', compact('plano', 'escolas'));
+        $escolaInicial = $escolas->first();
+        $escolaInicialId = $escolaInicial ? $escolaInicial->id : 1;
+        $cursosIniciais = $this->obterCursosPorEscolaAno((int) $escolaInicialId, $anoLetivoAtual);
+
+        $plano = new PlanoPagamento([
+            'ano_letivo' => $anoLetivoAtual,
+            'qtd_parcelas' => 12,
+            'valor_total' => 0.00,
+            'dia_vencimento_padrao' => 10,
+            'escola_id' => $escolaInicialId,
+        ]);
+
+        return view('financeiro::planos.create', compact('plano', 'escolas', 'cursosIniciais'));
+    }
+
+    /**
+     * Endpoint JSON para dropdown dinâmico de cursos por escola e ano letivo
+     */
+    public function cursosPorEscola(Request $request, $escolaId)
+    {
+        $anoLetivo = (int) $request->input('ano_letivo', date('Y'));
+        $cursos = $this->obterCursosPorEscolaAno((int) $escolaId, $anoLetivo);
+        return response()->json($cursos);
+    }
+
+    /**
+     * Consulta cursos vinculados à escola e ao ano letivo no i-Educar
+     */
+    private function obterCursosPorEscolaAno(int $escolaId, int $anoLetivo): array
+    {
+        try {
+            $queryComAno = "
+                SELECT DISTINCT c.cod_curso as id, c.nm_curso as nome
+                FROM pmieducar.escola_curso ec
+                JOIN pmieducar.curso c ON ec.ref_cod_curso = c.cod_curso
+                WHERE ec.ref_cod_escola = ?
+                  AND ec.ativo = 1
+                  AND c.ativo = 1
+                  AND (
+                      ec.anos_letivos IS NULL 
+                      OR ? = ANY(ec.anos_letivos)
+                      OR EXISTS (
+                          SELECT 1 FROM pmieducar.turma t 
+                          WHERE t.ref_ref_cod_escola = ec.ref_cod_escola 
+                            AND t.ref_cod_curso = c.cod_curso 
+                            AND t.ano = ? 
+                            AND t.ativo = 1
+                      )
+                  )
+                ORDER BY c.nm_curso ASC
+            ";
+            $cursos = DB::select($queryComAno, [$escolaId, $anoLetivo, $anoLetivo]);
+
+            if (empty($cursos)) {
+                $queryGeral = "
+                    SELECT DISTINCT c.cod_curso as id, c.nm_curso as nome
+                    FROM pmieducar.escola_curso ec
+                    JOIN pmieducar.curso c ON ec.ref_cod_curso = c.cod_curso
+                    WHERE ec.ref_cod_escola = ?
+                      AND ec.ativo = 1
+                      AND c.ativo = 1
+                    ORDER BY c.nm_curso ASC
+                ";
+                $cursos = DB::select($queryGeral, [$escolaId]);
+            }
+
+            return $cursos;
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     /**
@@ -64,7 +127,7 @@ class PlanoPagamentoController extends Controller
             'ano_letivo' => 'required|integer|min:2020|max:2040',
             'curso_id' => 'nullable|integer',
             'serie_id' => 'nullable|integer',
-            'nome' => 'required|string|max:150',
+            'nome' => 'nullable|string|max:150',
             'descricao' => 'nullable|string',
             'valor_total' => 'required|numeric|min:1',
             'qtd_parcelas' => 'nullable|integer|min:1|max:24',
@@ -72,6 +135,18 @@ class PlanoPagamentoController extends Controller
             'gerar_matricula_avulsa' => 'nullable|boolean',
             'valor_matricula' => 'nullable|numeric|min:0',
         ]);
+
+        // Se o nome do plano não foi preenchido manualmente, atribui o nome do curso selecionado
+        if (empty($validated['nome']) && !empty($validated['curso_id'])) {
+            $curso = DB::table('pmieducar.curso')->where('cod_curso', $validated['curso_id'])->first();
+            if ($curso) {
+                $validated['nome'] = $curso->nm_curso;
+            }
+        }
+
+        if (empty($validated['nome'])) {
+            $validated['nome'] = 'Plano de Cobrança ' . $validated['ano_letivo'];
+        }
 
         return DB::transaction(function () use ($validated, $request) {
             $diaVencimento = (int) ($validated['dia_vencimento_padrao'] ?? 10);
