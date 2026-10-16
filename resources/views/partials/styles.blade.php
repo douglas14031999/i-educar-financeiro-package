@@ -3,6 +3,45 @@
        DESIGN SYSTEM OFICIAL - MÓDULO FINANCEIRO I-EDUCAR
        ======================================================== */
     
+    /* Blindagem da barra superior nativa i-Educar */
+    .ieducar-menu-container {
+        background: #e9eff7 !important;
+        border-bottom: 1px solid #cddce6 !important;
+    }
+    .ieducar-menu {
+        background: #e9eff7 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        list-style: none !important;
+    }
+    .ieducar-menu > li > a {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        padding: 10px 16px !important;
+        color: #1b4c6b !important;
+        text-decoration: none !important;
+    }
+    .ieducar-menu > li:hover {
+        background: #cddce6 !important;
+    }
+    .ieducar-sub-menu {
+        background: #ffffff !important;
+        border: 1px solid #cddce6 !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+        border-radius: 0 0 4px 4px !important;
+        z-index: 9999 !important;
+    }
+    .ieducar-sub-menu li a {
+        font-size: 13px !important;
+        padding: 8px 16px !important;
+        color: #334155 !important;
+        text-decoration: none !important;
+    }
+    .ieducar-sub-menu li a:hover {
+        background: #f1f5f9 !important;
+        color: #1b4c6b !important;
+    }
+
     #financeiro-module {
         font-family: "Open Sans", Arial, sans-serif !important;
         color: #47728f;

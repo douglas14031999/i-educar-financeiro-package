@@ -88,22 +88,80 @@ class SincronizarMenusCommand extends Command
             $this->info("[✓] Menu Principal 'Financeiro' criado com sucesso (ID: {$rootId}).");
         }
 
-        // 2. Submenus
+        // 2. Categorias Principais Nativas do i-Educar
+        $categoriasDef = [
+            'Cadastros'     => 2,
+            'Movimentações' => 3,
+            'Lançamentos'   => 4,
+            'Relatórios'    => 5,
+            'Configurações' => 6,
+        ];
+
+        $todosMenuIds = [$rootId];
+        $catIds = [];
+
+        foreach ($categoriasDef as $catTitle => $order) {
+            $catData = [
+                'parent_id' => $rootId,
+                'title'     => $catTitle,
+                'order'     => $order,
+                'link'      => null,
+            ];
+            if (in_array('type', $colunasMenus)) {
+                $catData['type'] = 1; // 1 = Categoria / Pasta
+            }
+            if (in_array('active', $colunasMenus)) {
+                $catData['active'] = true;
+            }
+
+            $existente = DB::table('menus')->where('parent_id', $rootId)
+                ->where(function($q) use ($catTitle) {
+                    $q->where('title', $catTitle)
+                      ->orWhere('title', str_replace(['ç', 'õ', 'ã'], ['c', 'o', 'a'], $catTitle));
+                })->first();
+
+            if ($existente) {
+                $catId = $existente->id;
+                $updateCat = $catData;
+                if (in_array('updated_at', $colunasMenus)) {
+                    $updateCat['updated_at'] = now();
+                }
+                DB::table('menus')->where('id', $catId)->update($updateCat);
+            } else {
+                if (in_array('created_at', $colunasMenus)) {
+                    $catData['created_at'] = now();
+                }
+                if (in_array('updated_at', $colunasMenus)) {
+                    $catData['updated_at'] = now();
+                }
+                $catId = DB::table('menus')->insertGetId($catData);
+            }
+
+            $catIds[$catTitle] = $catId;
+            $todosMenuIds[] = $catId;
+            $this->line("  ↳ Categoria [{$catTitle}] registrada (ID: {$catId}).");
+        }
+
+        // 3. Submenus e Itens de Ação vinculados às suas Categorias
         $submenusDef = [
+            // Raiz: Painel Geral
             [
                 'old'         => ProcessosFinanceiro::MENU_DASHBOARD,
                 'title'       => 'Painel Geral',
                 'description' => 'Visão geral e faturamento',
                 'link'        => '/financeiro',
                 'order'       => 1,
+                'parent'      => 'root',
                 'icon'        => 'fa-dashboard',
             ],
+            // Categoria: Cadastros
             [
                 'old'         => ProcessosFinanceiro::MENU_RESPONSAVEIS,
                 'title'       => 'Responsáveis Financeiros',
                 'description' => 'Cadastro e rateio de responsáveis',
                 'link'        => '/financeiro/responsaveis',
-                'order'       => 2,
+                'order'       => 1,
+                'parent'      => 'Cadastros',
                 'icon'        => 'fa-users',
             ],
             [
@@ -111,7 +169,8 @@ class SincronizarMenusCommand extends Command
                 'title'       => 'Planos de Cobrança',
                 'description' => 'Tabelas de anuidade e parcelas',
                 'link'        => '/financeiro/planos',
-                'order'       => 3,
+                'order'       => 2,
+                'parent'      => 'Cadastros',
                 'icon'        => 'fa-tags',
             ],
             [
@@ -119,15 +178,18 @@ class SincronizarMenusCommand extends Command
                 'title'       => 'Contratos',
                 'description' => 'Contratos financeiros por matrícula',
                 'link'        => '/financeiro/contratos',
-                'order'       => 4,
+                'order'       => 3,
+                'parent'      => 'Cadastros',
                 'icon'        => 'fa-file-text-o',
             ],
+            // Categoria: Movimentações
             [
                 'old'         => ProcessosFinanceiro::MENU_TITULOS,
                 'title'       => 'Mensalidades e Boletos',
                 'description' => 'Gestão de títulos e parcelas Asaas',
                 'link'        => '/financeiro/titulos',
-                'order'       => 5,
+                'order'       => 1,
+                'parent'      => 'Movimentações',
                 'icon'        => 'fa-barcode',
             ],
             [
@@ -135,7 +197,8 @@ class SincronizarMenusCommand extends Command
                 'title'       => 'Baixa de Balcão (Caixa)',
                 'description' => 'Recebimento presencial na secretaria',
                 'link'        => '/financeiro/baixas/novo',
-                'order'       => 6,
+                'order'       => 2,
+                'parent'      => 'Movimentações',
                 'icon'        => 'fa-money',
             ],
             [
@@ -143,40 +206,47 @@ class SincronizarMenusCommand extends Command
                 'title'       => 'Renegociação de Dívidas',
                 'description' => 'Acordos financeiros e parcelamento',
                 'link'        => '/financeiro/renegociacao',
-                'order'       => 7,
+                'order'       => 3,
+                'parent'      => 'Movimentações',
                 'icon'        => 'fa-handshake-o',
             ],
+            // Categoria: Lançamentos
             [
                 'old'         => ProcessosFinanceiro::MENU_CONTAS_PAGAR,
                 'title'       => 'Contas a Pagar',
                 'description' => 'Despesas operacionais e fornecedores',
                 'link'        => '/financeiro/contas-pagar',
-                'order'       => 8,
+                'order'       => 1,
+                'parent'      => 'Lançamentos',
                 'icon'        => 'fa-credit-card',
             ],
+            // Categoria: Relatórios
             [
                 'old'         => ProcessosFinanceiro::MENU_RELATORIOS,
                 'title'       => 'Relatórios Gerenciais',
                 'description' => 'Inadimplência, DRE, IRPF e Quitação',
                 'link'        => '/financeiro/relatorios',
-                'order'       => 9,
+                'order'       => 1,
+                'parent'      => 'Relatórios',
                 'icon'        => 'fa-bar-chart',
             ],
+            // Categoria: Configurações
             [
                 'old'         => ProcessosFinanceiro::MENU_GATEWAY_CONFIG,
                 'title'       => 'Configurações do Asaas',
                 'description' => 'Chaves de API, webhooks e régua',
                 'link'        => '/financeiro/configuracoes/gateway',
-                'order'       => 10,
+                'order'       => 1,
+                'parent'      => 'Configurações',
                 'icon'        => 'fa-cogs',
             ],
         ];
 
-        $todosMenuIds = [$rootId];
-
         foreach ($submenusDef as $sub) {
+            $parentId = ($sub['parent'] === 'root') ? $rootId : ($catIds[$sub['parent']] ?? $rootId);
+
             $subData = [
-                'parent_id'   => $rootId,
+                'parent_id'   => $parentId,
                 'parent_old'  => ProcessosFinanceiro::MENU_FINANCEIRO_RAIZ,
                 'title'       => $sub['title'],
                 'description' => $sub['description'],

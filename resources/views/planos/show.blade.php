@@ -210,12 +210,16 @@
                         Copiar Plano de Pagamento
                     </h3>
                 </div>
-                <button type="button" onclick="document.getElementById('modal-copiar-plano').style.display='none';" class="text-white hover:text-slate-200 text-lg font-bold leading-none">&times;</button>
+                <button type="button" onclick="document.getElementById('modal-copiar-plano').style.display='none';" class="text-white hover:text-slate-200 transition" style="background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 4px !important; margin: 0 !important; cursor: pointer !important; width: auto !important; height: auto !important; line-height: 1 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;" title="Fechar">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                    </svg>
+                </button>
             </div>
             <form method="POST" action="{{ route('financeiro.planos.copiar', $plano->id) }}" class="p-6 space-y-4">
                 @csrf
                 <p class="text-xs text-slate-600">
-                    Cria uma cópia idêntica deste plano e de suas parcelas para outro ano letivo, permitindo reaproveitamento rápido da tabela de preços.
+                    Cria uma cópia deste plano para outro ano letivo, permitindo reaproveitamento rápido das condições de anuidade escolar.
                 </p>
                 <div>
                     <label for="novo_ano_letivo" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
