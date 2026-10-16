@@ -1,263 +1,1019 @@
 @extends('financeiro::layouts.app')
 
-@section('title', 'Checkout e Fechamento do Contrato #' . $contrato->numero_contrato)
+@section('title', 'Checkout — Contrato #' . $contrato->numero_contrato)
 @section('module-style', 'padding: 0;')
 
 @push('styles')
     @include('financeiro::dashboard.styles')
+    <style>
+        /* ================================================================
+           CHECKOUT STYLES — Scoped to .financeiro-dashboard-container
+           ================================================================ */
+
+        /* --- Checkout Hero Card --- */
+        .co-hero-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        }
+
+        /* --- Status Badge --- */
+        .co-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            border-radius: 3px;
+        }
+        .co-badge-pix       { background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; }
+        .co-badge-cartao    { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+        .co-badge-boleto    { background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe; }
+        .co-badge-carne     { background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; }
+        .co-badge-quitado   { background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; }
+
+        /* --- Main Panel --- */
+        .co-panel {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .co-panel-header {
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .co-panel-body {
+            padding: 24px;
+        }
+
+        /* --- QR Code Block --- */
+        .co-qr-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 16px;
+            width: 220px;
+            height: 220px;
+        }
+        .co-qr-wrapper img {
+            width: 188px !important;
+            height: 188px !important;
+            display: block;
+        }
+        .co-qr-placeholder {
+            width: 188px;
+            height: 188px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #94a3b8;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        /* --- Pix Countdown --- */
+        .co-countdown {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #c2410c;
+        }
+        .co-countdown-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ea580c;
+            animation: co-pulse 1.5s infinite;
+        }
+        @keyframes co-pulse {
+            0%,100% { opacity:1; transform:scale(1); }
+            50%      { opacity:.5; transform:scale(.85); }
+        }
+
+        /* --- Copy Input Group --- */
+        .co-copy-group {
+            display: flex;
+            align-items: stretch;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+        .co-copy-group input {
+            flex: 1;
+            min-width: 0;
+            padding: 9px 12px;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            color: #334155;
+            background: #f8fafc;
+            border: none;
+            outline: none;
+        }
+        .co-copy-btn {
+            padding: 0 14px;
+            background: #47728f;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background .15s;
+            letter-spacing: .04em;
+        }
+        .co-copy-btn:hover { background: #355972; }
+        .co-copy-btn.co-copied { background: #059669; }
+
+        /* --- Real-time pulse indicator --- */
+        .co-pulse-ring {
+            position: relative;
+            width: 10px;
+            height: 10px;
+            display: inline-flex;
+            flex-shrink: 0;
+        }
+        .co-pulse-ring span:first-child {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: #38bdf8;
+            opacity: .6;
+            animation: co-ring 1.8s ease-out infinite;
+        }
+        .co-pulse-ring span:last-child {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #0284c7;
+            display: block;
+        }
+        @keyframes co-ring {
+            0%   { transform: scale(1); opacity: .6; }
+            80%  { transform: scale(2.2); opacity: 0; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+
+        /* --- Success confetti card --- */
+        .co-success-panel {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 60%);
+            border: 2px solid #bbf7d0;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .co-success-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #dcfce7, #a7f3d0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 0 0 6px rgba(16,185,129,.12);
+        }
+
+        /* --- Step List (instruções numbered) --- */
+        .co-step-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .co-step-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 12px;
+            color: #475569;
+            line-height: 1.5;
+        }
+        .co-step-num {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #47728f;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* --- Info Row (boleto details) --- */
+        .co-info-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 12px;
+            color: #475569;
+        }
+        .co-info-row:last-child { border-bottom: none; }
+        .co-info-row strong { color: #1e293b; font-weight: 600; }
+
+        /* --- Responsive tweaks --- */
+        @media (max-width: 640px) {
+            .co-qr-wrapper { width: 180px; height: 180px; }
+            .co-qr-wrapper img { width: 148px !important; height: 148px !important; }
+        }
+    </style>
 @endpush
 
 @section('financeiro-content')
-<div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased flex flex-col justify-between" style="font-family: 'Inter', sans-serif;">
-    <main class="w-full p-4 md:p-6 space-y-6" data-purpose="contrato-checkout-container">
+<div class="financeiro-dashboard-container bg-[#f4f7f9] text-slate-800 font-sans min-h-screen antialiased" style="font-family: 'Inter', sans-serif;">
+    <main class="w-full p-4 md:p-6 space-y-5" data-purpose="contrato-checkout-container">
 
-        {{-- Cabeçalho Padrão i-Educar --}}
+        {{-- ── CABEÇALHO ── --}}
         @include('financeiro::partials.page-header', [
-            'title' => 'Checkout e Fechamento Financeiro da Matrícula',
-            'subtitle' => 'Contrato ' . $contrato->numero_contrato . ' — Aluno #' . $contrato->aluno_id . ' (' . $contrato->ano_letivo . ')',
+            'title'    => 'Fechamento e Pagamento da Matrícula',
+            'subtitle' => 'Contrato ' . $contrato->numero_contrato . ' · Aluno #' . $contrato->aluno_id . ' · ' . $contrato->ano_letivo,
             'breadcrumbs' => [
                 ['label' => 'Contratos', 'url' => route('financeiro.contratos.index')],
                 ['label' => $contrato->numero_contrato, 'url' => route('financeiro.contratos.show', $contrato->id)],
-                ['label' => 'Checkout de Pagamento']
+                ['label' => 'Checkout'],
             ],
             'actions' => '
-                <a href="' . route('financeiro.contratos.show', $contrato->id) . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
-                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                <a href="' . route('financeiro.contratos.show', $contrato->id) . '"
+                   class="inline-flex items-center gap-2 px-4 py-2 btn-ieducar-action btn-ieducar-outline"
+                   style="text-decoration:none;">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
                     </svg>
-                    Ver Detalhes do Contrato
+                    Ver Contrato
                 </a>
             '
         ])
 
-        {{-- Painel Principal do Checkout --}}
-        <div class="max-w-4xl mx-auto space-y-6">
-
-            {{-- Resumo da Matrícula / Contrato --}}
-            <div class="bg-white border border-slate-200 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Contrato Formalizado</span>
-                    <h2 class="text-lg font-bold text-slate-900 m-0">{{ $contrato->numero_contrato }}</h2>
-                    <span class="text-xs text-slate-600">
-                        Responsável: <strong>{{ $contrato->responsavel->nome ?? 'Não identificado' }}</strong>
-                        @if($contrato->responsavel && $contrato->responsavel->cpf_cnpj)
-                            (CPF: {{ $contrato->responsavel->cpf_cnpj }})
-                        @endif
-                    </span>
+        {{-- ── HERO: RESUMO DO CONTRATO ── --}}
+        <div class="co-hero-card p-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-start gap-4">
+                    {{-- Avatar / Ícone --}}
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+                         style="background:rgba(71,114,143,.12);">
+                        <svg width="22" height="22" fill="none" stroke="#47728f" viewBox="0 0 24 24">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                  stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Contrato Formalizado</div>
+                        <div class="text-base font-bold text-slate-900 mt-0.5">{{ $contrato->numero_contrato }}</div>
+                        <div class="text-xs text-slate-500 mt-0.5">
+                            Responsável:
+                            <span class="font-semibold text-slate-700">{{ $contrato->responsavel->nome ?? '—' }}</span>
+                            @if($contrato->responsavel?->cpf_cnpj)
+                                · CPF {{ $contrato->responsavel->cpf_cnpj }}
+                            @endif
+                        </div>
+                    </div>
                 </div>
-                <div class="text-left sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
-                    <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Valor Total Líquido</span>
-                    <span class="text-2xl font-extrabold text-slate-900">R$ {{ number_format($contrato->valor_total_liquido, 2, ',', '.') }}</span>
-                    <span class="block text-xs text-slate-500">Ano Letivo {{ $contrato->ano_letivo }}</span>
+
+                <div class="flex items-center gap-5 sm:gap-8 flex-wrap">
+                    <div class="text-right">
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Valor Total</div>
+                        <div class="text-2xl font-extrabold text-slate-900">
+                            R$ {{ number_format($contrato->valor_total_liquido, 2, ',', '.') }}
+                        </div>
+                        <div class="text-[11px] text-slate-400">Ano Letivo {{ $contrato->ano_letivo }}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Status</div>
+                        @php
+                            $statusMap = [
+                                'quitado'            => ['label'=>'Quitado',            'color'=>'#059669','bg'=>'#f0fdf4','border'=>'#bbf7d0'],
+                                'aguardando_pagamento'=>['label'=>'Aguardando Pagamento','color'=>'#b45309','bg'=>'#fffbeb','border'=>'#fde68a'],
+                                'ativo'              => ['label'=>'Ativo',              'color'=>'#0369a1','bg'=>'#eff6ff','border'=>'#bfdbfe'],
+                                'inadimplente'       => ['label'=>'Inadimplente',       'color'=>'#be123c','bg'=>'#fff1f2','border'=>'#fecdd3'],
+                                'cancelado'          => ['label'=>'Cancelado',          'color'=>'#6b7280','bg'=>'#f9fafb','border'=>'#e5e7eb'],
+                            ];
+                            $st = $statusMap[$contrato->status] ?? ['label'=>ucfirst($contrato->status),'color'=>'#334155','bg'=>'#f8fafc','border'=>'#e2e8f0'];
+                        @endphp
+                        <span style="display:inline-block;padding:3px 10px;font-size:11px;font-weight:700;
+                                     letter-spacing:.06em;text-transform:uppercase;border-radius:20px;
+                                     color:{{ $st['color'] }};background:{{ $st['bg'] }};border:1px solid {{ $st['border'] }};">
+                            {{ $st['label'] }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ═══════════════════════════════════════════════════════════════════════
+             CENÁRIO 1 — QUITADO (DINHEIRO / CARTÃO PRESENCIAL POS)
+             ═══════════════════════════════════════════════════════════════════════ --}}
+        @if($contrato->status === 'quitado')
+
+            <div class="co-success-panel p-8 md:p-10">
+                <div class="co-success-icon">
+                    <svg width="36" height="36" fill="none" stroke="#059669" viewBox="0 0 24 24">
+                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-extrabold text-slate-900 m-0">Pagamento Confirmado!</h2>
+                <p class="text-sm text-slate-500 mt-2 mb-6 max-w-md mx-auto">
+                    @if($contrato->forma_pagamento === 'cartao_presencial')
+                        Baixa registrada via <strong class="text-slate-700">Cartão Presencial (Maquininha POS)</strong>.
+                        @if($contrato->cartao_bandeira)
+                            Bandeira: <strong class="text-slate-700">{{ strtoupper($contrato->cartao_bandeira) }}</strong>.
+                        @endif
+                        @if($contrato->cartao_nsu)
+                            NSU/Autorização: <strong class="text-slate-700">{{ $contrato->cartao_nsu }}</strong>.
+                        @endif
+                        @if($contrato->cartao_tipo)
+                            Modalidade: <strong class="text-slate-700">{{ match($contrato->cartao_tipo) {
+                                'debito'            => 'Débito',
+                                'credito_vista'     => 'Crédito à Vista',
+                                'credito_parcelado' => 'Crédito Parcelado',
+                                default             => $contrato->cartao_tipo,
+                            } }}</strong>.
+                        @endif
+                    @else
+                        Baixa registrada no <strong class="text-slate-700">Caixa Escolar (Dinheiro à Vista)</strong>.
+                        O contrato foi automaticamente quitado no sistema.
+                    @endif
+                </p>
+
+                {{-- Detalhe do Cartão POS --}}
+                @if($contrato->forma_pagamento === 'cartao_presencial' && ($contrato->cartao_bandeira || $contrato->cartao_nsu))
+                    <div class="max-w-sm mx-auto mb-6 bg-white border border-slate-200 rounded-md overflow-hidden">
+                        @if($contrato->cartao_bandeira)
+                            <div class="co-info-row px-4">
+                                <span>Bandeira</span>
+                                <strong>{{ strtoupper($contrato->cartao_bandeira) }}</strong>
+                            </div>
+                        @endif
+                        @if($contrato->cartao_nsu)
+                            <div class="co-info-row px-4">
+                                <span>NSU / Autorização</span>
+                                <strong class="font-mono">{{ $contrato->cartao_nsu }}</strong>
+                            </div>
+                        @endif
+                        @if($contrato->cartao_tipo)
+                            <div class="co-info-row px-4">
+                                <span>Modalidade</span>
+                                <strong>{{ match($contrato->cartao_tipo) {
+                                    'debito' => 'Débito',
+                                    'credito_vista' => 'Crédito à Vista',
+                                    'credito_parcelado' => 'Crédito Parcelado',
+                                    default => $contrato->cartao_tipo,
+                                } }}</strong>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
+                <div class="flex flex-wrap items-center justify-center gap-3">
+                    @if($primeiroTitulo)
+                        <a href="{{ route('financeiro.titulos.recibo-pdf', $primeiroTitulo->id) }}" target="_blank"
+                           class="inline-flex items-center gap-2 px-6 py-2.5 btn-ieducar-action btn-ieducar-green text-sm font-semibold"
+                           style="text-decoration:none;">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                            </svg>
+                            Imprimir Recibo Oficial
+                        </a>
+                    @endif
+                    <a href="{{ route('financeiro.contratos.show', $contrato->id) }}"
+                       class="inline-flex items-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-outline text-sm"
+                       style="text-decoration:none;">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                        Ver Contrato Completo
+                    </a>
                 </div>
             </div>
 
-            {{-- ========================================================================= --}}
-            {{-- CENÁRIO 1: QUITADO (DINHEIRO OU CARTÃO PRESENCIAL POS)                    --}}
-            {{-- ========================================================================= --}}
-            @if($contrato->status === 'quitado')
-                <div class="bg-white border-2 border-emerald-500 p-6 md:p-8 shadow-xs text-center space-y-4">
-                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
-                        </svg>
-                    </div>
+        {{-- ═══════════════════════════════════════════════════════════════════════
+             CENÁRIO 2 — PIX INSTANTÂNEO (QR CODE 24H)
+             ═══════════════════════════════════════════════════════════════════════ --}}
+        @elseif($contrato->forma_pagamento === 'pix')
 
-                    <div>
-                        <h3 class="text-xl font-extrabold text-slate-900 m-0">Contrato Quitado com Sucesso!</h3>
-                        <p class="text-sm text-slate-600 mt-1">
-                            @if($contrato->forma_pagamento === 'cartao_presencial')
-                                Baixa confirmada via <strong>Cartão Presencial (POS)</strong>
-                                @if($contrato->cartao_bandeira) - {{ $contrato->cartao_bandeira }} @endif
-                                @if($contrato->cartao_nsu) (NSU: {{ $contrato->cartao_nsu }}) @endif
-                            @else
-                                Baixa confirmada no <strong>Caixa Escolar (Dinheiro à Vista)</strong>.
-                            @endif
-                        </p>
+            <div class="co-panel">
+                <div class="co-panel-header flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                             style="background:#e0f2fe;">
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                                <path d="M13 10V3L4 14h7v7l9-11h-7z" fill="#0369a1" stroke="#0369a1"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="co-badge co-badge-pix">⚡ Pagamento Instantâneo via Pix</span>
+                            <div class="text-base font-bold text-slate-900 mt-1">Aguardando Confirmação do Pagamento</div>
+                        </div>
                     </div>
-
-                    <div class="pt-4 flex flex-wrap items-center justify-center gap-3">
-                        @if($primeiroTitulo)
-                            <a href="{{ route('financeiro.titulos.recibo-pdf', $primeiroTitulo->id) }}" target="_blank" class="inline-flex items-center gap-2 px-6 py-2.5 btn-ieducar-action btn-ieducar-green text-sm font-semibold shadow-xs" style="text-decoration:none;">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                </svg>
-                                Imprimir Recibo Oficial
-                            </a>
-                        @endif
-                        <a href="{{ route('financeiro.contratos.show', $contrato->id) }}" class="inline-flex items-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-outline text-sm" style="text-decoration:none;">
-                            Ver Contrato e Títulos
-                        </a>
+                    <div id="co-countdown-pix" class="co-countdown">
+                        <span class="co-countdown-dot"></span>
+                        <span id="co-countdown-text">Calculando validade...</span>
                     </div>
                 </div>
 
-            {{-- ========================================================================= --}}
-            {{-- CENÁRIO 2: PIX INSTANTÂNEO (QR CODE DINÂMICO 24H)                         --}}
-            {{-- ========================================================================= --}}
-            @elseif($contrato->forma_pagamento === 'pix')
-                <div class="bg-white border border-slate-200 p-6 md:p-8 shadow-xs space-y-6">
-                    <div class="text-center space-y-1">
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-50 text-sky-800 border border-sky-200 text-xs font-bold uppercase tracking-wider">
-                            ⚡ Pagamento Instantâneo via PIX
-                        </span>
-                        <h3 class="text-lg font-bold text-slate-900 m-0">Aguardando Pagamento do Responsável</h3>
-                        <p class="text-xs text-slate-500">Validade deste QR Code: 24 horas. Esta tela atualizará automaticamente após a confirmação.</p>
-                    </div>
+                <div class="co-panel-body">
+                    <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
 
-                    <div class="flex flex-col md:flex-row items-center justify-center gap-8 py-2">
-                        {{-- QR Code Image --}}
-                        <div class="p-3 bg-white border border-slate-300 shadow-2xs text-center">
-                            @if($cobrancaAtiva && $cobrancaAtiva->qr_code_base64)
-                                <img src="data:image/png;base64,{{ $cobrancaAtiva->qr_code_base64 }}" alt="QR Code Pix" class="w-48 h-48 mx-auto">
-                            @elseif($cobrancaAtiva && $cobrancaAtiva->pix_qr_code_base64)
-                                <img src="data:image/png;base64,{{ $cobrancaAtiva->pix_qr_code_base64 }}" alt="QR Code Pix" class="w-48 h-48 mx-auto">
-                            @else
-                                <div class="w-48 h-48 bg-slate-100 flex flex-col items-center justify-center text-slate-400 text-xs p-4">
-                                    <span>QR Code gerado no Asaas</span>
-                                    <span class="text-[10px] mt-1 text-slate-500">Consulte no botão abaixo</span>
-                                </div>
-                            @endif
-                            <span class="block text-[11px] text-slate-500 mt-2 font-medium">Aponte a câmera do aplicativo do seu banco</span>
+                        {{-- QR CODE --}}
+                        <div class="flex-shrink-0 flex flex-col items-center gap-3">
+                            <div class="co-qr-wrapper">
+                                @if($cobrancaAtiva && ($cobrancaAtiva->qr_code_base64 || $cobrancaAtiva->pix_qr_code_base64))
+                                    <img src="data:image/png;base64,{{ $cobrancaAtiva->qr_code_base64 ?? $cobrancaAtiva->pix_qr_code_base64 }}"
+                                         alt="QR Code Pix — {{ $contrato->numero_contrato }}">
+                                @else
+                                    <div class="co-qr-placeholder">
+                                        <svg width="40" height="40" fill="none" stroke="#94a3b8" viewBox="0 0 24 24">
+                                            <path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                                                  stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/>
+                                        </svg>
+                                        <span>QR Code sendo<br>gerado no Asaas...</span>
+                                        <span style="font-size:10px;color:#94a3b8;">Recarregue a página</span>
+                                    </div>
+                                @endif
+                            </div>
+                            <span class="text-[11px] text-slate-500 text-center max-w-[200px]">
+                                Aponte a câmera do app do banco para pagar
+                            </span>
                         </div>
 
-                        {{-- Instruções e Chave Copia e Cola --}}
-                        <div class="space-y-4 max-w-sm w-full">
+                        {{-- AÇÕES --}}
+                        <div class="flex-1 w-full space-y-5">
+
+                            {{-- Pix Copia e Cola --}}
                             <div>
-                                <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Pix Copia e Cola:</label>
-                                <div class="relative">
-                                    <input type="text" id="pix_copia_cola" readonly value="{{ $cobrancaAtiva->pix_copia_cola ?? 'Pix em processamento no gateway...' }}" class="w-full text-xs font-mono p-2.5 bg-slate-50 border border-slate-300 select-all pr-20 text-slate-700">
-                                    <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('pix_copia_cola').value); alert('Chave Pix copiada com sucesso!');" class="absolute right-1.5 top-1.5 px-2.5 py-1 bg-[#47728f] text-white text-[11px] font-semibold hover:bg-[#385b73]">
+                                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-2">
+                                    Pix Copia e Cola
+                                </label>
+                                <div class="co-copy-group" id="co-pix-group">
+                                    <input type="text" id="co-pix-input" readonly
+                                           value="{{ $cobrancaAtiva?->pix_copia_cola ?? 'Chave Pix em processamento...' }}"
+                                           title="Código Pix Copia e Cola">
+                                    <button type="button" class="co-copy-btn" id="co-pix-btn"
+                                            onclick="copiaCola('co-pix-input','co-pix-btn')">
                                         Copiar
                                     </button>
                                 </div>
                             </div>
 
-                            {{-- Ações WhatsApp --}}
-                            @php
-                                $telefoneResp = preg_replace('/\D/', '', $contrato->responsavel->telefone_celular ?? '');
-                                $msgWhatsapp = urlencode("Olá " . ($contrato->responsavel->nome ?? '') . "! Segue o Pix para pagamento da matrícula do aluno no Contrato " . $contrato->numero_contrato . " no valor de R$ " . number_format($contrato->valor_total_liquido, 2, ',', '.') . ":\n\n" . ($cobrancaAtiva->pix_copia_cola ?? ''));
-                            @endphp
-                            @if($telefoneResp)
-                                <a href="https://wa.me/55{{ $telefoneResp }}?text={{ $msgWhatsapp }}" target="_blank" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-none shadow-xs" style="text-decoration:none;">
-                                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
-                                    Enviar Chave Pix via WhatsApp
-                                </a>
-                            @endif
+                            {{-- Valor + Instruções --}}
+                            <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
+                                <div class="co-info-row">
+                                    <span>Valor a pagar</span>
+                                    <strong class="text-base text-slate-900">R$ {{ number_format($contrato->valor_total_liquido, 2, ',', '.') }}</strong>
+                                </div>
+                                <div class="co-info-row">
+                                    <span>Validade</span>
+                                    <strong>24 horas após emissão</strong>
+                                </div>
+                                <div class="co-info-row">
+                                    <span>Confirmação</span>
+                                    <strong class="text-emerald-700">Automática via Webhook</strong>
+                                </div>
+                            </div>
 
-                            {{-- Status Pulsante --}}
-                            <div class="flex items-center gap-2 text-xs text-slate-500 pt-2" id="status_realtime_pix">
-                                <span class="relative flex h-3 w-3">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-3 w-3 bg-sky-500"></span>
+                            {{-- Instruções --}}
+                            <ul class="co-step-list">
+                                <li>
+                                    <span class="co-step-num">1</span>
+                                    <span>Abra o aplicativo do seu banco e escolha <strong>Pix</strong></span>
+                                </li>
+                                <li>
+                                    <span class="co-step-num">2</span>
+                                    <span>Escaneie o <strong>QR Code</strong> ao lado ou cole o <strong>código Pix</strong></span>
+                                </li>
+                                <li>
+                                    <span class="co-step-num">3</span>
+                                    <span>Confirme o valor de <strong>R$ {{ number_format($contrato->valor_total_liquido, 2, ',', '.') }}</strong> e finalize</span>
+                                </li>
+                                <li>
+                                    <span class="co-step-num">4</span>
+                                    <span>Esta tela <strong>atualiza automaticamente</strong> após a confirmação bancária</span>
+                                </li>
+                            </ul>
+
+                            {{-- Botões --}}
+                            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                                @php
+                                    $telefoneResp = preg_replace('/\D/', '', $contrato->responsavel?->telefone_celular ?? '');
+                                    $msgPix = urlencode(
+                                        "Olá " . ($contrato->responsavel?->nome ?? '') . "!\n" .
+                                        "Segue o Pix para o pagamento da matrícula — Contrato " . $contrato->numero_contrato . "\n" .
+                                        "Valor: R$ " . number_format($contrato->valor_total_liquido, 2, ',', '.') . "\n\n" .
+                                        ($cobrancaAtiva?->pix_copia_cola ?? '')
+                                    );
+                                @endphp
+                                @if($telefoneResp)
+                                    <a href="https://wa.me/55{{ $telefoneResp }}?text={{ $msgPix }}" target="_blank"
+                                       class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-green text-sm font-semibold"
+                                       style="text-decoration:none;">
+                                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                                        </svg>
+                                        Enviar Pix via WhatsApp
+                                    </a>
+                                @endif
+                                <a href="{{ route('financeiro.contratos.show', $contrato->id) }}"
+                                   class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-outline text-sm"
+                                   style="text-decoration:none;">
+                                    Ver Contrato
+                                </a>
+                            </div>
+
+                            {{-- Status em tempo real --}}
+                            <div class="flex items-center gap-2 pt-1 text-xs text-slate-500" id="co-realtime-status">
+                                <span class="co-pulse-ring">
+                                    <span></span><span></span>
                                 </span>
-                                <span>Monitorando confirmação bancária em tempo real...</span>
+                                <span id="co-realtime-text">Monitorando confirmação bancária em tempo real...</span>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-            {{-- ========================================================================= --}}
-            {{-- CENÁRIO 3: CARTÃO ONLINE (LINK DE PAGAMENTO ASAAS ATÉ 12X)                 --}}
-            {{-- ========================================================================= --}}
-            @elseif($contrato->forma_pagamento === 'cartao_credito')
-                <div class="bg-white border border-slate-200 p-6 md:p-8 shadow-xs space-y-6">
-                    <div class="text-center space-y-1">
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold uppercase tracking-wider">
-                            🌐 Link de Pagamento no Cartão de Crédito
-                        </span>
-                        <h3 class="text-lg font-bold text-slate-900 m-0">Link Asaas Disponível em até 12x</h3>
-                        <p class="text-xs text-slate-500">Os juros são repassados ao responsável no checkout. Validade: 5 dias úteis.</p>
+        {{-- ═══════════════════════════════════════════════════════════════════════
+             CENÁRIO 3 — CARTÃO DE CRÉDITO (LINK DE PAGAMENTO ASAAS ATÉ 12X)
+             ═══════════════════════════════════════════════════════════════════════ --}}
+        @elseif($contrato->forma_pagamento === 'cartao_credito')
+
+            <div class="co-panel">
+                <div class="co-panel-header flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                         style="background:#fef3c7;">
+                        <svg width="20" height="20" fill="none" stroke="#b45309" viewBox="0 0 24 24">
+                            <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                                  stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
                     </div>
+                    <div>
+                        <span class="co-badge co-badge-cartao">🌐 Cartão de Crédito Online — Asaas</span>
+                        <div class="text-base font-bold text-slate-900 mt-1">Link de Pagamento em até 12x</div>
+                    </div>
+                </div>
+
+                <div class="co-panel-body space-y-5">
+                    <p class="text-sm text-slate-500 m-0">
+                        O link foi gerado com <strong class="text-slate-700">repasse automático de juros</strong> ao responsável.
+                        Validade: <strong class="text-slate-700">5 dias úteis</strong>.
+                        @if($cobrancaAtiva?->expira_em)
+                            Expira em: <strong class="text-slate-700">{{ \Carbon\Carbon::parse($cobrancaAtiva->expira_em)->format('d/m/Y H:i') }}</strong>.
+                        @endif
+                    </p>
 
                     @if($contrato->payment_link_url)
-                        <div class="p-4 bg-slate-50 border border-slate-200 space-y-3 max-w-lg mx-auto">
-                            <label class="block text-xs font-bold uppercase text-slate-700">Link Direto do Checkout:</label>
-                            <div class="flex items-center gap-2">
-                                <input type="text" id="link_cartao_url" readonly value="{{ $contrato->payment_link_url }}" class="w-full text-xs p-2 bg-white border border-slate-300 text-slate-800 font-mono select-all">
-                                <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('link_cartao_url').value); alert('Link copiado!');" class="px-3 py-2 bg-[#47728f] text-white text-xs font-semibold shrink-0">
+                        {{-- URL do link --}}
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-2">
+                                Link de Pagamento Asaas
+                            </label>
+                            <div class="co-copy-group" id="co-link-group">
+                                <input type="text" id="co-link-input" readonly
+                                       value="{{ $contrato->payment_link_url }}"
+                                       title="Link de Pagamento Asaas">
+                                <button type="button" class="co-copy-btn" id="co-link-btn"
+                                        onclick="copiaCola('co-link-input','co-link-btn')">
                                     Copiar
                                 </button>
                             </div>
+                        </div>
 
-                            <div class="pt-2 flex flex-col sm:flex-row gap-2">
-                                <a href="{{ $contrato->payment_link_url }}" target="_blank" class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#47728f] hover:bg-[#355972] text-white font-semibold text-xs shadow-xs" style="text-decoration:none;">
-                                    Abrir Checkout Asaas ↗
-                                </a>
-
-                                @php
-                                    $telefoneResp = preg_replace('/\D/', '', $contrato->responsavel->telefone_celular ?? '');
-                                    $msgLinkWhatsapp = urlencode("Olá " . ($contrato->responsavel->nome ?? '') . "! Segue o link para pagamento no cartão de crédito em até 12x da matrícula no Contrato " . $contrato->numero_contrato . ":\n\n" . $contrato->payment_link_url);
-                                @endphp
-                                @if($telefoneResp)
-                                    <a href="https://wa.me/55{{ $telefoneResp }}?text={{ $msgLinkWhatsapp }}" target="_blank" class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs" style="text-decoration:none;">
-                                        Enviar WhatsApp
-                                    </a>
-                                @endif
+                        {{-- Detalhes --}}
+                        <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
+                            <div class="co-info-row">
+                                <span>Valor total</span>
+                                <strong>R$ {{ number_format($contrato->valor_total_liquido, 2, ',', '.') }}</strong>
+                            </div>
+                            <div class="co-info-row">
+                                <span>Parcelamento</span>
+                                <strong>Em até 12x no cartão de crédito</strong>
+                            </div>
+                            <div class="co-info-row">
+                                <span>Juros</span>
+                                <strong class="text-amber-700">Repassados ao responsável</strong>
+                            </div>
+                            <div class="co-info-row">
+                                <span>Confirmação</span>
+                                <strong class="text-emerald-700">Automática via Webhook Asaas</strong>
                             </div>
                         </div>
+
+                        {{-- Botões --}}
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <a href="{{ $contrato->payment_link_url }}" target="_blank"
+                               class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-blue text-sm font-semibold"
+                               style="text-decoration:none;">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                          stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                                </svg>
+                                Abrir Checkout Asaas
+                            </a>
+
+                            @php
+                                $telLink = preg_replace('/\D/', '', $contrato->responsavel?->telefone_celular ?? '');
+                                $msgLink = urlencode(
+                                    "Olá " . ($contrato->responsavel?->nome ?? '') . "!\n" .
+                                    "Segue o link para pagamento da matrícula em até 12x no cartão de crédito.\n" .
+                                    "Contrato: " . $contrato->numero_contrato . "\n" .
+                                    "Valor: R$ " . number_format($contrato->valor_total_liquido, 2, ',', '.') . "\n\n" .
+                                    $contrato->payment_link_url
+                                );
+                            @endphp
+                            @if($telLink)
+                                <a href="https://wa.me/55{{ $telLink }}?text={{ $msgLink }}" target="_blank"
+                                   class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-green text-sm font-semibold"
+                                   style="text-decoration:none;">
+                                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                                    </svg>
+                                    Enviar Link via WhatsApp
+                                </a>
+                            @endif
+                        </div>
+
+                        <p class="text-[11px] text-slate-400 m-0 text-center pt-1">
+                            💡 O responsável pode pagar de qualquer dispositivo clicando no link acima.
+                        </p>
+
                     @else
-                        <div class="text-center py-4 text-xs text-amber-700 bg-amber-50 border border-amber-200 p-4">
-                            O link de pagamento ainda está sendo processado pelo Asaas. Atualize a página em instantes.
+                        <div class="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800">
+                            <svg width="18" height="18" fill="none" stroke="#b45309" viewBox="0 0 24 24" class="flex-shrink-0">
+                                <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                            </svg>
+                            O link de pagamento ainda está sendo processado pelo Asaas.
+                            <button onclick="window.location.reload()" class="ml-auto text-xs font-bold underline bg-transparent border-none cursor-pointer text-amber-900">
+                                Atualizar página
+                            </button>
                         </div>
                     @endif
                 </div>
+            </div>
 
-            {{-- ========================================================================= --}}
-            {{-- CENÁRIO 4: BOLETO 1X OU CARNÊ ESCOLAR                                     --}}
-            {{-- ========================================================================= --}}
-            @else
-                <div class="bg-white border border-slate-200 p-6 md:p-8 shadow-xs text-center space-y-4">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold uppercase tracking-wider">
-                        @if($contrato->forma_pagamento === 'carne') 📚 Carnê Escolar Asaas @else 📄 Boleto Bancário @endif
-                    </span>
+        {{-- ═══════════════════════════════════════════════════════════════════════
+             CENÁRIO 4 — BOLETO BANCÁRIO À VISTA
+             ═══════════════════════════════════════════════════════════════════════ --}}
+        @elseif($contrato->forma_pagamento === 'boleto')
 
-                    <h3 class="text-lg font-bold text-slate-900 m-0">
-                        @if($contrato->forma_pagamento === 'carne') Carnê Oficial Gerado com Sucesso @else Boleto Emitido no Gateway @endif
-                    </h3>
-                    <p class="text-xs text-slate-500 max-w-md mx-auto">
-                        O contrato está ativo e as cobranças bancárias foram registradas no gateway Asaas.
+            <div class="co-panel">
+                <div class="co-panel-header flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                         style="background:#eff6ff;">
+                        <svg width="20" height="20" fill="none" stroke="#1d4ed8" viewBox="0 0 24 24">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                  stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="co-badge co-badge-boleto">📄 Boleto Bancário</span>
+                        <div class="text-base font-bold text-slate-900 mt-1">Boleto Emitido no Gateway Asaas</div>
+                    </div>
+                </div>
+
+                <div class="co-panel-body space-y-5">
+                    <p class="text-sm text-slate-500 m-0">
+                        O boleto foi registrado no Asaas. O contrato será
+                        <strong class="text-slate-700">automaticamente quitado</strong>
+                        via Webhook assim que o pagamento for confirmado pelo banco.
                     </p>
 
-                    <div class="pt-4 flex flex-wrap items-center justify-center gap-3">
-                        @if($contrato->forma_pagamento === 'carne')
-                            <a href="{{ route('financeiro.contratos.imprimir-carne', $contrato->id) }}" target="_blank" class="inline-flex items-center gap-2 px-6 py-2.5 btn-ieducar-action btn-ieducar-green text-sm font-semibold shadow-xs" style="text-decoration:none;">
-                                🖨️ Imprimir Carnê Oficial Asaas (PDF)
-                            </a>
-                        @elseif($primeiroTitulo && $primeiroTitulo->cobrancaGateway && $primeiroTitulo->cobrancaGateway->link_boleto_pdf)
-                            <a href="{{ $primeiroTitulo->cobrancaGateway->link_boleto_pdf }}" target="_blank" class="inline-flex items-center gap-2 px-6 py-2.5 btn-ieducar-action btn-ieducar-green text-sm font-semibold shadow-xs" style="text-decoration:none;">
-                                📄 Baixar Boleto Bancário (PDF)
+                    {{-- Linha Digitável --}}
+                    @if($primeiroTitulo?->cobrancaGateway?->linha_digitavel)
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-2">
+                                Linha Digitável
+                            </label>
+                            <div class="co-copy-group">
+                                <input type="text" id="co-boleto-input" readonly
+                                       value="{{ $primeiroTitulo->cobrancaGateway->linha_digitavel }}"
+                                       title="Linha digitável do boleto">
+                                <button type="button" class="co-copy-btn" id="co-boleto-btn"
+                                        onclick="copiaCola('co-boleto-input','co-boleto-btn')">
+                                    Copiar
+                                </button>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Detalhes --}}
+                    <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
+                        <div class="co-info-row">
+                            <span>Valor</span>
+                            <strong>R$ {{ number_format($contrato->valor_total_liquido, 2, ',', '.') }}</strong>
+                        </div>
+                        @if($primeiroTitulo?->data_vencimento)
+                            <div class="co-info-row">
+                                <span>Vencimento</span>
+                                <strong>{{ \Carbon\Carbon::parse($primeiroTitulo->data_vencimento)->format('d/m/Y') }}</strong>
+                            </div>
+                        @endif
+                        <div class="co-info-row">
+                            <span>Status</span>
+                            <strong class="text-amber-700">Aguardando Pagamento</strong>
+                        </div>
+                        <div class="co-info-row">
+                            <span>Baixa</span>
+                            <strong class="text-emerald-700">Automática ao compensar</strong>
+                        </div>
+                    </div>
+
+                    {{-- Botões --}}
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        @if($primeiroTitulo?->cobrancaGateway?->link_boleto_pdf)
+                            <a href="{{ $primeiroTitulo->cobrancaGateway->link_boleto_pdf }}" target="_blank"
+                               class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-green text-sm font-semibold"
+                               style="text-decoration:none;">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                          stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                                </svg>
+                                Baixar Boleto (PDF)
                             </a>
                         @endif
-                        <a href="{{ route('financeiro.contratos.show', $contrato->id) }}" class="inline-flex items-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-outline text-sm" style="text-decoration:none;">
-                            Ver Contrato Completo
+                        @if($primeiroTitulo?->cobrancaGateway?->link_pagamento)
+                            <a href="{{ $primeiroTitulo->cobrancaGateway->link_pagamento }}" target="_blank"
+                               class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-blue text-sm font-semibold"
+                               style="text-decoration:none;">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                          stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                                </svg>
+                                Abrir Boleto Online
+                            </a>
+                        @endif
+                        <a href="{{ route('financeiro.contratos.show', $contrato->id) }}"
+                           class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-outline text-sm"
+                           style="text-decoration:none;">
+                            Ver Contrato
                         </a>
                     </div>
                 </div>
-            @endif
+            </div>
 
+        {{-- ═══════════════════════════════════════════════════════════════════════
+             CENÁRIO 5 — CARNÊ ESCOLAR (PARCELAMENTO ASAAS)
+             ═══════════════════════════════════════════════════════════════════════ --}}
+        @elseif($contrato->forma_pagamento === 'carne')
+
+            <div class="co-panel">
+                <div class="co-panel-header flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                         style="background:#f0fdf4;">
+                        <svg width="20" height="20" fill="none" stroke="#166534" viewBox="0 0 24 24">
+                            <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                                  stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="co-badge co-badge-carne">📚 Carnê Escolar Parcelado</span>
+                        <div class="text-base font-bold text-slate-900 mt-1">Parcelas Registradas no Asaas</div>
+                    </div>
+                </div>
+
+                <div class="co-panel-body space-y-5">
+                    <p class="text-sm text-slate-500 m-0">
+                        O carnê foi gerado e as <strong class="text-slate-700">{{ $contrato->titulos->count() }} parcelas</strong>
+                        foram registradas no Asaas. Cada boleto de parcela será automaticamente liquidado ao ser pago.
+                    </p>
+
+                    {{-- Parcelas resumo --}}
+                    @php
+                        $titulos = $contrato->titulos->sortBy('numero_parcela');
+                        $totalParcelas = $titulos->count();
+                        $valorParcela = $totalParcelas > 0 ? round($contrato->valor_total_liquido / $totalParcelas, 2) : 0;
+                    @endphp
+                    <div class="bg-slate-50 border border-slate-200 rounded-md p-4">
+                        <div class="co-info-row">
+                            <span>Total parcelado</span>
+                            <strong>R$ {{ number_format($contrato->valor_total_liquido, 2, ',', '.') }}</strong>
+                        </div>
+                        <div class="co-info-row">
+                            <span>Número de parcelas</span>
+                            <strong>{{ $totalParcelas }}x</strong>
+                        </div>
+                        <div class="co-info-row">
+                            <span>Valor por parcela (aprox.)</span>
+                            <strong>R$ {{ number_format($valorParcela, 2, ',', '.') }}</strong>
+                        </div>
+                        <div class="co-info-row">
+                            <span>Primeiro vencimento</span>
+                            <strong>{{ $titulos->first() ? \Carbon\Carbon::parse($titulos->first()->data_vencimento)->format('d/m/Y') : '—' }}</strong>
+                        </div>
+                        <div class="co-info-row">
+                            <span>Último vencimento</span>
+                            <strong>{{ $titulos->last() ? \Carbon\Carbon::parse($titulos->last()->data_vencimento)->format('d/m/Y') : '—' }}</strong>
+                        </div>
+                    </div>
+
+                    {{-- Botões --}}
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <a href="{{ route('financeiro.contratos.imprimir-carne', $contrato->id) }}" target="_blank"
+                           class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-green text-sm font-semibold"
+                           style="text-decoration:none;">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                            </svg>
+                            Imprimir Carnê Oficial (PDF)
+                        </a>
+                        <a href="{{ route('financeiro.contratos.show', $contrato->id) }}"
+                           class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-outline text-sm"
+                           style="text-decoration:none;">
+                            Ver Todas as Parcelas
+                        </a>
+                    </div>
+
+                    <p class="text-[11px] text-slate-400 m-0 text-center">
+                        💡 O status de cada parcela será atualizado automaticamente via Webhook Asaas.
+                    </p>
+                </div>
+            </div>
+
+        {{-- ═══════════════════════════════════════════════════════════════════════
+             CENÁRIO 6 — FALLBACK (forma não reconhecida)
+             ═══════════════════════════════════════════════════════════════════════ --}}
+        @else
+            <div class="co-panel">
+                <div class="co-panel-body text-center space-y-4 py-8">
+                    <div class="text-4xl">📋</div>
+                    <h3 class="text-lg font-bold text-slate-900 m-0">Contrato Registrado</h3>
+                    <p class="text-sm text-slate-500 max-w-md mx-auto">
+                        O contrato foi criado com sucesso. Acesse os detalhes para gerenciar parcelas e emitir cobranças.
+                    </p>
+                    <a href="{{ route('financeiro.contratos.show', $contrato->id) }}"
+                       class="inline-flex items-center gap-2 px-6 py-2.5 btn-ieducar-action btn-ieducar-blue text-sm"
+                       style="text-decoration:none;">
+                        Ver Contrato Completo
+                    </a>
+                </div>
+            </div>
+        @endif
+
+        {{-- ── FOOTER LINKS ── --}}
+        <div class="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 pt-2 pb-4">
+            <div class="flex items-center gap-4">
+                <a href="{{ route('financeiro.contratos.index') }}" class="hover:text-[#47728f] transition" style="text-decoration:none;">
+                    ← Todos os Contratos
+                </a>
+                <a href="{{ route('financeiro.titulos.index') }}" class="hover:text-[#47728f] transition" style="text-decoration:none;">
+                    Ver Mensalidades
+                </a>
+            </div>
+            <span>Contrato <strong class="text-slate-700">{{ $contrato->numero_contrato }}</strong> · Criado em {{ $contrato->created_at?->format('d/m/Y H:i') }}</span>
         </div>
 
     </main>
 </div>
+@endsection
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
+    'use strict';
+
+    // ── COPY BUTTON ──────────────────────────────────────────────────────────
+    window.copiaCola = function (inputId, btnId) {
+        var input = document.getElementById(inputId);
+        var btn   = document.getElementById(btnId);
+        if (!input || !btn) return;
+
+        var val = input.value;
+        if (!val || val === 'Chave Pix em processamento...' || val === 'Código Pix em processamento...') {
+            return;
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(val).then(function () {
+                markCopied(btn);
+            }).catch(function () {
+                legacyCopy(input, btn);
+            });
+        } else {
+            legacyCopy(input, btn);
+        }
+    };
+
+    function markCopied(btn) {
+        var orig = btn.textContent;
+        btn.textContent = '✓ Copiado!';
+        btn.classList.add('co-copied');
+        setTimeout(function () {
+            btn.textContent = orig;
+            btn.classList.remove('co-copied');
+        }, 2500);
+    }
+
+    function legacyCopy(input, btn) {
+        input.select();
+        try {
+            document.execCommand('copy');
+            markCopied(btn);
+        } catch (e) {}
+        window.getSelection && window.getSelection().removeAllRanges();
+    }
+
+    // ── PIX COUNTDOWN ────────────────────────────────────────────────────────
     @if($contrato->forma_pagamento === 'pix' && $contrato->status !== 'quitado')
-        // Polling de verificação de status do contrato / título a cada 4 segundos
-        const intervaloPolling = setInterval(function () {
-            fetch("{{ route('financeiro.api.stream', ['titulo_id' => $primeiroTitulo->id ?? 0]) }}")
-                .then(r => r.json())
-                .then(dados => {
-                    if (dados && (dados.status === 'pago' || dados.status === 'liquidado' || dados.contrato_status === 'quitado')) {
-                        clearInterval(intervaloPolling);
-                        window.location.reload();
-                    }
-                })
-                .catch(() => {});
-        }, 4000);
+        (function () {
+            var expiresAt = null;
+            @if($cobrancaAtiva?->expira_em)
+                expiresAt = new Date('{{ \Carbon\Carbon::parse($cobrancaAtiva->expira_em)->toIso8601String() }}');
+            @elseif($contrato->created_at)
+                expiresAt = new Date('{{ $contrato->created_at->addHours(24)->toIso8601String() }}');
+            @endif
+
+            var el = document.getElementById('co-countdown-text');
+
+            function tick() {
+                if (!expiresAt || !el) return;
+                var now  = new Date();
+                var diff = expiresAt - now;
+
+                if (diff <= 0) {
+                    el.textContent = 'QR Code expirado — recarregue a página';
+                    var dot = document.querySelector('.co-countdown-dot');
+                    if (dot) { dot.style.background = '#dc2626'; dot.style.animation = 'none'; }
+                    return;
+                }
+
+                var h = Math.floor(diff / 3600000);
+                var m = Math.floor((diff % 3600000) / 60000);
+                var s = Math.floor((diff % 60000) / 1000);
+
+                el.textContent = 'Válido por ' +
+                    (h > 0 ? h + 'h ' : '') +
+                    String(m).padStart(2, '0') + 'min ' +
+                    String(s).padStart(2, '0') + 's';
+            }
+
+            tick();
+            setInterval(tick, 1000);
+        })();
+
+        // ── POLLING REALTIME ──────────────────────────────────────────────────
+        (function () {
+            var POLL_URL = '{{ route("financeiro.api.stream", ["titulo_id" => $primeiroTitulo?->id ?? 0]) }}';
+            var statusEl = document.getElementById('co-realtime-text');
+            var interval = null;
+            var attempts = 0;
+            var MAX = 900; // 60 min (900 × 4s)
+
+            interval = setInterval(function () {
+                attempts++;
+                if (attempts > MAX) {
+                    clearInterval(interval);
+                    if (statusEl) statusEl.textContent = 'Monitoramento encerrado. Recarregue para verificar.';
+                    return;
+                }
+
+                fetch(POLL_URL, { credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (data && (
+                            data.status === 'pago' ||
+                            data.status === 'liquidado' ||
+                            data.contrato_status === 'quitado' ||
+                            data.pago === true
+                        )) {
+                            clearInterval(interval);
+                            if (statusEl) {
+                                statusEl.textContent = '✅ Pagamento confirmado! Recarregando...';
+                                statusEl.style.color = '#059669';
+                                statusEl.style.fontWeight = '600';
+                            }
+                            setTimeout(function () { window.location.reload(); }, 1200);
+                        }
+                    })
+                    .catch(function () { /* silencia erros de rede */ });
+            }, 4000);
+        })();
     @endif
-});
+
+})();
 </script>
 @endpush
-@endsection
