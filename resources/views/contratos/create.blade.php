@@ -1986,15 +1986,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (textoInstrucaoPagamentoGlobal) textoInstrucaoPagamentoGlobal.classList.remove('hidden');
             }
 
-            // Auto-selecionar responsável se pré-definido ou se único disponível
+            // Auto-selecionar responsável se pré-definido, se houver responsável principal ou se houver responsável apto
             const respPreId = inputResponsavelId.value;
             if (respPreId && responsaveisCache.length > 0) {
                 const respEncontrado = responsaveisCache.find(r => r.responsavel_financeiro_id == respPreId);
                 if (respEncontrado) {
                     selecionarOuCriarResponsavel(respEncontrado);
                 }
-            } else if (responsaveisCache.length === 1 && responsaveisCache[0].cadastro_completo) {
-                selecionarOuCriarResponsavel(responsaveisCache[0]);
+            } else if (responsaveisCache.length > 0) {
+                const respPrincipal = responsaveisCache.find(r => r.responsavel_principal && (r.cpf || r.cpf_puro));
+                if (respPrincipal) {
+                    selecionarOuCriarResponsavel(respPrincipal);
+                } else {
+                    const primeiroComCpf = responsaveisCache.find(r => (r.cpf || r.cpf_puro));
+                    if (primeiroComCpf) {
+                        selecionarOuCriarResponsavel(primeiroComCpf);
+                    }
+                }
             }
         })
         .catch(err => {
@@ -2156,28 +2164,40 @@ document.addEventListener('DOMContentLoaded', function () {
             tr.className = 'hover:bg-slate-50 transition ' + (ehSelecionado ? 'resp-card-selected' : '');
             tr.id = `linha_resp_${idx}`;
 
+            let parentescoTxt = resp.parentesco || 'Responsável';
+            if (/m[3ã]e/i.test(parentescoTxt)) {
+                parentescoTxt = 'Mãe';
+            }
+
+            const temCpf = !!(resp.cpf || resp.cpf_puro);
+
             let statusBadge = '';
             let botaoAcao = '';
 
             if (ehSelecionado) {
                 statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold">✓ Titular Selecionado</span>';
-                botaoAcao = '<span class="text-xs font-bold text-emerald-700">✓ Titular Ativo</span>';
-            } else if (resp.ja_cadastrado_financeiro && resp.cadastro_completo) {
+                botaoAcao = `
+                    <div class="flex items-center justify-end gap-2">
+                        <span class="text-xs font-bold text-emerald-700">✓ Titular Ativo</span>
+                        <button type="button" class="btn-completar-resp p-1 text-slate-400 hover:text-[#47728f] rounded hover:bg-slate-100 transition" data-idx="${idx}" title="Editar dados ou endereço">
+                            ✏️
+                        </button>
+                    </div>
+                `;
+            } else if (temCpf) {
                 statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-blue-50 text-[#47728f] border border-blue-200 text-xs font-semibold">Pronto p/ Cobrança</span>';
                 botaoAcao = `
-                    <button type="button" class="btn-selecionar-resp px-3.5 py-1.5 btn-ieducar-action btn-ieducar-green text-xs font-semibold" data-idx="${idx}">
-                        Selecionar Titular
-                    </button>
-                `;
-            } else if (resp.cadastro_completo) {
-                statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium">Disponível</span>';
-                botaoAcao = `
-                    <button type="button" class="btn-selecionar-resp px-3.5 py-1.5 btn-ieducar-action btn-ieducar-green text-xs font-semibold" data-idx="${idx}">
-                        Vincular Titular
-                    </button>
+                    <div class="flex items-center justify-end gap-1.5">
+                        <button type="button" class="btn-selecionar-resp px-3.5 py-1.5 btn-ieducar-action btn-ieducar-green text-xs font-semibold" data-idx="${idx}">
+                            Selecionar Titular
+                        </button>
+                        <button type="button" class="btn-completar-resp p-1 text-slate-400 hover:text-[#47728f] rounded hover:bg-slate-100 transition" data-idx="${idx}" title="Editar dados ou endereço">
+                            ✏️
+                        </button>
+                    </div>
                 `;
             } else {
-                statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-300 text-xs font-medium">⚠️ Dados Incompletos</span>';
+                statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-300 text-xs font-medium">⚠️ CPF Pendente</span>';
                 botaoAcao = `
                     <button type="button" class="btn-completar-resp px-3.5 py-1.5 btn-ieducar-action btn-ieducar-outline text-xs text-amber-800 border-amber-300 font-semibold" data-idx="${idx}">
                         Completar Cadastro
@@ -2186,7 +2206,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             tr.innerHTML = `
-                <td class="py-3 px-4 font-bold text-slate-800">${resp.parentesco}</td>
+                <td class="py-3 px-4 font-bold text-slate-800">${parentescoTxt}</td>
                 <td class="py-3 px-4">
                     <div class="font-bold text-slate-900">${resp.nome}</div>
                     ${resp.email ? '<div class="text-[11px] text-slate-400">' + resp.email + '</div>' : ''}

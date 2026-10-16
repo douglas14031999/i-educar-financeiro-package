@@ -188,10 +188,15 @@ class AlunoBuscaController extends Controller
                 $idsPessoasJaIncluidas[] = $resp->pessoa_id;
             }
 
+            $parentescoLimpo = $vinculo->parentesco ?: 'Responsável Financeiro';
+            if (preg_match('/m[3ã]e/i', $parentescoLimpo)) {
+                $parentescoLimpo = 'Mãe';
+            }
+
             $responsaveisProcessados[] = [
                 'responsavel_financeiro_id' => $resp->id,
                 'pessoa_id' => $resp->pessoa_id,
-                'parentesco' => $vinculo->parentesco ?: 'Responsável Financeiro',
+                'parentesco' => $parentescoLimpo,
                 'nome' => $resp->nome,
                 'cpf' => $resp->cpf_cnpj_formatado,
                 'cpf_puro' => $resp->cpf_cnpj,
@@ -207,7 +212,7 @@ class AlunoBuscaController extends Controller
                 'ja_cadastrado_financeiro' => true,
                 'ja_vinculado_aluno' => true,
                 'responsavel_principal' => (bool) $vinculo->responsavel_principal,
-                'cadastro_completo' => !empty($resp->cpf_cnpj) && !empty($resp->cep) && !empty($resp->logradouro),
+                'cadastro_completo' => !empty($resp->cpf_cnpj),
             ];
         }
 
@@ -301,16 +306,21 @@ class AlunoBuscaController extends Controller
             }
 
             $jaCadastrado = (bool) $respFinanceiro;
-            $cadastroCompleto = !empty($cpfLimpo) && !empty($endereco['cep']) && !empty($endereco['logradouro']);
+            $cadastroCompleto = !empty($cpfLimpo);
 
             if ($idpes) {
                 $idsPessoasJaIncluidas[] = $idpes;
             }
 
+            $tipoLimpo = $tipo;
+            if (preg_match('/m[3ã]e/i', $tipoLimpo)) {
+                $tipoLimpo = 'Mãe';
+            }
+
             $responsaveisProcessados[] = [
                 'responsavel_financeiro_id' => $respFinanceiro ? $respFinanceiro->id : null,
                 'pessoa_id' => $idpes,
-                'parentesco' => $tipo,
+                'parentesco' => $tipoLimpo,
                 'nome' => $respFinanceiro ? $respFinanceiro->nome : $nome,
                 'cpf' => $respFinanceiro ? $respFinanceiro->cpf_cnpj_formatado : $cpfFormatadoResp,
                 'cpf_puro' => $respFinanceiro ? $respFinanceiro->cpf_cnpj : $cpfLimpo,
