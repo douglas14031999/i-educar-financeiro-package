@@ -192,7 +192,7 @@
             @endif
         </div>
 
-        <!-- Seção de Alunos Vinculados e Rateio Financeiro -->
+        <!-- Seção de Alunos Vinculados -->
         <section class="bg-white shadow-xs border border-slate-200 overflow-hidden" data-purpose="alunos-vinculados-section">
             <div class="bg-[#47728f] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
                 <div class="flex items-center gap-2">
@@ -201,11 +201,8 @@
                         <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     <h2 class="text-sm font-semibold tracking-wide" style="margin: 0; color: white;">
-                        Alunos Vinculados e Rateio Financeiro ({{ $responsavel->alunoVinculos->count() }})
+                        Alunos Vinculados ({{ $responsavel->alunoVinculos->count() }})
                     </h2>
-                </div>
-                <div class="text-xs text-slate-300">
-                    Configuração de rateio percentual para divisão automática de cobranças
                 </div>
             </div>
 
@@ -214,7 +211,6 @@
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-[11px] font-semibold tracking-wider">
                             <th class="py-3 px-4">Aluno</th>
-                            <th class="py-3 px-4 text-right">Rateio Financeiro (%)</th>
                             <th class="py-3 px-4 text-center">Responsável Principal</th>
                             <th class="py-3 px-4 text-center">Ações</th>
                         </tr>
@@ -224,9 +220,6 @@
                             <tr class="hover:bg-slate-50/80 transition duration-150">
                                 <td class="py-3.5 px-4 font-semibold text-slate-900">
                                     {{ \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($vinculo->aluno_id) }}
-                                </td>
-                                <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
-                                    {{ number_format($vinculo->percentual_rateio, 2, ',', '.') }}%
                                 </td>
                                 <td class="py-3.5 px-4 text-center">
                                     @if($vinculo->responsavel_principal)
@@ -254,7 +247,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="py-8 text-center text-slate-400">
+                                <td colspan="3" class="py-8 text-center text-slate-400">
                                     Nenhum aluno vinculado a este responsável financeiro até o momento.
                                 </td>
                             </tr>
@@ -275,6 +268,7 @@
                 <form method="post" action="{{ route('financeiro.responsaveis.vincular-aluno', $responsavel->id) }}" id="form_vincular_aluno" class="flex flex-wrap items-end gap-3">
                     @csrf
                     <input type="hidden" name="aluno_id" id="vincular_aluno_id" required>
+                    <input type="hidden" name="percentual_rateio" value="100.00">
 
                     {{-- Campo de busca de aluno com autocomplete --}}
                     <div class="w-full sm:flex-1 min-w-[280px] relative">
@@ -304,13 +298,6 @@
                     </div>
 
                     <input type="hidden" name="parentesco" value="Responsável">
-
-                    <div class="w-full sm:w-28">
-                        <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                            % Rateio <span class="text-red-500">*</span>
-                        </label>
-                        <input type="number" name="percentual_rateio" step="0.01" min="1" max="100" value="100.00" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm font-mono focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
-                    </div>
 
                     <div class="flex items-center gap-2 pt-1 sm:pt-0 pb-2">
                         <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">

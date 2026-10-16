@@ -223,12 +223,12 @@ class ResponsavelFinanceiroController extends Controller
         $request->validate([
             'aluno_id' => 'required|integer',
             'parentesco' => 'nullable|string|max:50',
-            'percentual_rateio' => 'required|numeric|min:1|max:100',
+            'percentual_rateio' => 'nullable|numeric|min:1|max:100',
         ]);
 
         $responsavel = ResponsavelFinanceiro::findOrFail($id);
         $alunoId = (int) $request->input('aluno_id');
-        $percentual = (float) $request->input('percentual_rateio');
+        $percentual = $request->filled('percentual_rateio') ? (float) $request->input('percentual_rateio') : 100.00;
         $vinculoExistente = AlunoResponsavel::where('aluno_id', $alunoId)
             ->where('responsavel_id', $responsavel->id)
             ->first();

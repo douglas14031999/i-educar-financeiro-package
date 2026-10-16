@@ -99,41 +99,84 @@ class ContratoService
             }
 
             // ----------------------------------------------------------------
-            // Identifica responsáveis financeiros do aluno
+            // Identifica responsáveis financeiros do aluno ou Rateio
             // ----------------------------------------------------------------
-            $vinculos = AlunoResponsavel::with('responsavel')
-                ->where('aluno_id', $alunoId)
-                ->get();
+            $aplicarRateio = !empty($dados['aplicar_rateio']) && !empty($dados['rateio_responsaveis']);
+            $rateioConfig  = $aplicarRateio ? (array) $dados['rateio_responsaveis'] : [];
 
-            if ($vinculos->isEmpty()) {
-                if (empty($dados['responsavel_financeiro_id'])) {
-                    throw new InvalidArgumentException(
-                        'O aluno não possui responsável financeiro cadastrado.'
-                    );
+            if ($aplicarRateio) {
+                // Validação de soma de rateios = 100%
+                $somaPct = 0.0;
+                foreach ($rateioConfig as $rc) {
+                    $somaPct += (float) ($rc['percentual'] ?? 0);
                 }
-                $responsavelPrincipalId = (int) $dados['responsavel_financeiro_id'];
+                if (abs($somaPct - 100.00) > 0.01) {
+                    throw new InvalidArgumentException(sprintf(
+                        'A soma dos percentuais de rateio deve ser exatamente 100,00%%. Soma atual: %.2f%%.',
+                        $somaPct
+                    ));
+                }
+
+                $vinculos = collect();
+                foreach ($rateioConfig as $idx => $rc) {
+                    $respId = (int) $rc['responsavel_id'];
+                    $pct = (float) $rc['percentual'];
+                    $formaResp = strtolower(trim((string) ($rc['forma_pagamento'] ?? ($dados['forma_pagamento'] ?? 'carne'))));
+                    $isPrincipal = ($idx === 0);
+
+                    // Atualiza ou cria vínculo na tabela financeiro.aluno_responsavel
+                    AlunoResponsavel::updateOrCreate(
+                        ['aluno_id' => $alunoId, 'responsavel_id' => $respId],
+                        [
+                            'parentesco'            => $rc['parentesco'] ?? 'Responsável',
+                            'percentual_rateio'     => $pct,
+                            'responsavel_principal' => $isPrincipal,
+                        ]
+                    );
+
+                    $vinculos->push((object) [
+                        'responsavel_id'        => $respId,
+                        'percentual_rateio'     => $pct,
+                        'forma_pagamento'       => $formaResp,
+                        'dia_vencimento'        => !empty($rc['dia_vencimento']) ? (int) $rc['dia_vencimento'] : $diaVencimento,
+                        'responsavel_principal' => $isPrincipal,
+                    ]);
+                }
+
+                $responsavelPrincipalId = (int) $rateioConfig[0]['responsavel_id'];
+            } else {
+                // Fluxo padrão sem rateio (1 responsável titular único)
+                $respId = !empty($dados['responsavel_financeiro_id']) ? (int) $dados['responsavel_financeiro_id'] : null;
+                if (!$respId) {
+                    $vinculoExistente = AlunoResponsavel::where('aluno_id', $alunoId)->first();
+                    $respId = $vinculoExistente?->responsavel_id;
+                }
+
+                if (!$respId) {
+                    throw new InvalidArgumentException('O aluno não possui responsável financeiro cadastrado.');
+                }
+
+                $responsavelPrincipalId = $respId;
+                $formaUnica = strtolower(trim((string) ($dados['forma_pagamento'] ?? 'carne')));
+
+                // Garante vínculo na base
+                AlunoResponsavel::updateOrCreate(
+                    ['aluno_id' => $alunoId, 'responsavel_id' => $respId],
+                    [
+                        'percentual_rateio'     => 100.00,
+                        'responsavel_principal' => true,
+                    ]
+                );
+
                 $vinculos = collect([
                     (object) [
                         'responsavel_id'        => $responsavelPrincipalId,
                         'percentual_rateio'     => 100.00,
+                        'forma_pagamento'       => $formaUnica,
+                        'dia_vencimento'        => $diaVencimento,
                         'responsavel_principal' => true,
                     ]
                 ]);
-            } else {
-                $responsavelPrincipalId =
-                    $vinculos->firstWhere('responsavel_principal', true)?->responsavel_id
-                    ?? $vinculos->first()->responsavel_id;
-            }
-
-            // A03 — Soma de rateios deve ser exatamente 100%
-            $somaRateio = (float) $vinculos->sum('percentual_rateio');
-            if (abs($somaRateio - 100.00) > 0.001) {
-                throw new InvalidArgumentException(
-                    sprintf(
-                        'A soma dos rateios deve ser exatamente 100%%. Soma atual: %.4f%%.',
-                        $somaRateio
-                    )
-                );
             }
 
             $plano = PlanoPagamento::with('itens')->findOrFail($planoId);
@@ -195,6 +238,7 @@ class ContratoService
                 'id'          => $plano->id,
                 'nome'        => $plano->nome,
                 'valor_total' => (float) $plano->valor_total,
+                'rateio'      => $aplicarRateio ? $rateioConfig : null,
                 'itens'       => $plano->itens->map(fn($item) => [
                     'tipo_item'       => $item->tipo_item,
                     'numero_parcela'  => (int) $item->numero_parcela,
@@ -203,6 +247,8 @@ class ContratoService
                     'descricao'       => $item->descricao,
                 ])->toArray(),
             ];
+
+            $formaMaster = $aplicarRateio ? 'rateio' : ($dados['forma_pagamento'] ?? null);
 
             $contrato = Contrato::create([
                 'numero_contrato'           => $numeroContrato,
@@ -219,23 +265,27 @@ class ContratoService
                 'dia_vencimento'            => $diaVencimento,
                 'escola_id'                 => $escolaId,
                 'status'                    => 'ativo',
-                'forma_pagamento'           => $dados['forma_pagamento'] ?? null,
+                'forma_pagamento'           => $formaMaster,
                 'plano_snapshot'            => $planoSnapshot,
             ]);
 
             $titulosCriados = [];
-            $formaNormalizada = strtolower(trim((string) ($dados['forma_pagamento'] ?? '')));
+            $qtdParcelasPadrao = max(1, (int) ($dados['qtd_parcelas'] ?? 12));
 
-            if ($formaNormalizada === 'pix') {
-                // Pagamento Instantâneo via Pix: gera parcela única (1/1) referente ao total líquido do contrato
-                $valoresRateio = $this->distribuirComResiduo($valorLiquido, $vinculos);
+            // Distribuição exata do valor líquido total entre os vínculos (Largest Remainder)
+            $valoresRateioTotal = $this->distribuirComResiduo($valorLiquido, $vinculos);
 
-                foreach ($vinculos as $idx => $vinculo) {
-                    $valorVinculo = $valoresRateio[$idx];
-                    if ($valorVinculo <= 0) {
-                        continue;
-                    }
+            foreach ($vinculos as $idx => $vinculo) {
+                $valorVinculoTotal = $valoresRateioTotal[$idx];
+                if ($valorVinculoTotal <= 0) {
+                    continue;
+                }
 
+                $formaDoResp = strtolower(trim((string) ($vinculo->forma_pagamento ?: 'carne')));
+                $diaDoResp   = (int) ($vinculo->dia_vencimento ?: $diaVencimento);
+
+                if ($formaDoResp === 'pix') {
+                    // Parcela única instantânea via Pix
                     $titulosCriados[] = Titulo::create([
                         'contrato_id'               => $contrato->id,
                         'aluno_id'                  => $alunoId,
@@ -246,30 +296,22 @@ class ContratoService
                         'total_parcelas'            => 1,
                         'competencia'               => Carbon::today()->format('Y-m'),
                         'data_vencimento'           => Carbon::today(),
-                        'valor_nominal'             => $valorVinculo,
+                        'valor_nominal'             => $valorVinculoTotal,
                         'valor_desconto'            => 0.00,
                         'valor_multa'               => 0.00,
                         'valor_juros'               => 0.00,
                         'valor_pago'                => 0.00,
-                        'valor_saldo'               => $valorVinculo,
+                        'valor_saldo'               => $valorVinculoTotal,
                         'status'                    => 'aberto',
                         'observacoes'               => sprintf(
-                            '%s - Pagamento Instantâneo via Pix',
-                            $contrato->numero_contrato
+                            '%s - Pagamento Instantâneo via Pix (%s%%)',
+                            $contrato->numero_contrato,
+                            number_format($vinculo->percentual_rateio, 1)
                         ),
                     ]);
-                }
-            } elseif ($formaNormalizada === 'boleto') {
-                // Boleto à Vista (1x): vence 2 dias posterior ao atual
-                $dataVencBoleto = Carbon::today()->addDays(2);
-                $valoresRateio = $this->distribuirComResiduo($valorLiquido, $vinculos);
-
-                foreach ($vinculos as $idx => $vinculo) {
-                    $valorVinculo = $valoresRateio[$idx];
-                    if ($valorVinculo <= 0) {
-                        continue;
-                    }
-
+                } elseif ($formaDoResp === 'boleto') {
+                    // Boleto à Vista (1x) vence em 2 dias
+                    $dataVencBoleto = Carbon::today()->addDays(2);
                     $titulosCriados[] = Titulo::create([
                         'contrato_id'               => $contrato->id,
                         'aluno_id'                  => $alunoId,
@@ -280,94 +322,44 @@ class ContratoService
                         'total_parcelas'            => 1,
                         'competencia'               => Carbon::today()->format('Y-m'),
                         'data_vencimento'           => $dataVencBoleto,
-                        'valor_nominal'             => $valorVinculo,
+                        'valor_nominal'             => $valorVinculoTotal,
                         'valor_desconto'            => 0.00,
                         'valor_multa'               => 0.00,
                         'valor_juros'               => 0.00,
                         'valor_pago'                => 0.00,
-                        'valor_saldo'               => $valorVinculo,
+                        'valor_saldo'               => $valorVinculoTotal,
                         'status'                    => 'aberto',
                         'observacoes'               => sprintf(
-                            '%s - Boleto Bancário à Vista',
-                            $contrato->numero_contrato
+                            '%s - Boleto Bancário à Vista (%s%%)',
+                            $contrato->numero_contrato,
+                            number_format($vinculo->percentual_rateio, 1)
                         ),
                     ]);
-                }
-            } else {
-                $itemMatricula = $plano->itens->firstWhere('tipo_item', 'matricula');
-                $valorMatriculaLiquido = 0.00;
-
-                // Se houver taxa de matrícula integrada ao plano (parcela 0)
-                if ($itemMatricula) {
-                    $valorMatriculaBruto = (float) $itemMatricula->valor;
-                    $descontoMatricula = round($valorMatriculaBruto * $taxaDesconto, 2);
-                    $valorMatriculaLiquido = round($valorMatriculaBruto - $descontoMatricula, 2);
-
-                    $valoresRateioMatricula = $this->distribuirComResiduo($valorMatriculaLiquido, $vinculos);
-
-                    foreach ($vinculos as $idx => $vinculo) {
-                        $valorVinculo = $valoresRateioMatricula[$idx];
-                        if ($valorVinculo <= 0) {
-                            continue;
-                        }
-
-                        $titulosCriados[] = Titulo::create([
-                            'contrato_id'               => $contrato->id,
-                            'aluno_id'                  => $alunoId,
-                            'responsavel_financeiro_id' => $vinculo->responsavel_id,
-                            'escola_id'                 => $escolaId,
-                            'tipo'                      => 'matricula',
-                            'numero_parcela'            => 0,
-                            'total_parcelas'            => 1,
-                            'competencia'               => Carbon::today()->format('Y-m'),
-                            'data_vencimento'           => Carbon::today(),
-                            'valor_nominal'             => $valorVinculo,
-                            'valor_desconto'            => 0.00,
-                            'valor_multa'               => 0.00,
-                            'valor_juros'               => 0.00,
-                            'valor_pago'                => 0.00,
-                            'valor_saldo'               => $valorVinculo,
-                            'status'                    => 'aberto',
-                            'observacoes'               => sprintf(
-                                '%s - Taxa de Matrícula',
-                                $contrato->numero_contrato
-                            ),
-                        ]);
+                } else {
+                    // Parcelado em N vezes (Carnê Asaas, Cartão de Crédito Link, Cartão Presencial POS ou Dinheiro)
+                    $qtdParcelasResp = $qtdParcelasPadrao;
+                    if ($formaDoResp === 'dinheiro' && empty($dados['qtd_parcelas'])) {
+                        $qtdParcelasResp = 1;
                     }
-                }
 
-                // Mensalidades: valor líquido restante dividido na quantidade de parcelas escolhida no contrato
-                $valorMensalidadesLiquido = max(0.00, round($valorLiquido - $valorMatriculaLiquido, 2));
-                $qtdParcelas = max(1, (int) ($dados['qtd_parcelas'] ?? 12));
-                $valoresParcelas = $this->dividirValorEmParcelas($valorMensalidadesLiquido, $qtdParcelas);
+                    $valoresParcelas = $this->dividirValorEmParcelas($valorVinculoTotal, $qtdParcelasResp);
 
-                // Regra de data inicial: a partir da data atual
-                // Se o dia de vencimento já passou no mês atual, começa no próximo mês
-                $hoje = Carbon::today();
-                $mesOffset = ($hoje->day > $diaVencimento) ? 1 : 0;
-                $dataPrimeira = $hoje->copy()->startOfMonth()->addMonths($mesOffset);
+                    $hoje = Carbon::today();
+                    $mesOffset = ($hoje->day > $diaDoResp) ? 1 : 0;
+                    $dataPrimeira = $hoje->copy()->startOfMonth()->addMonths($mesOffset);
 
-                for ($i = 1; $i <= $qtdParcelas; $i++) {
-                    $dataRef = $dataPrimeira->copy()->addMonths($i - 1);
-                    $anoParcela = $dataRef->year;
-                    $mesParcela = $dataRef->month;
-                    $competencia = sprintf('%04d-%02d', $anoParcela, $mesParcela);
+                    for ($i = 1; $i <= $qtdParcelasResp; $i++) {
+                        $dataRef = $dataPrimeira->copy()->addMonths($i - 1);
+                        $anoParcela = $dataRef->year;
+                        $mesParcela = $dataRef->month;
+                        $competencia = sprintf('%04d-%02d', $anoParcela, $mesParcela);
 
-                    // Trata vencimento em meses com 28, 29 ou 30 dias para não dar overflow
-                    $ultimoDiaMes = $dataRef->copy()->endOfMonth()->day;
-                    $diaEfetivo = min($diaVencimento, $ultimoDiaMes);
-                    $dataVencimento = Carbon::create($anoParcela, $mesParcela, $diaEfetivo);
+                        $ultimoDiaMes = $dataRef->copy()->endOfMonth()->day;
+                        $diaEfetivo = min($diaDoResp, $ultimoDiaMes);
+                        $dataVencimento = Carbon::create($anoParcela, $mesParcela, $diaEfetivo);
 
-                    $valorParcelaLiquida = $valoresParcelas[$i - 1];
-
-                    // Distribui resíduo de centavos entre os vínculos
-                    $valoresRateio = $this->distribuirComResiduo($valorParcelaLiquida, $vinculos);
-
-                    foreach ($vinculos as $idx => $vinculo) {
-                        $valorVinculo = $valoresRateio[$idx];
-
-                        // RN22 — Percentual zero não gera cobrança
-                        if ($valorVinculo <= 0) {
+                        $valorParcela = $valoresParcelas[$i - 1];
+                        if ($valorParcela <= 0) {
                             continue;
                         }
 
@@ -378,41 +370,71 @@ class ContratoService
                             'escola_id'                 => $escolaId,
                             'tipo'                      => 'mensalidade',
                             'numero_parcela'            => $i,
-                            'total_parcelas'            => $qtdParcelas,
+                            'total_parcelas'            => $qtdParcelasResp,
                             'competencia'               => $competencia,
                             'data_vencimento'           => $dataVencimento,
-                            'valor_nominal'             => $valorVinculo,
+                            'valor_nominal'             => $valorParcela,
                             'valor_desconto'            => 0.00,
                             'valor_multa'               => 0.00,
                             'valor_juros'               => 0.00,
                             'valor_pago'                => 0.00,
-                            'valor_saldo'               => $valorVinculo,
+                            'valor_saldo'               => $valorParcela,
                             'status'                    => 'aberto',
                             'observacoes'               => sprintf(
-                                '%s - Parcela %02d/%02d',
+                                '%s - Parcela %02d/%02d (%s%%)',
                                 $contrato->numero_contrato,
                                 $i,
-                                $qtdParcelas
+                                $qtdParcelasResp,
+                                number_format($vinculo->percentual_rateio, 1)
                             ),
                         ]);
                     }
                 }
             }
 
-            // Orquestra a modalidade de pagamento escolhida no ato do contrato
-            $this->processarModalidadePagamento($contrato, $titulosCriados, $dados);
+            // Orquestra a modalidade de pagamento escolhida para cada responsável
+            $this->processarModalidadePagamentoMultiplos($contrato, $titulosCriados, $vinculos, $dados);
 
             return $contrato;
         });
     }
 
     /**
-     * Orquestra as 6 modalidades de pagamento e inicializa a integracao de gateway ou baixa de balcao.
+     * Orquestra a modalidade de pagamento escolhida para cada responsável em rateio ou titular único.
      */
-    public function processarModalidadePagamento(Contrato $contrato, array $titulos, array $dados): void
+    public function processarModalidadePagamentoMultiplos(Contrato $contrato, array $titulos, iterable $vinculos, array $dados): void
     {
-        $formaPagamento = strtolower(trim((string) ($dados['forma_pagamento'] ?? '')));
-        if (empty($formaPagamento)) {
+        $titulosPorResp = collect($titulos)->groupBy('responsavel_financeiro_id');
+        $vinculosCol = collect($vinculos)->keyBy('responsavel_id');
+
+        foreach ($titulosPorResp as $respId => $titulosDoResp) {
+            $vinculo = $vinculosCol->get($respId);
+            $formaDoResp = $vinculo?->forma_pagamento ?? strtolower(trim((string) ($dados['forma_pagamento'] ?? 'carne')));
+            $this->processarModalidadePorResponsavel($contrato, $titulosDoResp->all(), $formaDoResp, $dados);
+        }
+
+        // Atualiza status final do contrato
+        $todosTitulos = $contrato->titulos()->get();
+        if ($todosTitulos->isNotEmpty() && $todosTitulos->every(fn($t) => in_array($t->status, ['pago', 'liquidado']))) {
+            $contrato->update([
+                'status'     => 'quitado',
+                'quitado_em' => Carbon::now(),
+            ]);
+        } elseif ($todosTitulos->contains(fn($t) => $t->status === 'aberto')) {
+            $temPixOuBoletoAguardando = $todosTitulos->contains(fn($t) => in_array($t->forma_pagamento, ['pix', 'boleto']));
+            $contrato->update([
+                'status' => $temPixOuBoletoAguardando ? 'aguardando_pagamento' : 'ativo',
+            ]);
+        }
+    }
+
+    /**
+     * Processa a modalidade de pagamento específica de um grupo de títulos de um responsável.
+     */
+    public function processarModalidadePorResponsavel(Contrato $contrato, array $titulos, string $formaPagamento, array $dados): void
+    {
+        $formaPagamento = strtolower(trim($formaPagamento));
+        if (empty($formaPagamento) || empty($titulos)) {
             return;
         }
 
@@ -428,11 +450,6 @@ class ContratoService
                         'usuario_id'      => auth()->id() ?? null,
                     ]);
                 }
-                $contrato->update([
-                    'forma_pagamento' => 'dinheiro',
-                    'status'          => 'quitado',
-                    'quitado_em'      => Carbon::now(),
-                ]);
                 break;
 
             case 'cartao_presencial':
@@ -446,36 +463,21 @@ class ContratoService
                         'usuario_id'      => auth()->id() ?? null,
                     ]);
                 }
-                $contrato->update([
-                    'forma_pagamento' => 'cartao_presencial',
-                    'cartao_bandeira' => $dados['cartao_bandeira'] ?? null,
-                    'cartao_nsu'      => $dados['cartao_nsu'] ?? null,
-                    'cartao_tipo'     => $dados['cartao_tipo'] ?? 'credito_vista',
-                    'status'          => 'quitado',
-                    'quitado_em'      => Carbon::now(),
-                ]);
                 break;
 
-            case 'cartao_credito': // Link Asaas até 12x com repasse de juros (validade 5 dias úteis)
-                $contrato->update([
-                    'forma_pagamento' => 'cartao_credito',
-                    'status'          => 'aguardando_pagamento',
-                ]);
+            case 'cartao_credito':
                 try {
                     $gateway = app(\iEducar\Financeiro\Gateways\GatewayManager::class);
                     $maxParcelas = (int) ($dados['qtd_parcelas'] ?? ($dados['cartao_parcelas'] ?? 12));
-                    $res = $gateway->criarPaymentLink($contrato, (float) $contrato->valor_total_liquido, $maxParcelas, 5);
-                    $contrato->update([
-                        'payment_link_url' => $res['payment_link_url'] ?? null,
-                        'payment_link_id'  => $res['payment_link_id'] ?? null,
-                    ]);
+                    $valorTotalResp = array_sum(array_map(fn($t) => (float) $t->valor_nominal, $titulos));
+                    $res = $gateway->criarPaymentLink($contrato, (float) $valorTotalResp, $maxParcelas, 5);
                     if (!empty($titulos)) {
                         CobrancaGateway::create([
                             'titulo_id'         => $titulos[0]->id,
                             'contrato_id'       => $contrato->id,
                             'gateway'           => 'asaas',
                             'tipo_cobranca'     => 'payment_link',
-                            'gateway_charge_id' => $res['payment_link_id'] ?? 'LINK-' . $contrato->id,
+                            'gateway_charge_id' => $res['payment_link_id'] ?? 'LINK-' . $contrato->id . '-' . $titulos[0]->responsavel_financeiro_id,
                             'link_pagamento'    => $res['payment_link_url'] ?? null,
                             'status_externo'    => 'ACTIVE',
                             'ativa'             => true,
@@ -487,11 +489,7 @@ class ContratoService
                 }
                 break;
 
-            case 'pix': // Pix Instantâneo (Validade 24h)
-                $contrato->update([
-                    'forma_pagamento' => 'pix',
-                    'status'          => 'aguardando_pagamento',
-                ]);
+            case 'pix':
                 if (!empty($titulos)) {
                     try {
                         $gateway = app(\iEducar\Financeiro\Gateways\GatewayManager::class);
@@ -516,11 +514,7 @@ class ContratoService
                 }
                 break;
 
-            case 'boleto': // Boleto 1x à vista
-                $contrato->update([
-                    'forma_pagamento' => 'boleto',
-                    'status'          => 'aguardando_pagamento',
-                ]);
+            case 'boleto':
                 if (!empty($titulos)) {
                     try {
                         $gateway = app(\iEducar\Financeiro\Gateways\GatewayManager::class);
@@ -531,11 +525,7 @@ class ContratoService
                 }
                 break;
 
-            case 'carne': // Carnê 2x a 12x Asaas
-                $contrato->update([
-                    'forma_pagamento' => 'carne',
-                    'status'          => 'ativo',
-                ]);
+            case 'carne':
                 if (count($titulos) >= 2) {
                     try {
                         $carneService = app(CarneService::class);
@@ -549,6 +539,15 @@ class ContratoService
                 }
                 break;
         }
+    }
+
+    /**
+     * Orquestra as modalidades de pagamento (mantido para compatibilidade).
+     */
+    public function processarModalidadePagamento(Contrato $contrato, array $titulos, array $dados): void
+    {
+        $formaPagamento = strtolower(trim((string) ($dados['forma_pagamento'] ?? '')));
+        $this->processarModalidadePorResponsavel($contrato, $titulos, $formaPagamento, $dados);
     }
 
 

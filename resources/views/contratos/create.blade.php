@@ -314,6 +314,17 @@
             <input type="hidden" name="escola_id" id="escola_id" value="{{ old('escola_id') }}">
             <input type="hidden" name="ano_letivo" id="ano_letivo" value="{{ old('ano_letivo', $anoAtual) }}" required>
             <input type="hidden" name="responsavel_financeiro_id" id="responsavel_financeiro_id" value="{{ old('responsavel_financeiro_id', $preResponsavelId ?? '') }}">
+            
+            {{-- Campos de Rateio entre Responsáveis --}}
+            <input type="hidden" name="aplicar_rateio" id="input_aplicar_rateio" value="0">
+            <input type="hidden" name="rateio_responsaveis[0][responsavel_id]" id="input_rateio_0_id">
+            <input type="hidden" name="rateio_responsaveis[0][percentual]" id="input_rateio_0_pct" value="50.00">
+            <input type="hidden" name="rateio_responsaveis[0][forma_pagamento]" id="input_rateio_0_forma" value="carne">
+            <input type="hidden" name="rateio_responsaveis[0][dia_vencimento]" id="input_rateio_0_venc" value="10">
+            <input type="hidden" name="rateio_responsaveis[1][responsavel_id]" id="input_rateio_1_id">
+            <input type="hidden" name="rateio_responsaveis[1][percentual]" id="input_rateio_1_pct" value="50.00">
+            <input type="hidden" name="rateio_responsaveis[1][forma_pagamento]" id="input_rateio_1_forma" value="carne">
+            <input type="hidden" name="rateio_responsaveis[1][dia_vencimento]" id="input_rateio_1_venc" value="10">
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
@@ -471,9 +482,172 @@
                                 <p class="text-xs text-slate-500 m-0 max-w-md">Ao selecionar o aluno acima, todos os responsáveis vinculados no i-Educar (mãe, pai ou responsável legal) serão listados aqui para seleção em 1 clique.</p>
                             </div>
 
-                            {{-- Bloco com Tabela de Responsáveis --}}
+                            {{-- Bloco com Tabela de Responsáveis e Opção de Rateio --}}
                             <div id="bloco_responsaveis_secao" class="space-y-4 hidden">
-                                {{-- Card de Confirmação do Responsável Selecionado --}}
+
+                                {{-- Opção de Divisão/Rateio (exibido quando há 2 ou mais responsáveis disponíveis) --}}
+                                <div id="painel_opcao_divisao" class="p-3.5 bg-slate-50 border border-slate-200 rounded-sm hidden">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <label class="text-xs font-bold text-slate-800 uppercase tracking-wider m-0 flex items-center gap-1.5">
+                                            <svg class="w-4 h-4 text-[#47728f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                            </svg>
+                                            Divisão Financeira do Contrato (Rateio)
+                                        </label>
+                                        <span class="text-[11px] text-slate-500">Múltiplos responsáveis identificados</span>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <label class="flex items-start gap-3 p-3 bg-white border border-slate-300 rounded-sm cursor-pointer hover:border-[#47728f] transition" id="card_opcao_unico">
+                                            <input type="radio" name="opcao_divisao" value="unico" checked class="mt-1 text-[#47728f] focus:ring-[#47728f]">
+                                            <div>
+                                                <span class="block text-xs font-bold text-slate-900">1 Titular Único (Sem Rateio)</span>
+                                                <span class="block text-[11px] text-slate-500 mt-0.5">Um único responsável assume 100% das cobranças do contrato.</span>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-start gap-3 p-3 bg-white border border-slate-300 rounded-sm cursor-pointer hover:border-[#47728f] transition" id="card_opcao_rateio">
+                                            <input type="radio" name="opcao_divisao" value="rateio" class="mt-1 text-[#47728f] focus:ring-[#47728f]">
+                                            <div>
+                                                <span class="block text-xs font-bold text-slate-900">Dividir entre 2 Responsáveis (Rateio %)</span>
+                                                <span class="block text-[11px] text-slate-500 mt-0.5">Definir porcentagem e forma de pagamento individual para cada um.</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {{-- Bloco de Configuração de Rateio Duplo --}}
+                                <div id="painel_config_rateio" class="p-4 bg-blue-50/40 border border-[#47728f]/30 rounded-sm space-y-4 hidden">
+                                    <div class="flex items-center justify-between pb-2 border-b border-[#47728f]/20">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-6 h-6 rounded-full bg-[#47728f] text-white flex items-center justify-center font-bold text-xs">👥</span>
+                                            <span class="text-xs font-bold text-slate-900 uppercase tracking-wider">Configuração de Rateio Financeiro</span>
+                                        </div>
+                                        <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                                            Soma: <span id="rateio_soma_display">100,00%</span>
+                                        </span>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {{-- Card Responsável 1 --}}
+                                        <div class="p-4 bg-white border border-slate-200 rounded-sm shadow-2xs space-y-3">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Responsável 1 (Titular Principal)</span>
+                                                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Titular 1</span>
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Selecione o Responsável</label>
+                                                <select id="rateio_select_resp_0" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-semibold">
+                                                    {{-- Populado via JS --}}
+                                                </select>
+                                            </div>
+
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">% Rateio</label>
+                                                    <div class="relative">
+                                                        <input type="number" id="rateio_input_pct_0" value="50.00" min="1" max="99" step="0.01" class="w-full text-xs font-mono font-bold p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] pr-6">
+                                                        <span class="absolute right-2 top-2 text-xs text-slate-400 font-bold">%</span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Dia Vencimento</label>
+                                                    <select id="rateio_select_venc_0" class="w-full text-xs p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
+                                                        <option value="5">Dia 05</option>
+                                                        <option value="10" selected>Dia 10</option>
+                                                        <option value="15">Dia 15</option>
+                                                        <option value="20">Dia 20</option>
+                                                        <option value="25">Dia 25</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Forma de Pagamento (Resp. 1)</label>
+                                                <select id="rateio_select_forma_0" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-medium text-slate-800">
+                                                    <option value="carne" selected>Carnê Escolar (Asaas)</option>
+                                                    <option value="pix">PIX Instantâneo (24h)</option>
+                                                    <option value="boleto">Boleto à Vista (1x)</option>
+                                                    <option value="cartao_credito">Cartão Online (Link até 12x)</option>
+                                                    <option value="cartao_presencial">Cartão Presencial (POS)</option>
+                                                    <option value="dinheiro">Dinheiro (Balcão)</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-center">
+                                                <span class="block text-[10px] text-slate-500 uppercase font-semibold">Valor da Cota Resp. 1</span>
+                                                <span id="rateio_valor_display_0" class="block text-sm font-extrabold text-[#47728f]">R$ 0,00</span>
+                                                <span id="rateio_parcelas_display_0" class="block text-[11px] text-slate-500">12x de R$ 0,00</span>
+                                            </div>
+
+                                            <div id="rateio_btn_completar_0_box" class="hidden">
+                                                <button type="button" class="w-full py-1.5 px-3 btn-ieducar-action btn-ieducar-outline text-xs text-amber-800 border-amber-300 font-semibold" id="btn_completar_rateio_0">
+                                                    ⚠️ Completar Cadastro deste Responsável
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {{-- Card Responsável 2 --}}
+                                        <div class="p-4 bg-white border border-slate-200 rounded-sm shadow-2xs space-y-3">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Responsável 2 (Co-titular)</span>
+                                                <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">Titular 2</span>
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Selecione o Responsável</label>
+                                                <select id="rateio_select_resp_1" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-semibold">
+                                                    {{-- Populado via JS --}}
+                                                </select>
+                                            </div>
+
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">% Rateio</label>
+                                                    <div class="relative">
+                                                        <input type="number" id="rateio_input_pct_1" value="50.00" min="1" max="99" step="0.01" class="w-full text-xs font-mono font-bold p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] pr-6">
+                                                        <span class="absolute right-2 top-2 text-xs text-slate-400 font-bold">%</span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Dia Vencimento</label>
+                                                    <select id="rateio_select_venc_1" class="w-full text-xs p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
+                                                        <option value="5">Dia 05</option>
+                                                        <option value="10" selected>Dia 10</option>
+                                                        <option value="15">Dia 15</option>
+                                                        <option value="20">Dia 20</option>
+                                                        <option value="25">Dia 25</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Forma de Pagamento (Resp. 2)</label>
+                                                <select id="rateio_select_forma_1" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-medium text-slate-800">
+                                                    <option value="carne">Carnê Escolar (Asaas)</option>
+                                                    <option value="pix" selected>PIX Instantâneo (24h)</option>
+                                                    <option value="boleto">Boleto à Vista (1x)</option>
+                                                    <option value="cartao_credito">Cartão Online (Link até 12x)</option>
+                                                    <option value="cartao_presencial">Cartão Presencial (POS)</option>
+                                                    <option value="dinheiro">Dinheiro (Balcão)</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-center">
+                                                <span class="block text-[10px] text-slate-500 uppercase font-semibold">Valor da Cota Resp. 2</span>
+                                                <span id="rateio_valor_display_1" class="block text-sm font-extrabold text-[#47728f]">R$ 0,00</span>
+                                                <span id="rateio_parcelas_display_1" class="block text-[11px] text-slate-500">12x de R$ 0,00</span>
+                                            </div>
+
+                                            <div id="rateio_btn_completar_1_box" class="hidden">
+                                                <button type="button" class="w-full py-1.5 px-3 btn-ieducar-action btn-ieducar-outline text-xs text-amber-800 border-amber-300 font-semibold" id="btn_completar_rateio_1">
+                                                    ⚠️ Completar Cadastro deste Responsável
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Card de Confirmação do Responsável Selecionado (Modo Titular Único) --}}
                                 <div id="alerta_responsavel_selecionado" class="p-3.5 bg-emerald-50 border border-emerald-300 rounded-sm text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hidden">
                                     <div class="flex items-center gap-2.5">
                                         <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">✓</span>
@@ -487,8 +661,8 @@
                                     </span>
                                 </div>
 
-                                {{-- Tabela de Responsáveis --}}
-                                <div class="bg-white border border-slate-200 overflow-hidden shadow-2xs rounded-sm">
+                                {{-- Tabela de Responsáveis (Modo Titular Único) --}}
+                                <div id="container_tabela_responsaveis_unico" class="bg-white border border-slate-200 overflow-hidden shadow-2xs rounded-sm">
                                     <div class="overflow-x-auto">
                                         <table class="w-full text-left text-xs divide-y divide-slate-200 m-0">
                                             <thead class="bg-slate-100/90 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
@@ -514,7 +688,7 @@
                     {{-- ========================================================================= --}}
                     {{-- ETAPA 3: FORMA DE PAGAMENTO E CHECKOUT DA MATRÍCULA                       --}}
                     {{-- ========================================================================= --}}
-                    <div class="bg-white border border-slate-200 shadow-xs rounded-sm overflow-hidden">
+                    <div class="bg-white border border-slate-200 shadow-xs rounded-sm overflow-hidden" id="bloco_step_3_pagamento">
                         <div class="bg-[#47728f] px-5 py-3 text-white flex items-center justify-between">
                             <div class="flex items-center gap-2.5">
                                 <span class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">3</span>
@@ -531,7 +705,13 @@
                         </div>
 
                         <div class="p-5 md:p-6 space-y-4">
-                            <p class="text-xs text-slate-600 m-0">
+                            {{-- Aviso quando Rateio estiver Ativo --}}
+                            <div id="alerta_rateio_step3" class="hidden p-3.5 bg-blue-50 border border-blue-200 text-blue-900 rounded-sm flex items-center gap-2.5 text-xs font-semibold">
+                                <span class="text-base">ℹ️</span>
+                                <span>Rateio Financeiro Ativo: As formas de pagamento de cada responsável foram definidas individualmente no Passo 2 acima.</span>
+                            </div>
+
+                            <p class="text-xs text-slate-600 m-0" id="texto_instrucao_pagamento_global">
                                 Escolha a forma de quitação para automatizar a baixa no caixa da escola e a emissão dos títulos no gateway Asaas:
                             </p>
 
@@ -1161,6 +1341,42 @@ document.addEventListener('DOMContentLoaded', function () {
     const inputAnoLetivo = document.getElementById('ano_letivo');
     const inputResponsavelId = document.getElementById('responsavel_financeiro_id');
 
+    // Elementos de Rateio Financeiro
+    const inputAplicarRateio = document.getElementById('input_aplicar_rateio');
+    const inputRateio0Id = document.getElementById('input_rateio_0_id');
+    const inputRateio0Pct = document.getElementById('input_rateio_0_pct');
+    const inputRateio0Forma = document.getElementById('input_rateio_0_forma');
+    const inputRateio0Venc = document.getElementById('input_rateio_0_venc');
+    const inputRateio1Id = document.getElementById('input_rateio_1_id');
+    const inputRateio1Pct = document.getElementById('input_rateio_1_pct');
+    const inputRateio1Forma = document.getElementById('input_rateio_1_forma');
+    const inputRateio1Venc = document.getElementById('input_rateio_1_venc');
+
+    const painelOpcaoDivisao = document.getElementById('painel_opcao_divisao');
+    const painelConfigRateio = document.getElementById('painel_config_rateio');
+    const containerTabelaUnico = document.getElementById('container_tabela_responsaveis_unico');
+    const alertaRateioStep3 = document.getElementById('alerta_rateio_step3');
+    const textoInstrucaoPagamentoGlobal = document.getElementById('texto_instrucao_pagamento_global');
+    const rateioSomaDisplay = document.getElementById('rateio_soma_display');
+
+    const rateioSelectResp0 = document.getElementById('rateio_select_resp_0');
+    const rateioInputPct0 = document.getElementById('rateio_input_pct_0');
+    const rateioSelectVenc0 = document.getElementById('rateio_select_venc_0');
+    const rateioSelectForma0 = document.getElementById('rateio_select_forma_0');
+    const rateioValorDisplay0 = document.getElementById('rateio_valor_display_0');
+    const rateioParcelasDisplay0 = document.getElementById('rateio_parcelas_display_0');
+    const rateioBtnCompletar0Box = document.getElementById('rateio_btn_completar_0_box');
+    const btnCompletarRateio0 = document.getElementById('btn_completar_rateio_0');
+
+    const rateioSelectResp1 = document.getElementById('rateio_select_resp_1');
+    const rateioInputPct1 = document.getElementById('rateio_input_pct_1');
+    const rateioSelectVenc1 = document.getElementById('rateio_select_venc_1');
+    const rateioSelectForma1 = document.getElementById('rateio_select_forma_1');
+    const rateioValorDisplay1 = document.getElementById('rateio_valor_display_1');
+    const rateioParcelasDisplay1 = document.getElementById('rateio_parcelas_display_1');
+    const rateioBtnCompletar1Box = document.getElementById('rateio_btn_completar_1_box');
+    const btnCompletarRateio1 = document.getElementById('btn_completar_rateio_1');
+
     // Simulação Financeira
     const selectPlano = document.getElementById('plano_id');
     const selectQtdParcelas = document.getElementById('qtd_parcelas');
@@ -1276,7 +1492,248 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (inputAlunoId.value && inputResponsavelId.value) {
             stepLabel4.textContent = `${parcelas} parcelas`;
         }
+
+        if (inputAplicarRateio && inputAplicarRateio.value === '1') {
+            atualizarSimulacaoRateio();
+        }
     }
+
+    // =========================================================================
+    // LÓGICA DE RATEIO ENTRE DOIS RESPONSÁVEIS
+    // =========================================================================
+
+    function popularSelectsRateio() {
+        if (!rateioSelectResp0 || !rateioSelectResp1) return;
+
+        rateioSelectResp0.innerHTML = '';
+        rateioSelectResp1.innerHTML = '';
+
+        if (responsaveisCache.length === 0) return;
+
+        responsaveisCache.forEach((resp, idx) => {
+            const opt0 = document.createElement('option');
+            opt0.value = idx;
+            opt0.textContent = `${resp.nome} (${resp.parentesco})${resp.cpf ? ' - ' + resp.cpf : ' [Sem CPF]'}`;
+            rateioSelectResp0.appendChild(opt0);
+
+            const opt1 = document.createElement('option');
+            opt1.value = idx;
+            opt1.textContent = `${resp.nome} (${resp.parentesco})${resp.cpf ? ' - ' + resp.cpf : ' [Sem CPF]'}`;
+            rateioSelectResp1.appendChild(opt1);
+        });
+
+        rateioSelectResp0.selectedIndex = 0;
+        if (responsaveisCache.length > 1) {
+            rateioSelectResp1.selectedIndex = 1;
+        } else {
+            rateioSelectResp1.selectedIndex = 0;
+        }
+
+        verificarStatusCadastralRateio();
+        atualizarSimulacaoRateio();
+    }
+
+    function verificarStatusCadastralRateio() {
+        if (!rateioSelectResp0 || !rateioSelectResp1) return;
+        const idx0 = parseInt(rateioSelectResp0.value);
+        const idx1 = parseInt(rateioSelectResp1.value);
+
+        if (!isNaN(idx0) && responsaveisCache[idx0]) {
+            const resp0 = responsaveisCache[idx0];
+            const incomplet0 = !resp0.responsavel_financeiro_id || !resp0.cpf;
+            if (incomplet0 && rateioBtnCompletar0Box) {
+                rateioBtnCompletar0Box.classList.remove('hidden');
+            } else if (rateioBtnCompletar0Box) {
+                rateioBtnCompletar0Box.classList.add('hidden');
+            }
+        }
+
+        if (!isNaN(idx1) && responsaveisCache[idx1]) {
+            const resp1 = responsaveisCache[idx1];
+            const incomplet1 = !resp1.responsavel_financeiro_id || !resp1.cpf;
+            if (incomplet1 && rateioBtnCompletar1Box) {
+                rateioBtnCompletar1Box.classList.remove('hidden');
+            } else if (rateioBtnCompletar1Box) {
+                rateioBtnCompletar1Box.classList.add('hidden');
+            }
+        }
+    }
+
+    function atualizarSimulacaoRateio() {
+        if (!inputAplicarRateio || inputAplicarRateio.value !== '1') return;
+
+        const opt = selectPlano ? selectPlano.selectedOptions[0] : null;
+        const valorBruto = opt && opt.value ? parseFloat(opt.dataset.valor || 0) : 0;
+        const desconto = Math.max(0, parseFloat(inputDesconto.value || 0));
+        const valorLiquido = Math.max(0, valorBruto - desconto);
+
+        let p0 = parseFloat(rateioInputPct0.value) || 0;
+        let p1 = parseFloat(rateioInputPct1.value) || 0;
+
+        const v0 = Math.round(valorLiquido * (p0 / 100) * 100) / 100;
+        const v1 = Math.round((valorLiquido - v0) * 100) / 100;
+
+        let parcelasPlano = 1;
+        if (selectQtdParcelas && selectQtdParcelas.value) {
+            parcelasPlano = parseInt(selectQtdParcelas.value);
+        }
+
+        // Resp 0
+        const forma0 = rateioSelectForma0.value;
+        const isAvista0 = ['pix', 'dinheiro', 'boleto'].includes(forma0);
+        const parc0 = isAvista0 ? 1 : parcelasPlano;
+        const valParc0 = parc0 > 1 ? (v0 / parc0) : v0;
+        rateioValorDisplay0.textContent = formatMoney(v0);
+        rateioParcelasDisplay0.textContent = isAvista0 ? `1x de ${formatMoney(v0)} (À vista)` : `${parc0}x de ${formatMoney(valParc0)}`;
+
+        // Resp 1
+        const forma1 = rateioSelectForma1.value;
+        const isAvista1 = ['pix', 'dinheiro', 'boleto'].includes(forma1);
+        const parc1 = isAvista1 ? 1 : parcelasPlano;
+        const valParc1 = parc1 > 1 ? (v1 / parc1) : v1;
+        rateioValorDisplay1.textContent = formatMoney(v1);
+        rateioParcelasDisplay1.textContent = isAvista1 ? `1x de ${formatMoney(v1)} (À vista)` : `${parc1}x de ${formatMoney(valParc1)}`;
+
+        // Atualiza Resumo Lateral no Modo Rateio
+        const idx0 = parseInt(rateioSelectResp0.value);
+        const idx1 = parseInt(rateioSelectResp1.value);
+        const r0 = responsaveisCache[idx0];
+        const r1 = responsaveisCache[idx1];
+
+        if (r0 && r1) {
+            resumoRespBox.innerHTML = `
+                <div class="space-y-1.5 text-left">
+                    <div>
+                        <div class="font-bold text-slate-800 text-xs">${r0.nome} (${p0.toFixed(0)}%)</div>
+                        <div class="text-[11px] text-slate-500">${rateioSelectForma0.options[rateioSelectForma0.selectedIndex].text} • ${formatMoney(v0)}</div>
+                    </div>
+                    <div class="pt-1.5 border-t border-slate-100">
+                        <div class="font-bold text-slate-800 text-xs">${r1.nome} (${p1.toFixed(0)}%)</div>
+                        <div class="text-[11px] text-slate-500">${rateioSelectForma1.options[rateioSelectForma1.selectedIndex].text} • ${formatMoney(v1)}</div>
+                    </div>
+                </div>
+            `;
+            resumoFormaLabel.textContent = 'Múltiplas Formas';
+            resumoFormaBadge.textContent = 'Rateio Duplo';
+            simGradeParcelas.textContent = `${formatMoney(v0)} (${p0.toFixed(0)}%) + ${formatMoney(v1)} (${p1.toFixed(0)}%)`;
+            simDiaVencimento.textContent = `Vencimentos: Dia ${rateioSelectVenc0.value} e Dia ${rateioSelectVenc1.value}`;
+
+            // Stepper
+            stepInd2.className = 'step-item completed';
+            stepCircle2.className = 'step-circle done';
+            stepCircle2.innerHTML = '✓';
+            stepLabel2.textContent = 'Rateio Configurado';
+
+            stepInd3.className = 'step-item completed';
+            stepCircle3.className = 'step-circle done';
+            stepCircle3.innerHTML = '✓';
+            stepLabel3.textContent = 'Formas Individuais';
+
+            if (selectPlano && selectPlano.value) {
+                stepInd4.className = 'step-item completed';
+                stepCircle4.className = 'step-circle done';
+                stepCircle4.innerHTML = '✓';
+            }
+        }
+    }
+
+    // Sincronização das Porcentagens de Rateio
+    if (rateioInputPct0) {
+        rateioInputPct0.addEventListener('input', function () {
+            let p0 = parseFloat(this.value);
+            if (isNaN(p0)) p0 = 0;
+            if (p0 > 99) { p0 = 99; this.value = 99; }
+            if (p0 < 1 && this.value !== '') { p0 = 1; this.value = 1; }
+            const p1 = Math.round((100 - p0) * 100) / 100;
+            rateioInputPct1.value = p1.toFixed(2);
+            rateioSomaDisplay.textContent = '100,00%';
+            atualizarSimulacaoRateio();
+        });
+    }
+
+    if (rateioInputPct1) {
+        rateioInputPct1.addEventListener('input', function () {
+            let p1 = parseFloat(this.value);
+            if (isNaN(p1)) p1 = 0;
+            if (p1 > 99) { p1 = 99; this.value = 99; }
+            if (p1 < 1 && this.value !== '') { p1 = 1; this.value = 1; }
+            const p0 = Math.round((100 - p1) * 100) / 100;
+            rateioInputPct0.value = p0.toFixed(2);
+            rateioSomaDisplay.textContent = '100,00%';
+            atualizarSimulacaoRateio();
+        });
+    }
+
+    if (rateioSelectResp0) {
+        rateioSelectResp0.addEventListener('change', function () {
+            if (this.value === rateioSelectResp1.value) {
+                const outroIdx = Array.from(rateioSelectResp1.options).find(o => o.value !== this.value);
+                if (outroIdx) rateioSelectResp1.value = outroIdx.value;
+            }
+            verificarStatusCadastralRateio();
+            atualizarSimulacaoRateio();
+        });
+    }
+
+    if (rateioSelectResp1) {
+        rateioSelectResp1.addEventListener('change', function () {
+            if (this.value === rateioSelectResp0.value) {
+                const outroIdx = Array.from(rateioSelectResp0.options).find(o => o.value !== this.value);
+                if (outroIdx) rateioSelectResp0.value = outroIdx.value;
+            }
+            verificarStatusCadastralRateio();
+            atualizarSimulacaoRateio();
+        });
+    }
+
+    if (rateioSelectForma0) rateioSelectForma0.addEventListener('change', atualizarSimulacaoRateio);
+    if (rateioSelectForma1) rateioSelectForma1.addEventListener('change', atualizarSimulacaoRateio);
+    if (rateioSelectVenc0) rateioSelectVenc0.addEventListener('change', atualizarSimulacaoRateio);
+    if (rateioSelectVenc1) rateioSelectVenc1.addEventListener('change', atualizarSimulacaoRateio);
+
+    if (btnCompletarRateio0) {
+        btnCompletarRateio0.addEventListener('click', function () {
+            const idx = parseInt(rateioSelectResp0.value);
+            if (!isNaN(idx) && responsaveisCache[idx]) {
+                abrirModalComplemento(responsaveisCache[idx]);
+            }
+        });
+    }
+
+    if (btnCompletarRateio1) {
+        btnCompletarRateio1.addEventListener('click', function () {
+            const idx = parseInt(rateioSelectResp1.value);
+            if (!isNaN(idx) && responsaveisCache[idx]) {
+                abrirModalComplemento(responsaveisCache[idx]);
+            }
+        });
+    }
+
+    // Alternância Titular Único vs Rateio
+    document.querySelectorAll('input[name="opcao_divisao"]').forEach(radio => {
+        radio.addEventListener('change', function () {
+            if (this.value === 'rateio') {
+                inputAplicarRateio.value = '1';
+                painelConfigRateio.classList.remove('hidden');
+                containerTabelaUnico.classList.add('hidden');
+                alertaRespSelecionado.classList.add('hidden');
+                alertaRateioStep3.classList.remove('hidden');
+                if (textoInstrucaoPagamentoGlobal) textoInstrucaoPagamentoGlobal.classList.add('hidden');
+                verificarStatusCadastralRateio();
+                atualizarSimulacaoRateio();
+            } else {
+                inputAplicarRateio.value = '0';
+                painelConfigRateio.classList.add('hidden');
+                containerTabelaUnico.classList.remove('hidden');
+                if (inputResponsavelId.value) {
+                    alertaRespSelecionado.classList.remove('hidden');
+                }
+                alertaRateioStep3.classList.add('hidden');
+                if (textoInstrucaoPagamentoGlobal) textoInstrucaoPagamentoGlobal.classList.remove('hidden');
+                atualizarSimulacao();
+            }
+        });
+    });
 
     selectPlano.addEventListener('change', atualizarSimulacao);
     if (selectQtdParcelas) {
@@ -1450,6 +1907,21 @@ document.addEventListener('DOMContentLoaded', function () {
             renderizarTabelaResponsaveis();
             blocoResponsaveis.classList.remove('hidden');
 
+            // Gerencia exibição do seletor de Rateio se houver 2 ou mais responsáveis
+            if (responsaveisCache.length >= 2) {
+                if (painelOpcaoDivisao) painelOpcaoDivisao.classList.remove('hidden');
+                popularSelectsRateio();
+            } else {
+                if (painelOpcaoDivisao) painelOpcaoDivisao.classList.add('hidden');
+                const radioUnico = document.querySelector('input[name="opcao_divisao"][value="unico"]');
+                if (radioUnico) radioUnico.checked = true;
+                if (inputAplicarRateio) inputAplicarRateio.value = '0';
+                if (painelConfigRateio) painelConfigRateio.classList.add('hidden');
+                if (containerTabelaUnico) containerTabelaUnico.classList.remove('hidden');
+                if (alertaRateioStep3) alertaRateioStep3.classList.add('hidden');
+                if (textoInstrucaoPagamentoGlobal) textoInstrucaoPagamentoGlobal.classList.remove('hidden');
+            }
+
             // Auto-selecionar responsável se pré-definido ou se único disponível
             const respPreId = inputResponsavelId.value;
             if (respPreId && responsaveisCache.length > 0) {
@@ -1566,6 +2038,14 @@ document.addEventListener('DOMContentLoaded', function () {
         termoInput.value = '';
         termoInput.focus();
         alertaRespSelecionado.classList.add('hidden');
+        if (painelOpcaoDivisao) painelOpcaoDivisao.classList.add('hidden');
+        if (painelConfigRateio) painelConfigRateio.classList.add('hidden');
+        if (containerTabelaUnico) containerTabelaUnico.classList.remove('hidden');
+        if (alertaRateioStep3) alertaRateioStep3.classList.add('hidden');
+        if (textoInstrucaoPagamentoGlobal) textoInstrucaoPagamentoGlobal.classList.remove('hidden');
+        if (inputAplicarRateio) inputAplicarRateio.value = '0';
+        const radioUnico = document.querySelector('input[name="opcao_divisao"][value="unico"]');
+        if (radioUnico) radioUnico.checked = true;
         resumoAlunoBox.innerHTML = '<span class="text-slate-500 italic">Aguardando identificação no Passo 1...</span>';
         resumoRespBox.innerHTML = '<span class="text-slate-500 italic">Aguardando seleção do titular...</span>';
 
@@ -1923,17 +2403,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             fecharModal();
 
-            // Atualiza hidden e status
-            inputResponsavelId.value = data.responsavel.id;
-            nomeRespSelecionado.textContent = data.responsavel.nome + (data.responsavel.cpf ? ' (' + data.responsavel.cpf + ')' : '');
-            alertaRespSelecionado.classList.remove('hidden');
-
-            // Atualiza Resumo Lateral
-            resumoRespBox.innerHTML = `
-                <div class="font-bold text-slate-800">${data.responsavel.nome}</div>
-                <div class="text-[11px] text-slate-500">${data.responsavel.cpf ? 'CPF: ' + data.responsavel.cpf : 'Sem CPF'} • ${dados.parentesco || 'Responsável'}</div>
-            `;
-
             // Atualiza cache local
             const item = responsaveisCache.find(r => (r.pessoa_id && r.pessoa_id == dados.pessoa_id) || r.nome == dados.nome);
             if (item) {
@@ -1944,17 +2413,34 @@ document.addEventListener('DOMContentLoaded', function () {
                 item.cadastro_completo = true;
             }
 
-            // Atualiza Stepper: Passo 2 Concluído, Passo 3 Ativo
-            stepInd2.className = 'step-item completed';
-            stepCircle2.className = 'step-circle done';
-            stepCircle2.innerHTML = '✓';
-            stepLabel2.textContent = data.responsavel.nome;
+            if (inputAplicarRateio && inputAplicarRateio.value === '1') {
+                popularSelectsRateio();
+                verificarStatusCadastralRateio();
+                atualizarSimulacaoRateio();
+            } else {
+                // Atualiza hidden e status
+                inputResponsavelId.value = data.responsavel.id;
+                nomeRespSelecionado.textContent = data.responsavel.nome + (data.responsavel.cpf ? ' (' + data.responsavel.cpf + ')' : '');
+                alertaRespSelecionado.classList.remove('hidden');
 
-            stepInd3.className = 'step-item active';
-            stepCircle3.className = 'step-circle current';
+                // Atualiza Resumo Lateral
+                resumoRespBox.innerHTML = `
+                    <div class="font-bold text-slate-800">${data.responsavel.nome}</div>
+                    <div class="text-[11px] text-slate-500">${data.responsavel.cpf ? 'CPF: ' + data.responsavel.cpf : 'Sem CPF'} • ${dados.parentesco || 'Responsável'}</div>
+                `;
 
-            renderizarTabelaResponsaveis();
-            atualizarSimulacao();
+                // Atualiza Stepper: Passo 2 Concluído, Passo 3 Ativo
+                stepInd2.className = 'step-item completed';
+                stepCircle2.className = 'step-circle done';
+                stepCircle2.innerHTML = '✓';
+                stepLabel2.textContent = data.responsavel.nome;
+
+                stepInd3.className = 'step-item active';
+                stepCircle3.className = 'step-circle current';
+
+                renderizarTabelaResponsaveis();
+                atualizarSimulacao();
+            }
         })
         .catch(err => {
             btnSalvar.disabled = false;
@@ -1977,6 +2463,70 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             alert('Nenhuma matrícula ativa selecionada para este aluno.');
             return false;
+        }
+
+        const isRateio = inputAplicarRateio && inputAplicarRateio.value === '1';
+
+        if (isRateio) {
+            const idx0 = parseInt(rateioSelectResp0.value);
+            const idx1 = parseInt(rateioSelectResp1.value);
+
+            if (isNaN(idx0) || isNaN(idx1) || idx0 === idx1) {
+                e.preventDefault();
+                alert('Para aplicar o Rateio, você deve selecionar dois responsáveis diferentes.');
+                rateioSelectResp1.focus();
+                return false;
+            }
+
+            const resp0 = responsaveisCache[idx0];
+            const resp1 = responsaveisCache[idx1];
+
+            if (!resp0 || !resp1) {
+                e.preventDefault();
+                alert('Responsáveis inválidos selecionados para o rateio.');
+                return false;
+            }
+
+            const p0 = parseFloat(rateioInputPct0.value) || 0;
+            const p1 = parseFloat(rateioInputPct1.value) || 0;
+            if (Math.abs((p0 + p1) - 100) > 0.01) {
+                e.preventDefault();
+                alert('A soma das porcentagens de rateio deve ser exatamente 100,00% (atualmente: ' + (p0 + p1).toFixed(2) + '%).');
+                rateioInputPct0.focus();
+                return false;
+            }
+
+            if (!resp0.responsavel_financeiro_id || !resp0.cpf) {
+                e.preventDefault();
+                alert(`O responsável 1 (${resp0.nome}) não possui cadastro financeiro completo ou CPF. Por favor, clique em "Completar Cadastro" antes de emitir o contrato.`);
+                abrirModalComplemento(resp0);
+                return false;
+            }
+
+            if (!resp1.responsavel_financeiro_id || !resp1.cpf) {
+                e.preventDefault();
+                alert(`O responsável 2 (${resp1.nome}) não possui cadastro financeiro completo ou CPF. Por favor, clique em "Completar Cadastro" antes de emitir o contrato.`);
+                abrirModalComplemento(resp1);
+                return false;
+            }
+
+            // Sincroniza inputs hidden para envio ao backend
+            inputResponsavelId.value = resp0.responsavel_financeiro_id;
+            inputRateio0Id.value = resp0.responsavel_financeiro_id;
+            inputRateio0Pct.value = p0.toFixed(2);
+            inputRateio0Forma.value = rateioSelectForma0.value;
+            inputRateio0Venc.value = rateioSelectVenc0.value;
+
+            inputRateio1Id.value = resp1.responsavel_financeiro_id;
+            inputRateio1Pct.value = p1.toFixed(2);
+            inputRateio1Forma.value = rateioSelectForma1.value;
+            inputRateio1Venc.value = rateioSelectVenc1.value;
+        } else {
+            if (!inputResponsavelId.value) {
+                e.preventDefault();
+                alert('Selecione o responsável financeiro titular da cobrança no Passo 2.');
+                return false;
+            }
         }
 
         const btnSubmit = document.getElementById('btn_submit_contrato');

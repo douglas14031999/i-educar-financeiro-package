@@ -55,25 +55,7 @@ class AlunoResponsavel extends Model
      */
     public static function validarSomaRateio(int $alunoId, float $novoPercentual, ?int $ignorarVinculoId = null): bool
     {
-        if ($novoPercentual <= 0 || $novoPercentual > 100.00) {
-            throw new InvalidArgumentException('O percentual de rateio individual deve estar entre 0.01% e 100.00%.');
-        }
-
-        $query = static::where('aluno_id', $alunoId);
-
-        if ($ignorarVinculoId) {
-            $query->where('id', '!=', $ignorarVinculoId);
-        }
-
-        $somaExistente = (float) $query->sum('percentual_rateio');
-        $somaTotal = round($somaExistente + $novoPercentual, 2);
-
-        if ($somaTotal > 100.00) {
-            throw new InvalidArgumentException(
-                sprintf('A soma dos percentuais de rateio dos responsáveis pelo aluno não pode exceder 100.00%%. Total atual: %.2f%%.', $somaTotal)
-            );
-        }
-
+        // Rateio agora é flexível e definido na contratação por contrato
         return true;
     }
 }

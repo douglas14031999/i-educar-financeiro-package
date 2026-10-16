@@ -88,9 +88,12 @@ class CarneService
         usort($titulos, fn($a, $b) => strcmp((string) $a->data_vencimento, (string) $b->data_vencimento));
 
         return DB::transaction(function () use ($contrato, $titulos, $usuarioId) {
-            // Checagem de idempotência: se já existe carnê ativo com os mesmos títulos
+            $responsavelId = $titulos[0]->responsavel_financeiro_id ?: $contrato->responsavel_financeiro_id;
+
+            // Checagem de idempotência: se já existe carnê ativo com os mesmos títulos para este responsável
             $idsOrdenados = array_map(fn($t) => (int) $t->id, $titulos);
             $carneExistente = CarneGateway::where('contrato_id', $contrato->id)
+                ->where('responsavel_financeiro_id', $responsavelId)
                 ->where('status', 'ativo')
                 ->first();
 
@@ -127,7 +130,7 @@ class CarneService
             // 1. Cria o registro do carnê
             $carne = CarneGateway::create([
                 'contrato_id'               => $contrato->id,
-                'responsavel_financeiro_id' => $contrato->responsavel_financeiro_id,
+                'responsavel_financeiro_id' => $responsavelId,
                 'gateway'                   => 'asaas',
                 'installment_id'            => $installmentId,
                 'status'                    => 'ativo',

@@ -90,11 +90,23 @@ class ContratoController extends Controller
             'qtd_parcelas' => 'nullable|integer|min:1|max:24',
             'valor_total_descontos' => 'nullable|numeric|min:0',
             'forma_pagamento' => 'nullable|string|in:dinheiro,cartao_presencial,cartao_credito,pix,boleto,carne',
+            'aplicar_rateio' => 'nullable|boolean',
+            'rateio_responsaveis' => 'nullable|array',
+            'rateio_responsaveis.*.responsavel_id' => 'required_with:aplicar_rateio|integer',
+            'rateio_responsaveis.*.percentual' => 'required_with:aplicar_rateio|numeric|min:0.01|max:99.99',
+            'rateio_responsaveis.*.forma_pagamento' => 'required_with:aplicar_rateio|string|in:dinheiro,cartao_presencial,cartao_credito,pix,boleto,carne',
+            'rateio_responsaveis.*.dia_vencimento' => 'nullable|integer|min:1|max:31',
             'cartao_bandeira' => 'nullable|string|max:50',
             'cartao_nsu' => 'nullable|string|max:100',
             'cartao_tipo' => 'nullable|string|max:20',
             'cartao_parcelas' => 'nullable|integer|min:1|max:12',
         ]);
+
+        $aplicarRateio = $request->boolean('aplicar_rateio', false);
+        $validated['aplicar_rateio'] = $aplicarRateio;
+        if ($aplicarRateio && $request->filled('rateio_responsaveis')) {
+            $validated['rateio_responsaveis'] = $request->input('rateio_responsaveis');
+        }
 
         if ($request->filled('forma_pagamento')) {
             $validated['forma_pagamento'] = strtolower(trim((string) $request->input('forma_pagamento')));
