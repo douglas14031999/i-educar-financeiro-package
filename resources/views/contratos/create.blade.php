@@ -1,13 +1,13 @@
 @extends('financeiro::layouts.app')
 
-@section('title', 'Novo Contrato Financeiro')
+@section('title', 'Novo Contrato Financeiro Escolar')
 @section('module-style', 'padding: 0;')
 
 @push('styles')
     @include('financeiro::dashboard.styles')
     <style>
         .aluno-search-dropdown {
-            max-height: 280px;
+            max-height: 320px;
             overflow-y: auto;
             scrollbar-width: thin;
         }
@@ -26,6 +26,35 @@
             background-color: #47728f !important;
             color: #ffffff !important;
             border-color: #355972 !important;
+            font-weight: 700;
+        }
+        /* Radio cards de pagamento modernos */
+        .payment-radio-card {
+            position: relative;
+            cursor: pointer;
+            border: 1.5px solid #e2e8f0;
+            background-color: #ffffff;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 4px;
+        }
+        .payment-radio-card:hover {
+            border-color: #47728f;
+            box-shadow: 0 2px 8px rgba(71, 114, 143, 0.08);
+            transform: translateY(-1px);
+        }
+        .payment-radio-card.selected {
+            border-color: #47728f !important;
+            background-color: #f0f7fa !important;
+            box-shadow: 0 0 0 1px #47728f, 0 4px 12px rgba(71, 114, 143, 0.12) !important;
+        }
+        .payment-radio-card.selected .check-indicator {
+            background-color: #47728f !important;
+            border-color: #47728f !important;
+            color: #ffffff !important;
+        }
+        .sticky-summary-card {
+            position: sticky;
+            top: 24px;
         }
     </style>
 @endpush
@@ -37,14 +66,14 @@
         {{-- Cabeçalho Padrão i-Educar com Breadcrumb no Topo --}}
         @include('financeiro::partials.page-header', [
             'title' => 'Novo Contrato Financeiro Escolar',
-            'subtitle' => 'Busque o aluno no cadastro do i-Educar, vincule o responsável e gere a grade de títulos e mensalidades',
+            'subtitle' => 'Localize o aluno matriculado, defina o responsável financeiro e configure as condições de pagamento e parcelamento',
             'breadcrumbs' => [
                 ['label' => 'Contratos', 'url' => route('financeiro.contratos.index')],
                 ['label' => 'Novo Contrato']
             ],
             'actions' => '
-                <a href="' . route('financeiro.contratos.index') . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
-                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="' . route('financeiro.contratos.index') . '" class="inline-flex items-center gap-2 px-3.5 py-2 btn-ieducar-action btn-ieducar-outline text-xs md:text-sm" style="text-decoration: none;">
+                    <svg class="w-4 h-4 text-[#47728f]" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                     </svg>
                     Voltar para Contratos
@@ -52,294 +81,282 @@
             '
         ])
 
-        {{-- Formulário Principal em Card Design System --}}
-        <div class="bg-white shadow-xs border border-slate-200 overflow-hidden">
-            {{-- Topo do Card Petróleo #47728f --}}
-            <div class="bg-[#47728f] px-5 py-3.5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div class="flex items-center gap-2.5">
-                    <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                    </svg>
-                    <h2 class="text-sm font-semibold tracking-wide" style="margin: 0; color: white;">
-                        Emissão de Contrato Financeiro e Grade de Parcelas
-                    </h2>
+        {{-- Stepper de Progresso Operacional (4 Etapas) --}}
+        <div class="bg-white border border-slate-200 shadow-xs rounded-sm p-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {{-- Etapa 1 --}}
+                <div id="step_indicator_1" class="flex items-center gap-3 p-2.5 rounded-sm bg-[#f0f7fa] border border-[#47728f] transition">
+                    <div id="step_circle_1" class="w-7 h-7 rounded-full bg-[#47728f] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                        1
+                    </div>
+                    <div class="min-w-0">
+                        <span class="block text-[10px] font-bold uppercase tracking-wider text-[#47728f]">Passo 1</span>
+                        <span id="step_label_1" class="block text-xs font-semibold text-slate-900 truncate">Aluno & Matrícula</span>
+                    </div>
                 </div>
-                <span class="text-xs text-slate-200 flex items-center gap-1">
-                    <span class="text-amber-300 font-bold">*</span> Campos obrigatórios
-                </span>
-            </div>
 
-            {{-- Stepper Visual com Fluxo Operacional --}}
-            <div class="px-5 py-3 bg-slate-50 border-b border-slate-200">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {{-- Etapa 1 --}}
-                    <div id="step_indicator_1" class="flex items-center gap-3 p-2.5 rounded bg-white border border-[#47728f]/60 shadow-2xs transition">
-                        <div id="step_circle_1" class="w-7 h-7 rounded-full bg-[#47728f] text-white flex items-center justify-center font-bold text-xs shrink-0">
-                            1
-                        </div>
-                        <div class="min-w-0">
-                            <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Etapa 1</span>
-                            <span id="step_label_1" class="block text-xs font-semibold text-slate-900 truncate">Aluno & Matrícula</span>
-                        </div>
+                {{-- Etapa 2 --}}
+                <div id="step_indicator_2" class="flex items-center gap-3 p-2.5 rounded-sm bg-white border border-slate-200 transition opacity-80">
+                    <div id="step_circle_2" class="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
+                        2
                     </div>
-
-                    {{-- Etapa 2 --}}
-                    <div id="step_indicator_2" class="flex items-center gap-3 p-2.5 rounded bg-white border border-slate-200 shadow-2xs opacity-75 transition">
-                        <div id="step_circle_2" class="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
-                            2
-                        </div>
-                        <div class="min-w-0">
-                            <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Etapa 2</span>
-                            <span id="step_label_2" class="block text-xs font-semibold text-slate-600 truncate">Responsável Financeiro</span>
-                        </div>
+                    <div class="min-w-0">
+                        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Passo 2</span>
+                        <span id="step_label_2" class="block text-xs font-semibold text-slate-600 truncate">Responsável Financeiro</span>
                     </div>
+                </div>
 
-                    {{-- Etapa 3 --}}
-                    <div id="step_indicator_3" class="flex items-center gap-3 p-2.5 rounded bg-white border border-slate-200 shadow-2xs opacity-75 transition">
-                        <div id="step_circle_3" class="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
-                            3
-                        </div>
-                        <div class="min-w-0">
-                            <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Etapa 3</span>
-                            <span id="step_label_3" class="block text-xs font-semibold text-slate-600 truncate">Condições & Simulação</span>
-                        </div>
+                {{-- Etapa 3 --}}
+                <div id="step_indicator_3" class="flex items-center gap-3 p-2.5 rounded-sm bg-white border border-slate-200 transition opacity-80">
+                    <div id="step_circle_3" class="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
+                        3
+                    </div>
+                    <div class="min-w-0">
+                        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Passo 3</span>
+                        <span id="step_label_3" class="block text-xs font-semibold text-slate-600 truncate">Plano & Parcelas</span>
+                    </div>
+                </div>
+
+                {{-- Etapa 4 --}}
+                <div id="step_indicator_4" class="flex items-center gap-3 p-2.5 rounded-sm bg-white border border-slate-200 transition opacity-80">
+                    <div id="step_circle_4" class="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
+                        4
+                    </div>
+                    <div class="min-w-0">
+                        <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Passo 4</span>
+                        <span id="step_label_4" class="block text-xs font-semibold text-slate-600 truncate">Forma de Pagamento</span>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <form id="formcadastro" method="post" action="{{ route('financeiro.contratos.store') }}" class="p-5 md:p-6 space-y-6">
-                @csrf
+        {{-- FORMULÁRIO PRINCIPAL: LAYOUT EM 2 COLUNAS (FORMULÁRIO 8 COLS + RESUMO STICKY 4 COLS) --}}
+        <form id="formcadastro" method="post" action="{{ route('financeiro.contratos.store') }}" class="m-0 p-0">
+            @csrf
 
-                {{-- Campos Ocultos para Submissão do Contrato --}}
-                <input type="hidden" name="aluno_id" id="aluno_id" value="{{ old('aluno_id') }}" required>
-                <input type="hidden" name="matricula_id" id="matricula_id" value="{{ old('matricula_id') }}" required>
-                <input type="hidden" name="escola_id" id="escola_id" value="{{ old('escola_id') }}">
-                <input type="hidden" name="ano_letivo" id="ano_letivo" value="{{ old('ano_letivo', $anoAtual) }}" required>
-                <input type="hidden" name="responsavel_financeiro_id" id="responsavel_financeiro_id" value="{{ old('responsavel_financeiro_id') }}">
+            {{-- Campos Ocultos para Submissão do Contrato --}}
+            <input type="hidden" name="aluno_id" id="aluno_id" value="{{ old('aluno_id') }}" required>
+            <input type="hidden" name="matricula_id" id="matricula_id" value="{{ old('matricula_id') }}" required>
+            <input type="hidden" name="escola_id" id="escola_id" value="{{ old('escola_id') }}">
+            <input type="hidden" name="ano_letivo" id="ano_letivo" value="{{ old('ano_letivo', $anoAtual) }}" required>
+            <input type="hidden" name="responsavel_financeiro_id" id="responsavel_financeiro_id" value="{{ old('responsavel_financeiro_id') }}">
 
-                {{-- ========================================================================= --}}
-                {{-- SEÇÃO 1: BUSCA E IDENTIFICAÇÃO DO ALUNO (i-Educar)                         --}}
-                {{-- ========================================================================= --}}
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between pb-2 border-b border-slate-200">
-                        <div class="flex items-center gap-2.5">
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#47728f] text-white text-xs font-bold shadow-2xs">1</span>
-                            <div>
-                                <h3 class="text-xs md:text-sm font-bold text-slate-900 uppercase tracking-wider" style="margin: 0;">
-                                    Busca e Identificação do Aluno (Base i-Educar)
-                                </h3>
-                                <p class="text-xs text-slate-500" style="margin: 2px 0 0 0;">
-                                    Localize o aluno matriculado por nome completo, código ou CPF
-                                </p>
-                            </div>
-                        </div>
-                        <span class="hidden sm:inline-flex items-center gap-1 text-xs text-slate-500 font-medium">
-                            <svg class="w-3.5 h-3.5 text-[#47728f]" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                            </svg>
-                            Integração Acadêmica
-                        </span>
-                    </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                {{-- COLUNA PRINCIPAL (8 COLUNAS): ETAPAS DO FORMULÁRIO --}}
+                <div class="lg:col-span-8 space-y-6">
 
-                    {{-- Campo de Busca com Autocomplete --}}
-                    <div class="relative" id="bloco_busca_aluno">
-                        <label for="termo_busca_aluno" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                            Localizar Aluno no Banco de Dados <span class="text-rose-500">*</span>
-                        </label>
-                        <div class="relative flex items-center">
-                            {{-- Ícone de Lupa à Esquerda --}}
-                            <div class="absolute left-3.5 text-slate-400 pointer-events-none">
-                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                </svg>
-                            </div>
-
-                            <input type="text" 
-                                   id="termo_busca_aluno" 
-                                   placeholder="Digite o nome ou CPF do aluno para buscar automaticamente..." 
-                                   autocomplete="off"
-                                   class="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-[#47728f] focus:ring-1 focus:ring-[#47728f] transition shadow-2xs">
-
-                            {{-- Spinner de Carregamento --}}
-                            <div id="busca_spinner" class="absolute right-3.5 hidden text-[#47728f]">
-                                <svg class="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between text-[11px] text-slate-500 mt-1.5">
-                            <span>Dica: Digite ao menos 2 caracteres do primeiro nome, sobrenome ou números do CPF.</span>
-                            <span class="text-slate-400">Busca em tempo real</span>
-                        </div>
-
-                        {{-- Dropdown de Resultados da Busca --}}
-                        <div id="dropdown_resultados_aluno" class="aluno-search-dropdown absolute z-30 inset-x-0 mt-1 bg-white border border-slate-200 shadow-lg hidden">
-                            <ul id="lista_resultados_aluno" class="divide-y divide-slate-100 text-sm"></ul>
-                        </div>
-                    </div>
-
-                    {{-- Alerta Caso o Aluno Não Seja Encontrado --}}
-                    <div id="alerta_aluno_nao_encontrado" class="hidden p-4 bg-amber-50 border border-amber-200 text-amber-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-xl">⚠️</span>
-                            <div>
-                                <p class="text-xs font-bold uppercase tracking-wider text-amber-800 m-0">Aluno não encontrado no banco do i-Educar</p>
-                                <p class="text-xs text-amber-700 mt-0.5 m-0">Nenhum registro ativo foi localizado com o termo informado. Você pode cadastrá-lo como pessoa física agora.</p>
-                            </div>
-                        </div>
-                        <a href="/intranet/atendidos_cad.php" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 btn-ieducar-action btn-ieducar-blue text-xs whitespace-nowrap" style="text-decoration: none;">
-                            + Cadastrar Pessoa Física no i-Educar ↗
-                        </a>
-                    </div>
-
-                    {{-- Card de Resumo do Aluno Selecionado --}}
-                    <div id="card_aluno_selecionado" class="hidden bg-slate-50 border border-slate-200 p-4 relative overflow-hidden">
-                        <div class="absolute top-0 inset-x-0 h-1 bg-[#47728f]"></div>
-                        
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div class="flex items-start gap-3.5">
-                                <div class="w-12 h-12 bg-[#47728f] text-white font-bold flex items-center justify-center text-base shadow-2xs shrink-0">
-                                    <span id="aluno_avatar_iniciais">AL</span>
-                                </div>
-                                <div>
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <h4 id="aluno_nome_display" class="text-base font-bold text-slate-900 m-0">NOME DO ALUNO</h4>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-800">
-                                            Código: <strong id="aluno_cod_display" class="ml-1">#0000</strong>
-                                        </span>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                            ✓ Aluno Localizado
-                                        </span>
-                                    </div>
-                                    <div class="text-xs text-slate-600 mt-1.5 flex flex-wrap gap-x-5 gap-y-1">
-                                        <span>CPF: <strong id="aluno_cpf_display" class="text-slate-800 font-mono">000.000.000-00</strong></span>
-                                        <span>Data de Nascimento: <strong id="aluno_nasc_display" class="text-slate-800">--/--/----</strong></span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button type="button" id="btn_trocar_aluno" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-outline text-xs self-start md:self-center">
-                                <svg class="w-3.5 h-3.5 text-slate-500" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                </svg>
-                                ✕ Trocar Aluno
-                            </button>
-                        </div>
-
-                        {{-- Seletor de Matrícula Acadêmica --}}
-                        <div class="mt-4 pt-3.5 border-t border-slate-200">
-                            <label for="seletor_matricula_ativa" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                                Matrícula Acadêmica Vinculada <span class="text-rose-500">*</span>
-                            </label>
-                            <select id="seletor_matricula_ativa" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-xs md:text-sm focus:outline-none focus:border-[#47728f] focus:ring-1 focus:ring-[#47728f] transition shadow-2xs">
-                                {{-- Populado via JavaScript --}}
-                            </select>
-                            <p class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1" id="matricula_detalhes_helper">
-                                <svg class="w-3.5 h-3.5 text-[#47728f]" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                </svg>
-                                Seleciona automaticamente o curso regular principal da escola no ano letivo ativo.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- ========================================================================= --}}
-                {{-- SEÇÃO 2: RESPONSÁVEL FINANCEIRO IDENTIFICADO                               --}}
-                {{-- ========================================================================= --}}
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between pb-2 border-b border-slate-200">
-                        <div class="flex items-center gap-2.5">
-                            <span id="passo2_badge" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-200 text-slate-700 text-xs font-bold shadow-2xs">2</span>
-                            <div>
-                                <h3 class="text-xs md:text-sm font-bold text-slate-900 uppercase tracking-wider" style="margin: 0;">
-                                    Seleção do Responsável Financeiro
-                                </h3>
-                                <p class="text-xs text-slate-500" style="margin: 2px 0 0 0;">
-                                    Mãe, pai ou responsável legal cadastrado que assinará e receberá os títulos
-                                </p>
-                            </div>
-                        </div>
-                        <span class="text-xs text-slate-500">Titular da Cobrança</span>
-                    </div>
-
-                    {{-- Placeholder Informacional (quando nenhum aluno foi selecionado) --}}
-                    <div id="placeholder_sem_aluno" class="p-5 bg-slate-50 border border-dashed border-slate-300 text-center text-slate-500 flex flex-col items-center justify-center gap-1.5">
-                        <svg class="w-7 h-7 text-slate-400" width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                        </svg>
-                        <p class="text-xs font-semibold text-slate-700 m-0">Aguardando identificação do aluno na Etapa 1</p>
-                        <p class="text-[11px] text-slate-500 m-0 max-w-md">Ao selecionar o aluno, os responsáveis vinculados (mãe, pai ou responsável legal) serão listados aqui para seleção em um clique.</p>
-                    </div>
-
-                    {{-- Bloco de Responsáveis (Exibido após carregar o aluno) --}}
-                    <div id="bloco_responsaveis_secao" class="space-y-4 hidden">
-                        {{-- Feedback de quem está selecionado --}}
-                        <div id="alerta_responsavel_selecionado" class="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 hidden">
+                    {{-- ========================================================================= --}}
+                    {{-- ETAPA 1: ALUNO & MATRÍCULA NO I-EDUCAR                                     --}}
+                    {{-- ========================================================================= --}}
+                    <div class="bg-white border border-slate-200 shadow-xs rounded-sm overflow-hidden">
+                        {{-- Topo do Card com Azul Oficial do i-Educar --}}
+                        <div class="bg-[#47728f] px-5 py-3 text-white flex items-center justify-between">
                             <div class="flex items-center gap-2.5">
-                                <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">✓</span>
-                                <div>
-                                    <span class="text-emerald-900 font-bold">Responsável Titular Selecionado:</span>
-                                    <span id="nome_responsavel_selecionado" class="font-semibold text-emerald-800 ml-1">--</span>
-                                </div>
+                                <span class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">1</span>
+                                <h2 class="text-sm font-bold tracking-wide" style="margin: 0; color: white;">
+                                    Aluno & Matrícula Acadêmica
+                                </h2>
                             </div>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                Titular Definido
+                            <span class="text-xs text-slate-200 flex items-center gap-1">
+                                <span class="text-amber-300 font-bold">*</span> Obrigatório
                             </span>
                         </div>
 
-                        {{-- Tabela / Lista de Responsáveis Disponíveis no i-Educar --}}
-                        <div class="bg-white border border-slate-200 overflow-hidden shadow-2xs">
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left text-xs divide-y divide-slate-200 m-0">
-                                    <thead class="bg-slate-100/90 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                                        <tr>
-                                            <th class="py-3 px-4">Vínculo / Parentesco</th>
-                                            <th class="py-3 px-4">Nome Completo</th>
-                                            <th class="py-3 px-4">CPF</th>
-                                            <th class="py-3 px-4">Telefone</th>
-                                            <th class="py-3 px-4 text-center">Status Financeiro</th>
-                                            <th class="py-3 px-4 text-right">Ação</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tabela_responsaveis_corpo" class="divide-y divide-slate-100 bg-white">
-                                        {{-- Preenchido via AJAX com base no aluno selecionado --}}
-                                    </tbody>
-                                </table>
+                        <div class="p-5 md:p-6 space-y-4">
+                            {{-- Campo de Busca com Autocomplete Integrado --}}
+                            <div id="bloco_busca_aluno" class="relative">
+                                <label for="termo_busca_aluno" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                                    Localizar Aluno Matriculado (Base Oficial i-Educar) <span class="text-rose-500">*</span>
+                                </label>
+                                
+                                <div class="relative flex items-center">
+                                    <div class="absolute left-3.5 text-slate-400 pointer-events-none">
+                                        <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                        </svg>
+                                    </div>
+
+                                    <input type="text" 
+                                           id="termo_busca_aluno" 
+                                           placeholder="Digite ao menos 2 letras do nome ou dígitos do CPF do aluno..." 
+                                           autocomplete="off"
+                                           class="w-full pl-11 pr-11 py-3 bg-white border border-slate-300 text-slate-800 text-sm rounded-sm focus:outline-none focus:border-[#47728f] focus:ring-2 focus:ring-[#47728f]/20 transition shadow-2xs">
+
+                                    {{-- Spinner de Carregamento --}}
+                                    <div id="busca_spinner" class="absolute right-3.5 hidden text-[#47728f]">
+                                        <svg class="animate-spin w-5 h-5" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between text-[11px] text-slate-500 mt-2">
+                                    <span class="flex items-center gap-1 text-slate-600">
+                                        <svg class="w-3.5 h-3.5 text-[#47728f]" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                        </svg>
+                                        Dica: Busca instantânea conectada aos registros do ano letivo {{ $anoAtual }}.
+                                    </span>
+                                    <span class="text-slate-400 font-mono text-[10px]">API i-Educar</span>
+                                </div>
+
+                                {{-- Dropdown de Resultados da Busca --}}
+                                <div id="dropdown_resultados_aluno" class="aluno-search-dropdown absolute z-30 inset-x-0 mt-1 bg-white border border-slate-200 shadow-xl rounded-sm hidden">
+                                    <ul id="lista_resultados_aluno" class="divide-y divide-slate-100 text-sm"></ul>
+                                </div>
+                            </div>
+
+                            {{-- Alerta Caso o Aluno Não Seja Encontrado --}}
+                            <div id="alerta_aluno_nao_encontrado" class="hidden p-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xl">⚠️</span>
+                                    <div>
+                                        <p class="text-xs font-bold uppercase tracking-wider text-amber-800 m-0">Nenhum aluno localizado</p>
+                                        <p class="text-xs text-amber-700 mt-0.5 m-0">Verifique a grafia do nome ou o CPF. Caso seja um novo cadastro, registre-o no i-Educar.</p>
+                                    </div>
+                                </div>
+                                <a href="/intranet/atendidos_cad.php" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 btn-ieducar-action btn-ieducar-blue text-xs whitespace-nowrap" style="text-decoration: none;">
+                                    + Cadastrar Aluno no i-Educar ↗
+                                </a>
+                            </div>
+
+                            {{-- Card de Aluno Selecionado (Exibido com destaque) --}}
+                            <div id="card_aluno_selecionado" class="hidden bg-[#f0f7fa] border border-[#47728f]/40 p-4 md:p-5 rounded-sm relative overflow-hidden">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-14 h-14 bg-[#47728f] text-white font-bold flex items-center justify-center text-lg rounded-sm shadow-xs shrink-0">
+                                            <span id="aluno_avatar_iniciais">AL</span>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <h3 id="aluno_nome_display" class="text-base font-bold text-slate-900 m-0">NOME DO ALUNO</h3>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                                    ✓ Aluno Identificado
+                                                </span>
+                                            </div>
+                                            <div class="text-xs text-slate-600 mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+                                                <span>Código: <strong id="aluno_cod_display" class="text-slate-800">#0000</strong></span>
+                                                <span>CPF: <strong id="aluno_cpf_display" class="text-slate-800 font-mono">000.000.000-00</strong></span>
+                                                <span>Nascimento: <strong id="aluno_nasc_display" class="text-slate-800">--/--/----</strong></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button type="button" id="btn_trocar_aluno" class="inline-flex items-center gap-1.5 px-3 py-1.5 btn-ieducar-action btn-ieducar-outline text-xs self-start sm:self-center">
+                                        <svg class="w-3.5 h-3.5 text-slate-500" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                        </svg>
+                                        Alterar Aluno
+                                    </button>
+                                </div>
+
+                                {{-- Seletor da Matrícula do Aluno --}}
+                                <div class="mt-4 pt-4 border-t border-[#47728f]/20">
+                                    <label for="seletor_matricula_ativa" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                        Matrícula Acadêmica e Turma Vinculada <span class="text-rose-500">*</span>
+                                    </label>
+                                    <select id="seletor_matricula_ativa" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 text-slate-800 text-xs md:text-sm rounded-sm focus:outline-none focus:border-[#47728f] focus:ring-1 focus:ring-[#47728f] transition shadow-2xs font-medium">
+                                        {{-- Populado dinamicamente via JS --}}
+                                    </select>
+                                    <p class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1" id="matricula_detalhes_helper">
+                                        <svg class="w-3.5 h-3.5 text-[#47728f]" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                        </svg>
+                                        Os títulos e cobranças serão vinculados a esta matrícula e escola no ano letivo ativo.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {{-- ========================================================================= --}}
-                {{-- SEÇÃO 3: PLANO DE COBRANÇA, CONDIÇÕES E SIMULAÇÃO FINANCEIRA               --}}
-                {{-- ========================================================================= --}}
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between pb-2 border-b border-slate-200">
-                        <div class="flex items-center gap-2.5">
-                            <span id="passo3_badge" class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-200 text-slate-700 text-xs font-bold shadow-2xs">3</span>
-                            <div>
-                                <h3 class="text-xs md:text-sm font-bold text-slate-900 uppercase tracking-wider" style="margin: 0;">
+                    {{-- ========================================================================= --}}
+                    {{-- ETAPA 2: RESPONSÁVEL FINANCEIRO IDENTIFICADO                               --}}
+                    {{-- ========================================================================= --}}
+                    <div class="bg-white border border-slate-200 shadow-xs rounded-sm overflow-hidden">
+                        <div class="bg-[#47728f] px-5 py-3 text-white flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <span id="passo2_badge" class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">2</span>
+                                <h2 class="text-sm font-bold tracking-wide" style="margin: 0; color: white;">
+                                    Responsável Financeiro (Titular da Cobrança)
+                                </h2>
+                            </div>
+                            <span class="text-xs text-slate-200">Emissão de Boletos & Carnês</span>
+                        </div>
+
+                        <div class="p-5 md:p-6 space-y-4">
+                            {{-- Placeholder Inicial (quando nenhum aluno foi selecionado) --}}
+                            <div id="placeholder_sem_aluno" class="py-8 px-4 bg-slate-50 border border-dashed border-slate-300 rounded-sm text-center text-slate-500 flex flex-col items-center justify-center gap-2">
+                                <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                    <svg class="w-6 h-6" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                    </svg>
+                                </div>
+                                <p class="text-xs font-bold text-slate-700 m-0 uppercase tracking-wide">Aguardando identificação do aluno no Passo 1</p>
+                                <p class="text-xs text-slate-500 m-0 max-w-md">Ao selecionar o aluno acima, todos os responsáveis vinculados no i-Educar (mãe, pai ou responsável legal) serão listados aqui para seleção em 1 clique.</p>
+                            </div>
+
+                            {{-- Bloco com Tabela de Responsáveis --}}
+                            <div id="bloco_responsaveis_secao" class="space-y-4 hidden">
+                                {{-- Card de Confirmação do Responsável Selecionado --}}
+                                <div id="alerta_responsavel_selecionado" class="p-3.5 bg-emerald-50 border border-emerald-300 rounded-sm text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hidden">
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">✓</span>
+                                        <div>
+                                            <span class="text-emerald-950 font-bold">Titular da Cobrança Definido:</span>
+                                            <span id="nome_responsavel_selecionado" class="font-bold text-emerald-800 ml-1">--</span>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                        Vínculo Confirmado
+                                    </span>
+                                </div>
+
+                                {{-- Tabela de Responsáveis --}}
+                                <div class="bg-white border border-slate-200 overflow-hidden shadow-2xs rounded-sm">
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-left text-xs divide-y divide-slate-200 m-0">
+                                            <thead class="bg-slate-100/90 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                                <tr>
+                                                    <th class="py-3 px-4">Parentesco</th>
+                                                    <th class="py-3 px-4">Nome do Responsável</th>
+                                                    <th class="py-3 px-4">CPF</th>
+                                                    <th class="py-3 px-4">WhatsApp / Fone</th>
+                                                    <th class="py-3 px-4 text-center">Status Cadastral</th>
+                                                    <th class="py-3 px-4 text-right">Ação</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tabela_responsaveis_corpo" class="divide-y divide-slate-100 bg-white">
+                                                {{-- Populado via JS --}}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ========================================================================= --}}
+                    {{-- ETAPA 3: PLANO DE COBRANÇA E CONDIÇÕES COMERCIAIS                         --}}
+                    {{-- ========================================================================= --}}
+                    <div class="bg-white border border-slate-200 shadow-xs rounded-sm overflow-hidden">
+                        <div class="bg-[#47728f] px-5 py-3 text-white flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <span id="passo3_badge" class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">3</span>
+                                <h2 class="text-sm font-bold tracking-wide" style="margin: 0; color: white;">
                                     Plano de Cobrança e Condições Comerciais
-                                </h3>
-                                <p class="text-xs text-slate-500" style="margin: 2px 0 0 0;">
-                                    Tabela de anuidade, vencimento das parcelas e cálculo estimado da contratação
-                                </p>
+                                </h2>
                             </div>
+                            <span class="text-xs text-slate-200">Anuidade & Mensalidades</span>
                         </div>
-                        <span class="text-xs text-slate-500">Parâmetros Financeiros</span>
-                    </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                        {{-- Coluna 1: Campos do Formulário (7 Colunas) --}}
-                        <div class="lg:col-span-7 space-y-4">
+                        <div class="p-5 md:p-6 space-y-4">
                             <div>
-                                <label for="plano_id" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                <label for="plano_id" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                                     Plano de Pagamento / Anuidade <span class="text-rose-500">*</span>
                                 </label>
-                                <select name="plano_id" id="plano_id" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 text-slate-800 text-xs md:text-sm focus:outline-none focus:border-[#47728f] focus:ring-1 focus:ring-[#47728f] transition shadow-2xs">
+                                <select name="plano_id" id="plano_id" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 text-slate-800 text-xs md:text-sm rounded-sm focus:outline-none focus:border-[#47728f] focus:ring-2 focus:ring-[#47728f]/20 transition shadow-2xs font-semibold">
                                     <option value="">Selecione o plano configurado...</option>
                                     @foreach($planos as $plano)
                                         <option value="{{ $plano->id }}" 
@@ -347,291 +364,370 @@
                                                 data-parcelas="{{ $plano->qtd_parcelas }}" 
                                                 data-nome="{{ $plano->nome }}"
                                                 {{ old('plano_id') == $plano->id ? 'selected' : '' }}>
-                                            {{ $plano->nome }} — R$ {{ number_format($plano->valor_total, 2, ',', '.') }} ({{ $plano->qtd_parcelas }}x)
+                                            {{ $plano->nome }} — R$ {{ number_format($plano->valor_total, 2, ',', '.') }} ({{ $plano->qtd_parcelas }} parcelas)
                                         </option>
                                     @endforeach
                                 </select>
                                 <p class="text-[11px] text-slate-500 mt-1.5">
-                                    Define o valor total da anuidade, a quantidade de títulos e as regras de cobrança.
+                                    Determina o valor global da anuidade, a quantidade de títulos e os vencimentos.
                                 </p>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                                 <div>
-                                    <label for="dia_vencimento" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    <label for="dia_vencimento" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                                         Dia de Vencimento Mensal <span class="text-rose-500">*</span>
                                     </label>
-                                    <input type="number" name="dia_vencimento" id="dia_vencimento" min="1" max="31" value="{{ old('dia_vencimento', 10) }}" required class="w-full px-3.5 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-[#47728f] focus:ring-1 focus:ring-[#47728f] transition shadow-2xs">
+                                    <input type="number" name="dia_vencimento" id="dia_vencimento" min="1" max="31" value="{{ old('dia_vencimento', 10) }}" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 text-slate-800 text-sm rounded-sm focus:outline-none focus:border-[#47728f] focus:ring-1 focus:ring-[#47728f] transition shadow-2xs font-bold">
                                     
                                     {{-- Botões de Atalho para o Dia de Vencimento --}}
                                     <div class="flex items-center gap-1.5 mt-2">
                                         <span class="text-[11px] text-slate-400">Atalhos:</span>
-                                        <button type="button" class="btn-dia-preset px-2 py-0.5 text-[11px] bg-slate-100 hover:bg-[#47728f] hover:text-white border border-slate-200 transition font-medium text-slate-700" data-dia="5">Dia 05</button>
-                                        <button type="button" class="btn-dia-preset px-2 py-0.5 text-[11px] bg-slate-100 hover:bg-[#47728f] hover:text-white border border-slate-200 transition font-medium text-slate-700 active" data-dia="10">Dia 10</button>
-                                        <button type="button" class="btn-dia-preset px-2 py-0.5 text-[11px] bg-slate-100 hover:bg-[#47728f] hover:text-white border border-slate-200 transition font-medium text-slate-700" data-dia="15">Dia 15</button>
-                                        <button type="button" class="btn-dia-preset px-2 py-0.5 text-[11px] bg-slate-100 hover:bg-[#47728f] hover:text-white border border-slate-200 transition font-medium text-slate-700" data-dia="20">Dia 20</button>
+                                        <button type="button" class="btn-dia-preset px-2.5 py-1 text-xs bg-slate-100 hover:bg-[#47728f] hover:text-white border border-slate-200 rounded-sm transition text-slate-700" data-dia="5">Dia 05</button>
+                                        <button type="button" class="btn-dia-preset px-2.5 py-1 text-xs bg-slate-100 hover:bg-[#47728f] hover:text-white border border-slate-200 rounded-sm transition text-slate-700 active" data-dia="10">Dia 10</button>
+                                        <button type="button" class="btn-dia-preset px-2.5 py-1 text-xs bg-slate-100 hover:bg-[#47728f] hover:text-white border border-slate-200 rounded-sm transition text-slate-700" data-dia="15">Dia 15</button>
+                                        <button type="button" class="btn-dia-preset px-2.5 py-1 text-xs bg-slate-100 hover:bg-[#47728f] hover:text-white border border-slate-200 rounded-sm transition text-slate-700" data-dia="20">Dia 20</button>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label for="valor_total_descontos" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    <label for="valor_total_descontos" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                                         Desconto Total Concedido (R$)
                                     </label>
                                     <div class="relative flex items-center">
-                                        <span class="absolute left-3 text-xs font-bold text-slate-400 pointer-events-none">R$</span>
-                                        <input type="number" name="valor_total_descontos" id="valor_total_descontos" step="0.01" min="0" value="{{ old('valor_total_descontos', '0.00') }}" class="w-full pl-9 pr-3.5 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-[#47728f] focus:ring-1 focus:ring-[#47728f] transition shadow-2xs">
+                                        <span class="absolute left-3.5 text-xs font-bold text-slate-400 pointer-events-none">R$</span>
+                                        <input type="number" name="valor_total_descontos" id="valor_total_descontos" step="0.01" min="0" value="{{ old('valor_total_descontos', '0.00') }}" class="w-full pl-10 pr-3.5 py-2.5 bg-white border border-slate-300 text-slate-800 text-sm rounded-sm focus:outline-none focus:border-[#47728f] focus:ring-1 focus:ring-[#47728f] transition shadow-2xs font-semibold">
                                     </div>
                                     <p class="text-[11px] text-slate-500 mt-1.5">
-                                        Bolsa escolar, convênio ou abatimento direto no contrato global.
+                                        Bolsa de estudos, convênio empresarial ou desconto comercial direto.
                                     </p>
                                 </div>
                             </div>
                         </div>
-
-                        {{-- Coluna 2: Card de Simulação e Resumo Financeiro (5 Colunas) --}}
-                        <div class="lg:col-span-5">
-                            <div class="bg-slate-50 border border-slate-200 shadow-xs relative overflow-hidden" id="card_resumo_simulacao">
-                                <div class="absolute top-0 inset-x-0 h-1 bg-[#47728f]"></div>
-                                
-                                <div class="p-3.5 border-b border-slate-200/80 flex items-center justify-between bg-slate-100/60">
-                                    <div class="flex items-center gap-2 text-slate-800">
-                                        <svg class="w-4 h-4 text-[#47728f]" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                        </svg>
-                                        <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Simulação do Contrato</span>
-                                    </div>
-                                    <span class="text-[10px] font-semibold uppercase px-2 py-0.5 bg-slate-200 text-slate-600">Tempo Real</span>
-                                </div>
-
-                                {{-- Corpo da Simulação --}}
-                                <div class="p-4 space-y-3">
-                                    <div id="simulacao_vazia" class="py-6 text-center text-slate-400">
-                                        <svg class="w-8 h-8 mx-auto text-slate-300 mb-2" width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                        </svg>
-                                        <p class="text-xs text-slate-500 m-0">Selecione o plano de pagamento para simular os valores e a grade de parcelas.</p>
-                                    </div>
-
-                                    <div id="simulacao_conteudo" class="space-y-2.5 hidden">
-                                        <div class="flex items-center justify-between text-xs text-slate-600">
-                                            <span>Valor Bruto do Plano:</span>
-                                            <span id="sim_valor_bruto" class="font-semibold text-slate-800">R$ 0,00</span>
-                                        </div>
-                                        <div class="flex items-center justify-between text-xs text-slate-600">
-                                            <span>Desconto Concedido:</span>
-                                            <span id="sim_valor_desconto" class="font-semibold text-rose-600">- R$ 0,00</span>
-                                        </div>
-                                        <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
-                                            <span class="text-xs font-bold uppercase text-slate-700">Valor Líquido Total:</span>
-                                            <span id="sim_valor_liquido" class="text-base font-bold text-slate-900">R$ 0,00</span>
-                                        </div>
-                                        <div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-none text-center">
-                                            <span class="block text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Grade de Parcelamento Prevista</span>
-                                            <span id="sim_grade_parcelas" class="block text-sm font-extrabold text-emerald-700 mt-0.5">--x de R$ --</span>
-                                        </div>
-                                        <div class="text-[11px] text-slate-500 flex items-center justify-between pt-1">
-                                            <span>Vencimento mensal:</span>
-                                            <span id="sim_dia_vencimento" class="font-semibold text-slate-700">Todo dia 10</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="p-2.5 bg-slate-100/70 border-t border-slate-200 text-[11px] text-slate-500 flex items-center gap-1.5">
-                                    <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                    </svg>
-                                    <span>Conformidade com a escola e ano letivo ativo.</span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
-                </div>
 
-                {{-- ========================================================================= --}}
-                {{-- SEÇÃO 4: FORMA DE PAGAMENTO E CHECKOUT DA MATRÍCULA                       --}}
-                {{-- ========================================================================= --}}
-                <div class="space-y-4 pt-4 border-t border-slate-200">
-                    <div class="flex items-center justify-between pb-2 border-b border-slate-200">
-                        <div class="flex items-center gap-2.5">
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#47728f] text-white text-xs font-bold shadow-2xs">4</span>
-                            <div>
-                                <h3 class="text-xs md:text-sm font-bold text-slate-900 uppercase tracking-wider" style="margin: 0;">
+                    {{-- ========================================================================= --}}
+                    {{-- ETAPA 4: FORMA DE PAGAMENTO E CHECKOUT DA MATRÍCULA                       --}}
+                    {{-- ========================================================================= --}}
+                    <div class="bg-white border border-slate-200 shadow-xs rounded-sm overflow-hidden">
+                        <div class="bg-[#47728f] px-5 py-3 text-white flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <span id="passo4_badge" class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">4</span>
+                                <h2 class="text-sm font-bold tracking-wide" style="margin: 0; color: white;">
                                     Condição de Pagamento e Checkout da Matrícula
-                                </h3>
-                                <p class="text-xs text-slate-500" style="margin: 2px 0 0 0;">
-                                    Escolha como o responsável quitará o contrato para automatizar a baixa e a emissão no Asaas
-                                </p>
+                                </h2>
+                            </div>
+                            <span class="text-xs text-emerald-200 font-semibold flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                </svg>
+                                6 Modalidades Integradas
+                            </span>
+                        </div>
+
+                        <div class="p-5 md:p-6 space-y-4">
+                            <p class="text-xs text-slate-600 m-0">
+                                Escolha a forma de quitação para automatizar a baixa no caixa da escola e a emissão dos títulos no gateway Asaas:
+                            </p>
+
+                            {{-- Grid das 6 Opções de Pagamento com Cards Modernos --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                                
+                                {{-- 1. Dinheiro à Vista --}}
+                                <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_dinheiro">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-9 h-9 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
+                                            <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="block text-xs font-bold text-slate-900">Dinheiro (À Vista)</span>
+                                                <input type="radio" name="forma_pagamento" value="dinheiro" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'dinheiro' ? 'checked' : '' }}>
+                                            </div>
+                                            <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Baixa imediata no caixa de balcão e recibo autenticado.</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                        <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Nasce Quitado</span>
+                                        <span class="text-[10px] text-slate-400">Balcão</span>
+                                    </div>
+                                </label>
+
+                                {{-- 2. Cartão Presencial (Maquininha POS) --}}
+                                <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_cartao_presencial">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-9 h-9 rounded-full bg-cyan-50 text-cyan-700 flex items-center justify-center shrink-0 border border-cyan-200">
+                                            <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="block text-xs font-bold text-slate-900">Cartão Presencial</span>
+                                                <input type="radio" name="forma_pagamento" value="cartao_presencial" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'cartao_presencial' ? 'checked' : '' }}>
+                                            </div>
+                                            <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Passado na maquininha física da escola (coleta NSU).</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                        <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Nasce Quitado</span>
+                                        <span class="text-[10px] text-slate-400">POS Escola</span>
+                                    </div>
+                                </label>
+
+                                {{-- 3. Cartão Online (Link Asaas até 12x) --}}
+                                <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_cartao_credito">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-9 h-9 rounded-full bg-blue-50 text-[#47728f] flex items-center justify-center shrink-0 border border-blue-200">
+                                            <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="block text-xs font-bold text-slate-900">Cartão Online (Link)</span>
+                                                <input type="radio" name="forma_pagamento" value="cartao_credito" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'cartao_credito' ? 'checked' : '' }}>
+                                            </div>
+                                            <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Link de crédito em até 12x com repasse de juros (5 dias úteis).</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                        <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Aguardando Webhook</span>
+                                        <span class="text-[10px] text-slate-400">Até 12x</span>
+                                    </div>
+                                </label>
+
+                                {{-- 4. PIX Instantâneo (Validade 24h) --}}
+                                <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_pix">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-9 h-9 rounded-full bg-teal-50 text-teal-700 flex items-center justify-center shrink-0 border border-teal-200">
+                                            <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="block text-xs font-bold text-slate-900">PIX Instantâneo (24h)</span>
+                                                <input type="radio" name="forma_pagamento" value="pix" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'pix' ? 'checked' : '' }}>
+                                            </div>
+                                            <span class="block text-[11px] text-slate-500 mt-1 leading-snug">QR Code dinâmico na tela com monitoramento em tempo real.</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                        <span class="text-[10px] font-bold text-teal-700 uppercase tracking-wider">Confirmação em 3s</span>
+                                        <span class="text-[10px] text-slate-400">24 Horas</span>
+                                    </div>
+                                </label>
+
+                                {{-- 5. Boleto Bancário (1x) --}}
+                                <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_boleto">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-9 h-9 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200">
+                                            <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="block text-xs font-bold text-slate-900">Boleto à Vista (1x)</span>
+                                                <input type="radio" name="forma_pagamento" value="boleto" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'boleto' ? 'checked' : '' }}>
+                                            </div>
+                                            <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Boleto único do Asaas com PDF e envio imediato no WhatsApp.</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                        <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Compensação D+1</span>
+                                        <span class="text-[10px] text-slate-400">À Vista</span>
+                                    </div>
+                                </label>
+
+                                {{-- 6. Carnê Escolar (2x a 12x) --}}
+                                <label class="payment-radio-card p-3.5 flex flex-col justify-between" id="card_pagto_carne">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-9 h-9 rounded-full bg-slate-100 text-[#47728f] flex items-center justify-center shrink-0 border border-slate-300">
+                                            <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="block text-xs font-bold text-slate-900">Carnê Escolar (Asaas)</span>
+                                                <input type="radio" name="forma_pagamento" value="carne" class="text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'carne' ? 'checked' : '' }}>
+                                            </div>
+                                            <span class="block text-[11px] text-slate-500 mt-1 leading-snug">Todas as mensalidades do ano em carnê PDF do Asaas.</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                        <span class="text-[10px] font-bold text-[#47728f] uppercase tracking-wider">Contrato Ativo</span>
+                                        <span class="text-[10px] text-slate-400">Parcelado</span>
+                                    </div>
+                                </label>
+
+                            </div>
+
+                            {{-- Bloco Condicional: Detalhes do Cartão Presencial (POS) --}}
+                            <div id="bloco_cartao_presencial_detalhes" class="p-4 bg-slate-50 border border-slate-200 rounded-sm space-y-3 hidden">
+                                <div class="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                    <svg class="w-4 h-4 text-[#47728f]" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                    </svg>
+                                    <span>Dados do Comprovante da Maquininha (POS)</span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Bandeira do Cartão</label>
+                                        <select name="cartao_bandeira" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
+                                            <option value="Visa">Visa</option>
+                                            <option value="Mastercard">Mastercard</option>
+                                            <option value="Elo">Elo</option>
+                                            <option value="Hipercard">Hipercard</option>
+                                            <option value="Amex">American Express</option>
+                                            <option value="Outra">Outra</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tipo de Operação</label>
+                                        <select name="cartao_tipo" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
+                                            <option value="credito_vista">Crédito à Vista</option>
+                                            <option value="debito">Débito</option>
+                                            <option value="credito_parcelado">Crédito Parcelado</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Código de Autorização / NSU</label>
+                                        <input type="text" name="cartao_nsu" placeholder="Ex: 082914" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Bloco Condicional: Detalhes do Cartão Online Link --}}
+                            <div id="bloco_cartao_credito_detalhes" class="p-4 bg-slate-50 border border-slate-200 rounded-sm space-y-2 hidden">
+                                <div class="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                    <svg class="w-4 h-4 text-[#47728f]" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                    </svg>
+                                    <span>Configuração do Link de Pagamento Asaas</span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Parcelamento Máximo Liberado</label>
+                                        <select name="cartao_parcelas" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
+                                            <option value="12" selected>Até 12x com repasse de juros ao pagador</option>
+                                            <option value="10">Até 10x com repasse de juros</option>
+                                            <option value="6">Até 6x com repasse de juros</option>
+                                            <option value="1">Apenas 1x (à vista no crédito)</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-center text-xs text-slate-500 pt-5">
+                                        <span>* Link gerado com validade de 5 dias úteis e repasse automático de taxas.</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <span class="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 font-semibold border border-emerald-200">
-                            Automação Integrada
-                        </span>
                     </div>
 
-                    {{-- Grid das 6 Opções de Pagamento --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                </div>
+
+                {{-- COLUNA LATERAL (4 COLUNAS): ESPELHO DO CONTRATO / STICKY SUMMARY EM TEMPO REAL --}}
+                <div class="lg:col-span-4 space-y-4">
+                    <div class="bg-white border border-slate-200 shadow-md rounded-sm overflow-hidden sticky-summary-card">
                         
-                        {{-- 1. Dinheiro à Vista --}}
-                        <label class="cursor-pointer border border-slate-200 p-3.5 bg-white hover:border-[#47728f] transition flex flex-col justify-between relative payment-option-card" id="card_pagto_dinheiro">
-                            <div class="flex items-start gap-3">
-                                <input type="radio" name="forma_pagamento" value="dinheiro" class="mt-1 text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'dinheiro' ? 'checked' : '' }}>
-                                <div>
-                                    <span class="block text-xs font-bold text-slate-900">💵 Dinheiro (À Vista)</span>
-                                    <span class="block text-[11px] text-slate-500 mt-1">Baixa imediata no caixa de balcão e emissão do Recibo Oficial.</span>
-                                </div>
+                        {{-- Topo do Resumo --}}
+                        <div class="bg-[#47728f] px-4 py-3 text-white flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                </svg>
+                                <span class="text-xs font-bold uppercase tracking-wider text-white">Espelho do Contrato</span>
                             </div>
-                            <span class="mt-2 text-[10px] font-bold text-emerald-700 uppercase">Nasce Quitado</span>
-                        </label>
-
-                        {{-- 2. Cartão Presencial (Maquininha POS) --}}
-                        <label class="cursor-pointer border border-slate-200 p-3.5 bg-white hover:border-[#47728f] transition flex flex-col justify-between relative payment-option-card" id="card_pagto_cartao_presencial">
-                            <div class="flex items-start gap-3">
-                                <input type="radio" name="forma_pagamento" value="cartao_presencial" class="mt-1 text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'cartao_presencial' ? 'checked' : '' }}>
-                                <div>
-                                    <span class="block text-xs font-bold text-slate-900">💳 Cartão Presencial (POS)</span>
-                                    <span class="block text-[11px] text-slate-500 mt-1">Passado na maquininha física da escola. Registra bandeira e NSU.</span>
-                                </div>
-                            </div>
-                            <span class="mt-2 text-[10px] font-bold text-emerald-700 uppercase">Nasce Quitado</span>
-                        </label>
-
-                        {{-- 3. Cartão Online (Link Asaas até 12x) --}}
-                        <label class="cursor-pointer border border-slate-200 p-3.5 bg-white hover:border-[#47728f] transition flex flex-col justify-between relative payment-option-card" id="card_pagto_cartao_credito">
-                            <div class="flex items-start gap-3">
-                                <input type="radio" name="forma_pagamento" value="cartao_credito" class="mt-1 text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'cartao_credito' ? 'checked' : '' }}>
-                                <div>
-                                    <span class="block text-xs font-bold text-slate-900">🌐 Cartão Online (Link Asaas)</span>
-                                    <span class="block text-[11px] text-slate-500 mt-1">Link de crédito em até 12x com repasse de juros (5 dias úteis).</span>
-                                </div>
-                            </div>
-                            <span class="mt-2 text-[10px] font-bold text-amber-600 uppercase">Aguardando Webhook</span>
-                        </label>
-
-                        {{-- 4. PIX Instantâneo (Validade 24h) --}}
-                        <label class="cursor-pointer border border-slate-200 p-3.5 bg-white hover:border-[#47728f] transition flex flex-col justify-between relative payment-option-card" id="card_pagto_pix">
-                            <div class="flex items-start gap-3">
-                                <input type="radio" name="forma_pagamento" value="pix" class="mt-1 text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'pix' ? 'checked' : '' }}>
-                                <div>
-                                    <span class="block text-xs font-bold text-slate-900">⚡ PIX Instantâneo (24h)</span>
-                                    <span class="block text-[11px] text-slate-500 mt-1">QR Code dinâmico na tela com monitoramento em tempo real.</span>
-                                </div>
-                            </div>
-                            <span class="mt-2 text-[10px] font-bold text-sky-700 uppercase">Confirmação em 3s</span>
-                        </label>
-
-                        {{-- 5. Boleto Bancário (1x) --}}
-                        <label class="cursor-pointer border border-slate-200 p-3.5 bg-white hover:border-[#47728f] transition flex flex-col justify-between relative payment-option-card" id="card_pagto_boleto">
-                            <div class="flex items-start gap-3">
-                                <input type="radio" name="forma_pagamento" value="boleto" class="mt-1 text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'boleto' ? 'checked' : '' }}>
-                                <div>
-                                    <span class="block text-xs font-bold text-slate-900">📄 Boleto Bancário (1x)</span>
-                                    <span class="block text-[11px] text-slate-500 mt-1">Boleto único do Asaas com PDF e envio imediato no WhatsApp.</span>
-                                </div>
-                            </div>
-                            <span class="mt-2 text-[10px] font-bold text-amber-600 uppercase">Compensação D+1</span>
-                        </label>
-
-                        {{-- 6. Carnê Escolar (2x a 12x) --}}
-                        <label class="cursor-pointer border border-slate-200 p-3.5 bg-white hover:border-[#47728f] transition flex flex-col justify-between relative payment-option-card" id="card_pagto_carne">
-                            <div class="flex items-start gap-3">
-                                <input type="radio" name="forma_pagamento" value="carne" class="mt-1 text-[#47728f] focus:ring-[#47728f]" {{ old('forma_pagamento') == 'carne' ? 'checked' : '' }}>
-                                <div>
-                                    <span class="block text-xs font-bold text-slate-900">📚 Carnê Escolar (Asaas)</span>
-                                    <span class="block text-[11px] text-slate-500 mt-1">Todas as mensalidades do ano com PDF completo de carnê do Asaas.</span>
-                                </div>
-                            </div>
-                            <span class="mt-2 text-[10px] font-bold text-blue-700 uppercase">Contrato Ativo</span>
-                        </label>
-
-                    </div>
-
-                    {{-- Bloco Condicional: Detalhes do Cartão Presencial (POS) --}}
-                    <div id="bloco_cartao_presencial_detalhes" class="p-4 bg-slate-50 border border-slate-200 space-y-3 hidden">
-                        <div class="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
-                            <svg class="w-4 h-4 text-[#47728f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                            </svg>
-                            <span>Dados do Comprovante da Maquininha (POS)</span>
+                            <span class="text-[10px] font-bold uppercase px-2 py-0.5 bg-white/20 text-white rounded-full">Resumo em Tempo Real</span>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Bandeira do Cartão</label>
-                                <select name="cartao_bandeira" class="w-full text-xs p-2 bg-white border border-slate-300">
-                                    <option value="Visa">Visa</option>
-                                    <option value="Mastercard">Mastercard</option>
-                                    <option value="Elo">Elo</option>
-                                    <option value="Hipercard">Hipercard</option>
-                                    <option value="Amex">American Express</option>
-                                    <option value="Outra">Outra</option>
-                                </select>
+
+                        <div class="p-4 space-y-4 text-xs">
+
+                            {{-- Resumo Aluno --}}
+                            <div class="pb-3 border-b border-slate-100">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Aluno Matriculado</span>
+                                <div id="resumo_aluno_box" class="text-slate-500 italic">
+                                    Aguardando identificação no Passo 1...
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tipo de Operação</label>
-                                <select name="cartao_tipo" class="w-full text-xs p-2 bg-white border border-slate-300">
-                                    <option value="credito_vista">Crédito à Vista</option>
-                                    <option value="debito">Débito</option>
-                                    <option value="credito_parcelado">Crédito Parcelado</option>
-                                </select>
+
+                            {{-- Resumo Responsável --}}
+                            <div class="pb-3 border-b border-slate-100">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Responsável Financeiro</span>
+                                <div id="resumo_resp_box" class="text-slate-500 italic">
+                                    Aguardando seleção do titular...
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Código de Autorização / NSU</label>
-                                <input type="text" name="cartao_nsu" placeholder="Ex: 082914" class="w-full text-xs p-2 bg-white border border-slate-300">
+
+                            {{-- Resumo Financeiro --}}
+                            <div class="space-y-2">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Valores do Contrato</span>
+                                
+                                <div class="flex items-center justify-between text-slate-600">
+                                    <span>Valor Bruto:</span>
+                                    <span id="sim_valor_bruto" class="font-semibold text-slate-800">R$ 0,00</span>
+                                </div>
+
+                                <div class="flex items-center justify-between text-slate-600">
+                                    <span>Desconto Concedido:</span>
+                                    <span id="sim_valor_desconto" class="font-semibold text-rose-600">- R$ 0,00</span>
+                                </div>
+
+                                <div class="pt-2 border-t border-slate-200 flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-800 uppercase">Valor Líquido:</span>
+                                    <span id="sim_valor_liquido" class="text-xl font-bold text-slate-900">R$ 0,00</span>
+                                </div>
+
+                                <div class="p-3 bg-[#f0f7fa] border border-[#47728f]/30 rounded-sm text-center">
+                                    <span class="block text-[10px] font-bold text-[#47728f] uppercase tracking-wider">Grade de Parcelamento</span>
+                                    <span id="sim_grade_parcelas" class="block text-sm font-extrabold text-[#47728f] mt-0.5">Selecione o plano</span>
+                                    <span id="sim_dia_vencimento" class="block text-[11px] text-slate-500 mt-0.5">Vencimento todo dia 10</span>
+                                </div>
                             </div>
+
+                            {{-- Resumo Forma de Pagamento --}}
+                            <div class="pt-2 border-t border-slate-100">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Modalidade Escolhida</span>
+                                <div id="resumo_forma_pagamento" class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm flex items-center justify-between">
+                                    <span class="font-bold text-slate-800" id="resumo_forma_label">Não selecionada</span>
+                                    <span class="text-[10px] font-semibold text-slate-500" id="resumo_forma_badge">--</span>
+                                </div>
+                            </div>
+
+                            {{-- Botões Oficiais i-Educar de Ação --}}
+                            <div class="pt-3 border-t border-slate-200 space-y-2">
+                                <button type="submit" id="btn_submit_contrato" class="w-full inline-flex items-center justify-center gap-2 py-3 px-4 btn-ieducar-action btn-ieducar-green text-sm font-bold shadow-sm">
+                                    <svg class="w-4 h-4 text-white" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                    </svg>
+                                    <span>Emitir Contrato e Gerar Parcelas</span>
+                                </button>
+
+                                <a href="{{ route('financeiro.contratos.index') }}" class="w-full block text-center py-2 px-3 btn-ieducar-action btn-ieducar-outline text-xs" style="text-decoration: none;">
+                                    Cancelar Operação
+                                </a>
+                            </div>
+
+                            <div class="p-2 bg-slate-50 text-[11px] text-slate-500 rounded-sm flex items-center gap-1.5 border border-slate-200">
+                                <svg class="w-4 h-4 text-emerald-600 shrink-0" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                </svg>
+                                <span>Operação registrada no ano letivo ativo {{ $anoAtual }}.</span>
+                            </div>
+
                         </div>
-                    </div>
-
-                    {{-- Bloco Condicional: Detalhes do Cartão Online Link --}}
-                    <div id="bloco_cartao_credito_detalhes" class="p-4 bg-slate-50 border border-slate-200 space-y-2 hidden">
-                        <div class="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
-                            <span>Configuração do Link Asaas</span>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Parcelamento Máximo Liberado</label>
-                                <select name="cartao_parcelas" class="w-full text-xs p-2 bg-white border border-slate-300">
-                                    <option value="12" selected>Até 12x com repasse de juros</option>
-                                    <option value="10">Até 10x com repasse de juros</option>
-                                    <option value="6">Até 6x com repasse de juros</option>
-                                    <option value="1">Apenas 1x (à vista no crédito)</option>
-                                </select>
-                            </div>
-                            <div class="flex items-center text-xs text-slate-500 pt-5">
-                                <span>* Link gerado com validade de 5 dias úteis e repasse automático de taxas para o cliente.</span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                {{-- ========================================================================= --}}
-                {{-- AÇÕES DO FORMULÁRIO (RODAPÉ)                                              --}}
-                {{-- ========================================================================= --}}
-
-                <div class="pt-5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div class="flex items-center gap-2 text-xs text-slate-500">
-                        <span class="text-rose-500 font-bold">*</span>
-                        <span>Campos de preenchimento obrigatório para a emissão do contrato.</span>
-                    </div>
-
-                    <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
-                        <a href="{{ route('financeiro.contratos.index') }}" class="w-full sm:w-auto text-center px-4 py-2.5 btn-ieducar-action btn-ieducar-outline text-xs md:text-sm" style="text-decoration: none;">
-                            Cancelar
-                        </a>
-                        <button type="submit" id="btn_submit_contrato" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-ieducar-action btn-ieducar-green text-xs md:text-sm font-semibold shadow-xs">
-                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                            </svg>
-                            <span>Emitir Contrato e Gerar Parcelas</span>
-                        </button>
                     </div>
                 </div>
 
-            </form>
-        </div>
+            </div>
+        </form>
 
     </main>
 </div>
-
 
 {{-- MODAL CADASTRO RÁPIDO DE RESPONSÁVEL — Design System Oficial --}}
 <div id="modal_complemento_responsavel"
@@ -825,8 +921,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const stepCircle3 = document.getElementById('step_circle_3');
     const stepLabel3 = document.getElementById('step_label_3');
     const stepInd3 = document.getElementById('step_indicator_3');
+    const stepCircle4 = document.getElementById('step_circle_4');
+    const stepLabel4 = document.getElementById('step_label_4');
+    const stepInd4 = document.getElementById('step_indicator_4');
     const passo2Badge = document.getElementById('passo2_badge');
     const passo3Badge = document.getElementById('passo3_badge');
+    const passo4Badge = document.getElementById('passo4_badge');
+
+    // Resumo Lateral Elements
+    const resumoAlunoBox = document.getElementById('resumo_aluno_box');
+    const resumoRespBox = document.getElementById('resumo_resp_box');
+    const resumoFormaLabel = document.getElementById('resumo_forma_label');
+    const resumoFormaBadge = document.getElementById('resumo_forma_badge');
 
     // Inputs hidden do form principal
     const inputAlunoId = document.getElementById('aluno_id');
@@ -839,8 +945,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectPlano = document.getElementById('plano_id');
     const inputVencimento = document.getElementById('dia_vencimento');
     const inputDesconto = document.getElementById('valor_total_descontos');
-    const simVazia = document.getElementById('simulacao_vazia');
-    const simConteudo = document.getElementById('simulacao_conteudo');
     const simValorBruto = document.getElementById('sim_valor_bruto');
     const simValorDesconto = document.getElementById('sim_valor_desconto');
     const simValorLiquido = document.getElementById('sim_valor_liquido');
@@ -865,8 +969,10 @@ document.addEventListener('DOMContentLoaded', function () {
     function atualizarSimulacao() {
         const opt = selectPlano.selectedOptions[0];
         if (!opt || !opt.value) {
-            simVazia.classList.remove('hidden');
-            simConteudo.classList.add('hidden');
+            simValorBruto.textContent = 'R$ 0,00';
+            simValorDesconto.textContent = '- R$ 0,00';
+            simValorLiquido.textContent = 'R$ 0,00';
+            simGradeParcelas.textContent = 'Selecione o plano';
             return;
         }
 
@@ -881,10 +987,13 @@ document.addEventListener('DOMContentLoaded', function () {
         simValorDesconto.textContent = (desconto > 0 ? '- ' : '') + formatMoney(desconto);
         simValorLiquido.textContent = formatMoney(valorLiquido);
         simGradeParcelas.textContent = `${parcelas}x de ${formatMoney(valorParcela)}`;
-        simDiaVencimento.textContent = `Todo dia ${dia < 10 ? '0' + dia : dia} de cada mês`;
+        simDiaVencimento.textContent = `Vencimento todo dia ${dia < 10 ? '0' + dia : dia}`;
 
-        simVazia.classList.add('hidden');
-        simConteudo.classList.remove('hidden');
+        // Atualiza Stepper Etapa 3
+        stepCircle3.innerHTML = '✓';
+        stepCircle3.classList.remove('bg-slate-200', 'text-slate-700', 'bg-[#47728f]');
+        stepCircle3.classList.add('bg-emerald-600', 'text-white');
+        stepLabel3.textContent = `${parcelas}x de ${formatMoney(valorParcela)}`;
     }
 
     selectPlano.addEventListener('change', atualizarSimulacao);
@@ -930,15 +1039,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     alertaNaoEncontrado.classList.add('hidden');
                     alunos.forEach(aluno => {
                         const li = document.createElement('li');
-                        li.className = 'px-4 py-2.5 hover:bg-slate-50 cursor-pointer flex items-center justify-between border-b border-slate-100 last:border-0 transition';
+                        li.className = 'px-4 py-3 hover:bg-[#f0f7fa] cursor-pointer flex items-center justify-between border-b border-slate-100 last:border-0 transition';
                         li.innerHTML = `
                             <div>
                                 <div class="font-bold text-slate-800">${aluno.nome}</div>
-                                <div class="text-xs text-slate-500">
-                                    Código: #${aluno.id} ${aluno.cpf ? '• CPF: ' + aluno.cpf : ''} ${aluno.data_nascimento ? '• Nasc: ' + aluno.data_nascimento : ''}
+                                <div class="text-xs text-slate-500 mt-0.5">
+                                    Código: <strong class="text-slate-700">#${aluno.id}</strong> ${aluno.cpf ? '• CPF: ' + aluno.cpf : ''} ${aluno.data_nascimento ? '• Nasc: ' + aluno.data_nascimento : ''}
                                 </div>
                             </div>
-                            <span class="text-xs font-semibold text-[#47728f] hover:underline flex items-center gap-1">Selecionar →</span>
+                            <span class="text-xs font-bold text-[#47728f] bg-white border border-[#47728f]/40 px-2.5 py-1 rounded-sm shadow-2xs">Selecionar →</span>
                         `;
                         li.addEventListener('click', () => carregarDetalhesAluno(aluno.id));
                         listaResultados.appendChild(li);
@@ -992,7 +1101,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const iniciais = (partesNome[0][0] + (partesNome.length > 1 ? partesNome[partesNome.length - 1][0] : '')).toUpperCase();
             document.getElementById('aluno_avatar_iniciais').textContent = iniciais;
 
-            // Popula seletor de matrículas (Opção A)
+            // Atualiza Resumo Lateral
+            resumoAlunoBox.innerHTML = `
+                <div class="font-bold text-slate-800">${aluno.nome}</div>
+                <div class="text-[11px] text-slate-500">Matrícula: #${aluno.id} ${aluno.cpf ? '• ' + aluno.cpf : ''}</div>
+            `;
+
+            // Popula seletor de matrículas
             seletorMatricula.innerHTML = '';
             if (matriculasCache.length === 0) {
                 seletorMatricula.innerHTML = '<option value="">Nenhuma matrícula ativa localizada para este aluno</option>';
@@ -1024,10 +1139,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             stepCircle2.classList.remove('bg-slate-200', 'text-slate-700');
             stepCircle2.classList.add('bg-[#47728f]', 'text-white');
-            stepInd2.classList.remove('opacity-75');
-            stepInd2.classList.add('border-[#47728f]/60');
-            passo2Badge.classList.remove('bg-slate-200', 'text-slate-700');
-            passo2Badge.classList.add('bg-[#47728f]', 'text-white');
+            stepInd2.classList.remove('opacity-80');
+            stepInd2.classList.add('border-[#47728f]');
+            passo2Badge.classList.remove('bg-white/20');
+            passo2Badge.classList.add('bg-white', 'text-[#47728f]');
 
             // Renderiza responsáveis
             placeholderSemAluno.classList.add('hidden');
@@ -1069,6 +1184,8 @@ document.addEventListener('DOMContentLoaded', function () {
         termoInput.value = '';
         termoInput.focus();
         alertaRespSelecionado.classList.add('hidden');
+        resumoAlunoBox.innerHTML = '<span class="text-slate-500 italic">Aguardando identificação no Passo 1...</span>';
+        resumoRespBox.innerHTML = '<span class="text-slate-500 italic">Aguardando seleção do titular...</span>';
 
         // Reset Stepper
         stepCircle1.innerHTML = '1';
@@ -1078,10 +1195,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         stepCircle2.classList.add('bg-slate-200', 'text-slate-700');
         stepCircle2.classList.remove('bg-[#47728f]', 'text-white', 'bg-emerald-600');
-        stepInd2.classList.add('opacity-75');
-        stepInd2.classList.remove('border-[#47728f]/60');
-        passo2Badge.classList.add('bg-slate-200', 'text-slate-700');
-        passo2Badge.classList.remove('bg-[#47728f]', 'text-white', 'bg-emerald-600');
+        stepInd2.classList.add('opacity-80');
+        stepInd2.classList.remove('border-[#47728f]');
+        passo2Badge.classList.add('bg-white/20');
+        passo2Badge.classList.remove('bg-white', 'text-[#47728f]');
         stepLabel2.textContent = 'Responsável Financeiro';
     });
 
@@ -1092,8 +1209,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (responsaveisCache.length === 0) {
             tabelaResponsaveisCorpo.innerHTML = `
                 <tr>
-                    <td colspan="6" class="p-4 text-center text-slate-500">
-                        Nenhum responsável identificado no cadastro desta matrícula.
+                    <td colspan="6" class="p-6 text-center text-slate-500">
+                        Nenhum responsável vinculado localizado no cadastro desta matrícula.
                     </td>
                 </tr>
             `;
@@ -1110,39 +1227,39 @@ document.addEventListener('DOMContentLoaded', function () {
             let botaoAcao = '';
 
             if (ehSelecionado) {
-                statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">✓ Titular Selecionado</span>';
-                botaoAcao = '<span class="text-xs font-bold text-emerald-600">✓ Selecionado</span>';
+                statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold">✓ Titular Selecionado</span>';
+                botaoAcao = '<span class="text-xs font-bold text-emerald-700">✓ Titular Ativo</span>';
             } else if (resp.ja_cadastrado_financeiro && resp.cadastro_completo) {
-                statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200 text-xs font-medium">Cadastrado no Financeiro</span>';
+                statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-blue-50 text-[#47728f] border border-blue-200 text-xs font-semibold">Pronto p/ Cobrança</span>';
                 botaoAcao = `
-                    <button type="button" class="btn-selecionar-resp px-3 py-1 btn-ieducar-action btn-ieducar-green text-xs" data-idx="${idx}">
-                        Selecionar Responsável
+                    <button type="button" class="btn-selecionar-resp px-3.5 py-1.5 btn-ieducar-action btn-ieducar-green text-xs font-semibold" data-idx="${idx}">
+                        Selecionar Titular
                     </button>
                 `;
             } else if (resp.cadastro_completo) {
-                statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium">Disponível no i-Educar</span>';
+                statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium">Disponível</span>';
                 botaoAcao = `
-                    <button type="button" class="btn-selecionar-resp px-3 py-1 btn-ieducar-action btn-ieducar-green text-xs" data-idx="${idx}">
-                        Selecionar e Vincular
+                    <button type="button" class="btn-selecionar-resp px-3.5 py-1.5 btn-ieducar-action btn-ieducar-green text-xs font-semibold" data-idx="${idx}">
+                        Vincular Titular
                     </button>
                 `;
             } else {
-                statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/70 text-xs font-medium">⚠️ Cadastro Incompleto</span>';
+                statusBadge = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-300 text-xs font-medium">⚠️ Dados Incompletos</span>';
                 botaoAcao = `
-                    <button type="button" class="btn-completar-resp px-3 py-1 btn-ieducar-action btn-ieducar-outline text-xs text-amber-700 border-amber-300" data-idx="${idx}">
-                        Completar Dados
+                    <button type="button" class="btn-completar-resp px-3.5 py-1.5 btn-ieducar-action btn-ieducar-outline text-xs text-amber-800 border-amber-300 font-semibold" data-idx="${idx}">
+                        Completar Cadastro
                     </button>
                 `;
             }
 
             tr.innerHTML = `
-                <td class="py-3 px-4 font-semibold text-slate-800">${resp.parentesco}</td>
+                <td class="py-3 px-4 font-bold text-slate-800">${resp.parentesco}</td>
                 <td class="py-3 px-4">
-                    <div class="font-medium text-slate-900">${resp.nome}</div>
+                    <div class="font-bold text-slate-900">${resp.nome}</div>
                     ${resp.email ? '<div class="text-[11px] text-slate-400">' + resp.email + '</div>' : ''}
                 </td>
-                <td class="py-3 px-4 text-slate-700 font-mono">${resp.cpf || '<span class="text-amber-600 font-sans">Não informado</span>'}</td>
-                <td class="py-3 px-4 text-slate-600">${resp.telefone_celular || '<span class="text-slate-400">--</span>'}</td>
+                <td class="py-3 px-4 text-slate-700 font-mono font-medium">${resp.cpf || '<span class="text-amber-600 font-sans text-xs">Não cadastrado</span>'}</td>
+                <td class="py-3 px-4 text-slate-600 font-medium">${resp.telefone_celular || '<span class="text-slate-400">--</span>'}</td>
                 <td class="py-3 px-4 text-center">${statusBadge}</td>
                 <td class="py-3 px-4 text-right whitespace-nowrap">${botaoAcao}</td>
             `;
@@ -1208,6 +1325,12 @@ document.addEventListener('DOMContentLoaded', function () {
             nomeRespSelecionado.textContent = data.responsavel.nome + (data.responsavel.cpf ? ' (' + data.responsavel.cpf + ')' : '');
             alertaRespSelecionado.classList.remove('hidden');
 
+            // Atualiza Resumo Lateral
+            resumoRespBox.innerHTML = `
+                <div class="font-bold text-slate-800">${data.responsavel.nome}</div>
+                <div class="text-[11px] text-slate-500">${data.responsavel.cpf ? 'CPF: ' + data.responsavel.cpf : 'Sem CPF'} • ${resp.parentesco || 'Responsável'}</div>
+            `;
+
             // Atualiza cache local
             const item = responsaveisCache.find(r => (r.pessoa_id && r.pessoa_id == resp.pessoa_id) || r.nome == resp.nome);
             if (item) {
@@ -1225,10 +1348,10 @@ document.addEventListener('DOMContentLoaded', function () {
             // Etapa 3 Ativa
             stepCircle3.classList.remove('bg-slate-200', 'text-slate-700');
             stepCircle3.classList.add('bg-[#47728f]', 'text-white');
-            stepInd3.classList.remove('opacity-75');
-            stepInd3.classList.add('border-[#47728f]/60');
-            passo3Badge.classList.remove('bg-slate-200', 'text-slate-700');
-            passo3Badge.classList.add('bg-[#47728f]', 'text-white');
+            stepInd3.classList.remove('opacity-80');
+            stepInd3.classList.add('border-[#47728f]');
+            passo3Badge.classList.remove('bg-white/20');
+            passo3Badge.classList.add('bg-white', 'text-[#47728f]');
 
             renderizarTabelaResponsaveis();
         })
@@ -1401,6 +1524,12 @@ document.addEventListener('DOMContentLoaded', function () {
             nomeRespSelecionado.textContent = data.responsavel.nome + (data.responsavel.cpf ? ' (' + data.responsavel.cpf + ')' : '');
             alertaRespSelecionado.classList.remove('hidden');
 
+            // Atualiza Resumo Lateral
+            resumoRespBox.innerHTML = `
+                <div class="font-bold text-slate-800">${data.responsavel.nome}</div>
+                <div class="text-[11px] text-slate-500">${data.responsavel.cpf ? 'CPF: ' + data.responsavel.cpf : 'Sem CPF'} • ${dados.parentesco || 'Responsável'}</div>
+            `;
+
             // Atualiza cache local
             const item = responsaveisCache.find(r => (r.pessoa_id && r.pessoa_id == dados.pessoa_id) || r.nome == dados.nome);
             if (item) {
@@ -1419,10 +1548,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             stepCircle3.classList.remove('bg-slate-200', 'text-slate-700');
             stepCircle3.classList.add('bg-[#47728f]', 'text-white');
-            stepInd3.classList.remove('opacity-75');
-            stepInd3.classList.add('border-[#47728f]/60');
-            passo3Badge.classList.remove('bg-slate-200', 'text-slate-700');
-            passo3Badge.classList.add('bg-[#47728f]', 'text-white');
+            stepInd3.classList.remove('opacity-80');
+            stepInd3.classList.add('border-[#47728f]');
+            passo3Badge.classList.remove('bg-white/20');
+            passo3Badge.classList.add('bg-white', 'text-[#47728f]');
 
             renderizarTabelaResponsaveis();
         })
@@ -1452,7 +1581,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnSubmit = document.getElementById('btn_submit_contrato');
         btnSubmit.disabled = true;
         btnSubmit.innerHTML = `
-            <svg class="animate-spin w-4 h-4 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin w-4 h-4 mr-2 text-white" width="16" height="16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -1461,25 +1590,30 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Toggle visual das opções de pagamento
-    const paymentRadios = document.querySelectorAll('input[name="forma_pagamento"]');
+    const paymentCards = document.querySelectorAll('.payment-radio-card');
     const blocoCartaoPresencial = document.getElementById('bloco_cartao_presencial_detalhes');
     const blocoCartaoCredito = document.getElementById('bloco_cartao_credito_detalhes');
 
+    const formasInfo = {
+        'dinheiro': { label: 'Dinheiro (À Vista)', badge: 'Nasce Quitado' },
+        'cartao_presencial': { label: 'Cartão Presencial (POS)', badge: 'Nasce Quitado' },
+        'cartao_credito': { label: 'Cartão Online (Link Asaas)', badge: 'Aguardando Webhook' },
+        'pix': { label: 'PIX Instantâneo (24h)', badge: 'Confirmação em 3s' },
+        'boleto': { label: 'Boleto Bancário (1x)', badge: 'Compensação D+1' },
+        'carne': { label: 'Carnê Escolar (Asaas)', badge: 'Contrato Ativo' }
+    };
+
     function atualizarOpcoesPagamento() {
-        document.querySelectorAll('.payment-option-card').forEach(card => {
-            card.classList.remove('border-[#47728f]', 'bg-blue-50/40', 'ring-1', 'ring-[#47728f]');
-            card.classList.add('border-slate-200');
-        });
+        paymentCards.forEach(card => card.classList.remove('selected'));
 
         if (blocoCartaoPresencial) blocoCartaoPresencial.classList.add('hidden');
         if (blocoCartaoCredito) blocoCartaoCredito.classList.add('hidden');
 
         const selecionado = document.querySelector('input[name="forma_pagamento"]:checked');
         if (selecionado) {
-            const card = selecionado.closest('.payment-option-card');
+            const card = selecionado.closest('.payment-radio-card');
             if (card) {
-                card.classList.remove('border-slate-200');
-                card.classList.add('border-[#47728f]', 'bg-blue-50/40', 'ring-1', 'ring-[#47728f]');
+                card.classList.add('selected');
             }
 
             if (selecionado.value === 'cartao_presencial' && blocoCartaoPresencial) {
@@ -1487,19 +1621,40 @@ document.addEventListener('DOMContentLoaded', function () {
             } else if (selecionado.value === 'cartao_credito' && blocoCartaoCredito) {
                 blocoCartaoCredito.classList.remove('hidden');
             }
+
+            if (formasInfo[selecionado.value]) {
+                resumoFormaLabel.textContent = formasInfo[selecionado.value].label;
+                resumoFormaBadge.textContent = formasInfo[selecionado.value].badge;
+            }
+
+            // Stepper Passo 4
+            stepCircle4.innerHTML = '✓';
+            stepCircle4.classList.remove('bg-slate-200', 'text-slate-700', 'bg-[#47728f]');
+            stepCircle4.classList.add('bg-emerald-600', 'text-white');
+            stepLabel4.textContent = formasInfo[selecionado.value] ? formasInfo[selecionado.value].label : 'Forma Escolhida';
         }
     }
 
-    paymentRadios.forEach(radio => {
+    paymentCards.forEach(card => {
+        card.addEventListener('click', function () {
+            const radio = this.querySelector('input[type="radio"]');
+            if (radio) {
+                radio.checked = true;
+                atualizarOpcoesPagamento();
+            }
+        });
+    });
+
+    document.querySelectorAll('input[name="forma_pagamento"]').forEach(radio => {
         radio.addEventListener('change', atualizarOpcoesPagamento);
     });
+
     atualizarOpcoesPagamento();
 
     // Caso volte de erro com old('aluno_id')
     @if(old('aluno_id'))
         carregarDetalhesAluno({{ old('aluno_id') }});
     @endif
-
 
     // Inicializa simulação se já tiver plano selecionado
     if (selectPlano.value) {
