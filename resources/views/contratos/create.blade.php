@@ -320,11 +320,15 @@
             <input type="hidden" name="rateio_responsaveis[0][responsavel_id]" id="input_rateio_0_id">
             <input type="hidden" name="rateio_responsaveis[0][percentual]" id="input_rateio_0_pct" value="50.00">
             <input type="hidden" name="rateio_responsaveis[0][forma_pagamento]" id="input_rateio_0_forma" value="carne">
+            <input type="hidden" name="rateio_responsaveis[0][qtd_parcelas]" id="input_rateio_0_parcelas" value="12">
             <input type="hidden" name="rateio_responsaveis[0][dia_vencimento]" id="input_rateio_0_venc" value="10">
+            <input type="hidden" name="rateio_responsaveis[0][data_vencimento]" id="input_rateio_0_data_venc" value="">
             <input type="hidden" name="rateio_responsaveis[1][responsavel_id]" id="input_rateio_1_id">
             <input type="hidden" name="rateio_responsaveis[1][percentual]" id="input_rateio_1_pct" value="50.00">
             <input type="hidden" name="rateio_responsaveis[1][forma_pagamento]" id="input_rateio_1_forma" value="carne">
+            <input type="hidden" name="rateio_responsaveis[1][qtd_parcelas]" id="input_rateio_1_parcelas" value="12">
             <input type="hidden" name="rateio_responsaveis[1][dia_vencimento]" id="input_rateio_1_venc" value="10">
+            <input type="hidden" name="rateio_responsaveis[1][data_vencimento]" id="input_rateio_1_data_venc" value="">
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
@@ -817,7 +821,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="grid grid-cols-2 gap-2">
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                             <div>
                                                 <label class="block text-[11px] font-semibold text-slate-600 mb-1">% Rateio</label>
                                                 <div class="relative">
@@ -826,27 +830,84 @@
                                                 </div>
                                             </div>
                                             <div>
-                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Dia Vencimento</label>
-                                                <select id="rateio_select_venc_0" class="w-full text-xs p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
-                                                    <option value="5">Dia 05</option>
-                                                    <option value="10" selected>Dia 10</option>
-                                                    <option value="15">Dia 15</option>
-                                                    <option value="20">Dia 20</option>
-                                                    <option value="25">Dia 25</option>
+                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Forma de Pagamento (Resp. 1)</label>
+                                                <select id="rateio_select_forma_0" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-medium text-slate-800">
+                                                    <option value="carne" selected>Carnê Escolar (Asaas)</option>
+                                                    <option value="cartao_credito">Cartão Online (Link até 12x)</option>
+                                                    <option value="pix">PIX Instantâneo (24h)</option>
+                                                    <option value="boleto">Boleto à Vista (1x)</option>
+                                                    <option value="cartao_presencial">Cartão Presencial (POS)</option>
+                                                    <option value="dinheiro">Dinheiro (Balcão)</option>
                                                 </select>
                                             </div>
                                         </div>
 
-                                        <div>
-                                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Forma de Pagamento (Resp. 1)</label>
-                                            <select id="rateio_select_forma_0" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-medium text-slate-800">
-                                                <option value="carne" selected>Carnê Escolar (Asaas)</option>
-                                                <option value="pix">PIX Instantâneo (24h)</option>
-                                                <option value="boleto">Boleto à Vista (1x)</option>
-                                                <option value="cartao_credito">Cartão Online (Link até 12x)</option>
-                                                <option value="cartao_presencial">Cartão Presencial (POS)</option>
-                                                <option value="dinheiro">Dinheiro (Balcão)</option>
-                                            </select>
+                                        {{-- Opções de Parcelas e Vencimento (Exibido para Carnê ou Cartão Online) --}}
+                                        <div id="rateio_condicoes_parcelado_0" class="p-2.5 bg-[#f0f7fa] border border-[#47728f]/30 rounded-sm space-y-1.5">
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Qtd. de Parcelas</label>
+                                                    <select id="rateio_select_parcelas_0" class="w-full text-xs p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-semibold text-slate-800">
+                                                        <option value="12" selected>12x prestações</option>
+                                                        <option value="11">11x prestações</option>
+                                                        <option value="10">10x prestações</option>
+                                                        <option value="9">9x prestações</option>
+                                                        <option value="8">8x prestações</option>
+                                                        <option value="7">7x prestações</option>
+                                                        <option value="6">6x prestações</option>
+                                                        <option value="5">5x prestações</option>
+                                                        <option value="4">4x prestações</option>
+                                                        <option value="3">3x prestações</option>
+                                                        <option value="2">2x prestações</option>
+                                                        <option value="1">1x (À vista)</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Dia Vencimento</label>
+                                                    <select id="rateio_select_venc_0" class="w-full text-xs p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-semibold text-slate-800">
+                                                        <option value="5">Dia 05</option>
+                                                        <option value="10" selected>Dia 10</option>
+                                                        <option value="15">Dia 15</option>
+                                                        <option value="20">Dia 20</option>
+                                                        <option value="25">Dia 25</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <span class="text-[10px] text-slate-500 block">Grade de parcelas mensais geradas no Asaas.</span>
+                                        </div>
+
+                                        {{-- Container para Boleto Único (Vencimento 2 dias após hoje) --}}
+                                        <div id="rateio_info_boleto_0" class="p-2.5 bg-amber-50 border border-amber-200 rounded-sm text-xs text-amber-900 hidden space-y-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-bold flex items-center gap-1.5 text-amber-900">
+                                                    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                                    Boleto Único (1x à Vista)
+                                                </span>
+                                                <span class="px-2 py-0.5 bg-amber-200 text-amber-900 rounded font-bold text-[10px] uppercase">D+2</span>
+                                            </div>
+                                            <p class="text-[11px] text-amber-800 m-0">
+                                                Data de Vencimento: <strong id="rateio_boleto_data_display_0" class="font-bold text-slate-900">--/--/----</strong> (2 dias após a data atual).
+                                            </p>
+                                        </div>
+
+                                        {{-- Container para PIX Instantâneo --}}
+                                        <div id="rateio_info_pix_0" class="p-2.5 bg-teal-50 border border-teal-200 rounded-sm text-xs text-teal-900 hidden space-y-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-bold flex items-center gap-1.5 text-teal-900">
+                                                    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                                    PIX Instantâneo (1x à Vista)
+                                                </span>
+                                                <span class="px-2 py-0.5 bg-teal-200 text-teal-900 rounded font-bold text-[10px] uppercase">24 Horas</span>
+                                            </div>
+                                            <p class="text-[11px] text-teal-800 m-0">
+                                                QR Code dinâmico com confirmação em tempo real e validade de 24h.
+                                            </p>
+                                        </div>
+
+                                        {{-- Container para Balcão / Presencial --}}
+                                        <div id="rateio_info_balcao_0" class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-xs text-slate-700 hidden">
+                                            <span class="font-bold block text-slate-800">Quitação Presencial (Balcão / POS)</span>
+                                            <span class="text-[10px] text-slate-500">Baixa manual registrada no caixa da escola no ato da emissão.</span>
                                         </div>
 
                                         <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-center">
@@ -888,7 +949,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="grid grid-cols-2 gap-2">
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                             <div>
                                                 <label class="block text-[11px] font-semibold text-slate-600 mb-1">% Rateio</label>
                                                 <div class="relative">
@@ -897,27 +958,84 @@
                                                 </div>
                                             </div>
                                             <div>
-                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Dia Vencimento</label>
-                                                <select id="rateio_select_venc_1" class="w-full text-xs p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f]">
-                                                    <option value="5">Dia 05</option>
-                                                    <option value="10" selected>Dia 10</option>
-                                                    <option value="15">Dia 15</option>
-                                                    <option value="20">Dia 20</option>
-                                                    <option value="25">Dia 25</option>
+                                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Forma de Pagamento (Resp. 2)</label>
+                                                <select id="rateio_select_forma_1" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-medium text-slate-800">
+                                                    <option value="carne">Carnê Escolar (Asaas)</option>
+                                                    <option value="cartao_credito">Cartão Online (Link até 12x)</option>
+                                                    <option value="pix" selected>PIX Instantâneo (24h)</option>
+                                                    <option value="boleto">Boleto à Vista (1x)</option>
+                                                    <option value="cartao_presencial">Cartão Presencial (POS)</option>
+                                                    <option value="dinheiro">Dinheiro (Balcão)</option>
                                                 </select>
                                             </div>
                                         </div>
 
-                                        <div>
-                                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Forma de Pagamento (Resp. 2)</label>
-                                            <select id="rateio_select_forma_1" class="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-medium text-slate-800">
-                                                <option value="carne">Carnê Escolar (Asaas)</option>
-                                                <option value="pix" selected>PIX Instantâneo (24h)</option>
-                                                <option value="boleto">Boleto à Vista (1x)</option>
-                                                <option value="cartao_credito">Cartão Online (Link até 12x)</option>
-                                                <option value="cartao_presencial">Cartão Presencial (POS)</option>
-                                                <option value="dinheiro">Dinheiro (Balcão)</option>
-                                            </select>
+                                        {{-- Opções de Parcelas e Vencimento (Exibido para Carnê ou Cartão Online) --}}
+                                        <div id="rateio_condicoes_parcelado_1" class="p-2.5 bg-[#f0f7fa] border border-[#47728f]/30 rounded-sm space-y-1.5 hidden">
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Qtd. de Parcelas</label>
+                                                    <select id="rateio_select_parcelas_1" class="w-full text-xs p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-semibold text-slate-800">
+                                                        <option value="12" selected>12x prestações</option>
+                                                        <option value="11">11x prestações</option>
+                                                        <option value="10">10x prestações</option>
+                                                        <option value="9">9x prestações</option>
+                                                        <option value="8">8x prestações</option>
+                                                        <option value="7">7x prestações</option>
+                                                        <option value="6">6x prestações</option>
+                                                        <option value="5">5x prestações</option>
+                                                        <option value="4">4x prestações</option>
+                                                        <option value="3">3x prestações</option>
+                                                        <option value="2">2x prestações</option>
+                                                        <option value="1">1x (À vista)</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[11px] font-bold text-slate-700 mb-1">Dia Vencimento</label>
+                                                    <select id="rateio_select_venc_1" class="w-full text-xs p-2 bg-white border border-slate-300 rounded-sm focus:outline-none focus:border-[#47728f] font-semibold text-slate-800">
+                                                        <option value="5">Dia 05</option>
+                                                        <option value="10" selected>Dia 10</option>
+                                                        <option value="15">Dia 15</option>
+                                                        <option value="20">Dia 20</option>
+                                                        <option value="25">Dia 25</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <span class="text-[10px] text-slate-500 block">Grade de parcelas mensais geradas no Asaas.</span>
+                                        </div>
+
+                                        {{-- Container para Boleto Único (Vencimento 2 dias após hoje) --}}
+                                        <div id="rateio_info_boleto_1" class="p-2.5 bg-amber-50 border border-amber-200 rounded-sm text-xs text-amber-900 hidden space-y-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-bold flex items-center gap-1.5 text-amber-900">
+                                                    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                                    Boleto Único (1x à Vista)
+                                                </span>
+                                                <span class="px-2 py-0.5 bg-amber-200 text-amber-900 rounded font-bold text-[10px] uppercase">D+2</span>
+                                            </div>
+                                            <p class="text-[11px] text-amber-800 m-0">
+                                                Data de Vencimento: <strong id="rateio_boleto_data_display_1" class="font-bold text-slate-900">--/--/----</strong> (2 dias após a data atual).
+                                            </p>
+                                        </div>
+
+                                        {{-- Container para PIX Instantâneo --}}
+                                        <div id="rateio_info_pix_1" class="p-2.5 bg-teal-50 border border-teal-200 rounded-sm text-xs text-teal-900 space-y-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-bold flex items-center gap-1.5 text-teal-900">
+                                                    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                                    PIX Instantâneo (1x à Vista)
+                                                </span>
+                                                <span class="px-2 py-0.5 bg-teal-200 text-teal-900 rounded font-bold text-[10px] uppercase">24 Horas</span>
+                                            </div>
+                                            <p class="text-[11px] text-teal-800 m-0">
+                                                QR Code dinâmico com confirmação em tempo real e validade de 24h.
+                                            </p>
+                                        </div>
+
+                                        {{-- Container para Balcão / Presencial --}}
+                                        <div id="rateio_info_balcao_1" class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-xs text-slate-700 hidden">
+                                            <span class="font-bold block text-slate-800">Quitação Presencial (Balcão / POS)</span>
+                                            <span class="text-[10px] text-slate-500">Baixa manual registrada no caixa da escola no ato da emissão.</span>
                                         </div>
 
                                         <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-center">
@@ -1370,11 +1488,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const inputRateio0Id = document.getElementById('input_rateio_0_id');
     const inputRateio0Pct = document.getElementById('input_rateio_0_pct');
     const inputRateio0Forma = document.getElementById('input_rateio_0_forma');
+    const inputRateio0Parcelas = document.getElementById('input_rateio_0_parcelas');
     const inputRateio0Venc = document.getElementById('input_rateio_0_venc');
+    const inputRateio0DataVenc = document.getElementById('input_rateio_0_data_venc');
     const inputRateio1Id = document.getElementById('input_rateio_1_id');
     const inputRateio1Pct = document.getElementById('input_rateio_1_pct');
     const inputRateio1Forma = document.getElementById('input_rateio_1_forma');
+    const inputRateio1Parcelas = document.getElementById('input_rateio_1_parcelas');
     const inputRateio1Venc = document.getElementById('input_rateio_1_venc');
+    const inputRateio1DataVenc = document.getElementById('input_rateio_1_data_venc');
 
     const painelOpcaoDivisao = document.getElementById('painel_opcao_divisao');
     const painelConfigRateio = document.getElementById('painel_config_rateio');
@@ -1384,23 +1506,37 @@ document.addEventListener('DOMContentLoaded', function () {
     const textoInstrucaoPagamentoGlobal = document.getElementById('texto_instrucao_pagamento_global');
     const rateioSomaDisplay = document.getElementById('rateio_soma_display');
 
+    // Resp 0
     const rateioSelectResp0 = document.getElementById('rateio_select_resp_0');
     const rateioCpfDisplay0 = document.getElementById('rateio_cpf_display_0');
     const rateioTelDisplay0 = document.getElementById('rateio_tel_display_0');
     const rateioInputPct0 = document.getElementById('rateio_input_pct_0');
     const rateioSelectVenc0 = document.getElementById('rateio_select_venc_0');
     const rateioSelectForma0 = document.getElementById('rateio_select_forma_0');
+    const rateioSelectParcelas0 = document.getElementById('rateio_select_parcelas_0');
+    const rateioCondicoesParcelado0 = document.getElementById('rateio_condicoes_parcelado_0');
+    const rateioInfoBoleto0 = document.getElementById('rateio_info_boleto_0');
+    const rateioBoletoDataDisplay0 = document.getElementById('rateio_boleto_data_display_0');
+    const rateioInfoPix0 = document.getElementById('rateio_info_pix_0');
+    const rateioInfoBalcao0 = document.getElementById('rateio_info_balcao_0');
     const rateioValorDisplay0 = document.getElementById('rateio_valor_display_0');
     const rateioParcelasDisplay0 = document.getElementById('rateio_parcelas_display_0');
     const rateioBtnCompletar0Box = document.getElementById('rateio_btn_completar_0_box');
     const btnCompletarRateio0 = document.getElementById('btn_completar_rateio_0');
 
+    // Resp 1
     const rateioSelectResp1 = document.getElementById('rateio_select_resp_1');
     const rateioCpfDisplay1 = document.getElementById('rateio_cpf_display_1');
     const rateioTelDisplay1 = document.getElementById('rateio_tel_display_1');
     const rateioInputPct1 = document.getElementById('rateio_input_pct_1');
     const rateioSelectVenc1 = document.getElementById('rateio_select_venc_1');
     const rateioSelectForma1 = document.getElementById('rateio_select_forma_1');
+    const rateioSelectParcelas1 = document.getElementById('rateio_select_parcelas_1');
+    const rateioCondicoesParcelado1 = document.getElementById('rateio_condicoes_parcelado_1');
+    const rateioInfoBoleto1 = document.getElementById('rateio_info_boleto_1');
+    const rateioBoletoDataDisplay1 = document.getElementById('rateio_boleto_data_display_1');
+    const rateioInfoPix1 = document.getElementById('rateio_info_pix_1');
+    const rateioInfoBalcao1 = document.getElementById('rateio_info_balcao_1');
     const rateioValorDisplay1 = document.getElementById('rateio_valor_display_1');
     const rateioParcelasDisplay1 = document.getElementById('rateio_parcelas_display_1');
     const rateioBtnCompletar1Box = document.getElementById('rateio_btn_completar_1_box');
@@ -1586,6 +1722,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         atualizarCardsRateioInfo();
         verificarStatusCadastralRateio();
+        atualizarCamposCondicionaisRateio(0);
+        atualizarCamposCondicionaisRateio(1);
         atualizarSimulacaoRateio();
     }
 
@@ -1617,6 +1755,51 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function getVencimentoBoletoD2() {
+        const d = new Date();
+        d.setDate(d.getDate() + 2);
+        const dia = String(d.getDate()).padStart(2, '0');
+        const mes = String(d.getMonth() + 1).padStart(2, '0');
+        const ano = d.getFullYear();
+        return {
+            dia: d.getDate(),
+            dataSql: `${ano}-${mes}-${dia}`,
+            dataBr: `${dia}/${mes}/${ano}`
+        };
+    }
+
+    function atualizarCamposCondicionaisRateio(idx) {
+        const formaSelect = idx === 0 ? rateioSelectForma0 : rateioSelectForma1;
+        const boxParcelado = idx === 0 ? rateioCondicoesParcelado0 : rateioCondicoesParcelado1;
+        const boxBoleto = idx === 0 ? rateioInfoBoleto0 : rateioInfoBoleto1;
+        const boletoDataDisp = idx === 0 ? rateioBoletoDataDisplay0 : rateioBoletoDataDisplay1;
+        const boxPix = idx === 0 ? rateioInfoPix0 : rateioInfoPix1;
+        const boxBalcao = idx === 0 ? rateioInfoBalcao0 : rateioInfoBalcao1;
+
+        if (!formaSelect) return;
+        const forma = formaSelect.value;
+        const d2 = getVencimentoBoletoD2();
+
+        if (boxParcelado) boxParcelado.classList.add('hidden');
+        if (boxBoleto) boxBoleto.classList.add('hidden');
+        if (boxPix) boxPix.classList.add('hidden');
+        if (boxBalcao) boxBalcao.classList.add('hidden');
+
+        if (forma === 'carne' || forma === 'cartao_credito') {
+            if (boxParcelado) boxParcelado.classList.remove('hidden');
+        } else if (forma === 'boleto') {
+            if (boxBoleto) {
+                boxBoleto.classList.remove('hidden');
+                if (boletoDataDisp) boletoDataDisp.textContent = d2.dataBr;
+            }
+        } else if (forma === 'pix') {
+            if (boxPix) boxPix.classList.remove('hidden');
+        } else {
+            // dinheiro ou cartao_presencial
+            if (boxBalcao) boxBalcao.classList.remove('hidden');
+        }
+    }
+
     function atualizarSimulacaoRateio() {
         if (!inputAplicarRateio || inputAplicarRateio.value !== '1') return;
 
@@ -1636,21 +1819,45 @@ document.addEventListener('DOMContentLoaded', function () {
             parcelasPlano = parseInt(selectQtdParcelas.value);
         }
 
+        const d2 = getVencimentoBoletoD2();
+
         // Resp 0
         const forma0 = rateioSelectForma0.value;
-        const isAvista0 = ['pix', 'dinheiro', 'boleto'].includes(forma0);
-        const parc0 = isAvista0 ? 1 : parcelasPlano;
+        const isParcelado0 = ['carne', 'cartao_credito'].includes(forma0);
+        let parc0 = 1;
+        if (isParcelado0 && rateioSelectParcelas0) {
+            parc0 = parseInt(rateioSelectParcelas0.value) || parcelasPlano;
+        }
         const valParc0 = parc0 > 1 ? (v0 / parc0) : v0;
         rateioValorDisplay0.textContent = formatMoney(v0);
-        rateioParcelasDisplay0.textContent = isAvista0 ? `1x de ${formatMoney(v0)} (À vista)` : `${parc0}x de ${formatMoney(valParc0)}`;
+        if (isParcelado0) {
+            rateioParcelasDisplay0.textContent = `${parc0}x de ${formatMoney(valParc0)} (Venc. todo dia ${rateioSelectVenc0.value})`;
+        } else if (forma0 === 'boleto') {
+            rateioParcelasDisplay0.textContent = `1x de ${formatMoney(v0)} (Boleto com venc. em ${d2.dataBr})`;
+        } else if (forma0 === 'pix') {
+            rateioParcelasDisplay0.textContent = `1x de ${formatMoney(v0)} (À vista - PIX 24h)`;
+        } else {
+            rateioParcelasDisplay0.textContent = `1x de ${formatMoney(v0)} (À vista - Balcão)`;
+        }
 
         // Resp 1
         const forma1 = rateioSelectForma1.value;
-        const isAvista1 = ['pix', 'dinheiro', 'boleto'].includes(forma1);
-        const parc1 = isAvista1 ? 1 : parcelasPlano;
+        const isParcelado1 = ['carne', 'cartao_credito'].includes(forma1);
+        let parc1 = 1;
+        if (isParcelado1 && rateioSelectParcelas1) {
+            parc1 = parseInt(rateioSelectParcelas1.value) || parcelasPlano;
+        }
         const valParc1 = parc1 > 1 ? (v1 / parc1) : v1;
         rateioValorDisplay1.textContent = formatMoney(v1);
-        rateioParcelasDisplay1.textContent = isAvista1 ? `1x de ${formatMoney(v1)} (À vista)` : `${parc1}x de ${formatMoney(valParc1)}`;
+        if (isParcelado1) {
+            rateioParcelasDisplay1.textContent = `${parc1}x de ${formatMoney(valParc1)} (Venc. todo dia ${rateioSelectVenc1.value})`;
+        } else if (forma1 === 'boleto') {
+            rateioParcelasDisplay1.textContent = `1x de ${formatMoney(v1)} (Boleto com venc. em ${d2.dataBr})`;
+        } else if (forma1 === 'pix') {
+            rateioParcelasDisplay1.textContent = `1x de ${formatMoney(v1)} (À vista - PIX 24h)`;
+        } else {
+            rateioParcelasDisplay1.textContent = `1x de ${formatMoney(v1)} (À vista - Balcão)`;
+        }
 
         // Atualiza Resumo Lateral no Modo Rateio
         const idx0 = parseInt(rateioSelectResp0.value);
@@ -1659,22 +1866,29 @@ document.addEventListener('DOMContentLoaded', function () {
         const r1 = responsaveisCache[idx1];
 
         if (r0 && r1) {
+            const descForma0 = rateioSelectForma0.options[rateioSelectForma0.selectedIndex].text;
+            const descForma1 = rateioSelectForma1.options[rateioSelectForma1.selectedIndex].text;
+            const det0 = isParcelado0 ? `${parc0}x de ${formatMoney(valParc0)} (Dia ${rateioSelectVenc0.value})` : (forma0 === 'boleto' ? `Boleto Venc. ${d2.dataBr}` : 'À vista');
+            const det1 = isParcelado1 ? `${parc1}x de ${formatMoney(valParc1)} (Dia ${rateioSelectVenc1.value})` : (forma1 === 'boleto' ? `Boleto Venc. ${d2.dataBr}` : 'À vista');
+
             resumoRespBox.innerHTML = `
                 <div class="space-y-1.5 text-left">
                     <div>
                         <div class="font-bold text-slate-800 text-xs">${r0.nome} (${p0.toFixed(0)}%)</div>
-                        <div class="text-[11px] text-slate-500">${rateioSelectForma0.options[rateioSelectForma0.selectedIndex].text} • ${formatMoney(v0)}</div>
+                        <div class="text-[11px] text-slate-500">${descForma0} • ${formatMoney(v0)} <span class="text-slate-400">(${det0})</span></div>
                     </div>
                     <div class="pt-1.5 border-t border-slate-100">
                         <div class="font-bold text-slate-800 text-xs">${r1.nome} (${p1.toFixed(0)}%)</div>
-                        <div class="text-[11px] text-slate-500">${rateioSelectForma1.options[rateioSelectForma1.selectedIndex].text} • ${formatMoney(v1)}</div>
+                        <div class="text-[11px] text-slate-500">${descForma1} • ${formatMoney(v1)} <span class="text-slate-400">(${det1})</span></div>
                     </div>
                 </div>
             `;
             resumoFormaLabel.textContent = 'Múltiplas Formas';
             resumoFormaBadge.textContent = 'Rateio Duplo';
             simGradeParcelas.textContent = `${formatMoney(v0)} (${p0.toFixed(0)}%) + ${formatMoney(v1)} (${p1.toFixed(0)}%)`;
-            simDiaVencimento.textContent = `Vencimentos: Dia ${rateioSelectVenc0.value} e Dia ${rateioSelectVenc1.value}`;
+            const venc0Str = (forma0 === 'boleto') ? `Boleto ${d2.dataBr}` : (isParcelado0 ? `Dia ${rateioSelectVenc0.value}` : 'À vista');
+            const venc1Str = (forma1 === 'boleto') ? `Boleto ${d2.dataBr}` : (isParcelado1 ? `Dia ${rateioSelectVenc1.value}` : 'À vista');
+            simDiaVencimento.textContent = `Resp 1: ${venc0Str} | Resp 2: ${venc1Str}`;
 
             // Stepper
             stepInd2.className = 'step-item completed';
@@ -1746,8 +1960,22 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    if (rateioSelectForma0) rateioSelectForma0.addEventListener('change', atualizarSimulacaoRateio);
-    if (rateioSelectForma1) rateioSelectForma1.addEventListener('change', atualizarSimulacaoRateio);
+    if (rateioSelectForma0) {
+        rateioSelectForma0.addEventListener('change', function () {
+            atualizarCamposCondicionaisRateio(0);
+            atualizarSimulacaoRateio();
+        });
+    }
+
+    if (rateioSelectForma1) {
+        rateioSelectForma1.addEventListener('change', function () {
+            atualizarCamposCondicionaisRateio(1);
+            atualizarSimulacaoRateio();
+        });
+    }
+
+    if (rateioSelectParcelas0) rateioSelectParcelas0.addEventListener('change', atualizarSimulacaoRateio);
+    if (rateioSelectParcelas1) rateioSelectParcelas1.addEventListener('change', atualizarSimulacaoRateio);
     if (rateioSelectVenc0) rateioSelectVenc0.addEventListener('change', atualizarSimulacaoRateio);
     if (rateioSelectVenc1) rateioSelectVenc1.addEventListener('change', atualizarSimulacaoRateio);
 
@@ -2599,23 +2827,36 @@ document.addEventListener('DOMContentLoaded', function () {
             inputRateio0Id.disabled = false;
             inputRateio0Pct.disabled = false;
             inputRateio0Forma.disabled = false;
+            inputRateio0Parcelas.disabled = false;
             inputRateio0Venc.disabled = false;
+            inputRateio0DataVenc.disabled = false;
+
             inputRateio1Id.disabled = false;
             inputRateio1Pct.disabled = false;
             inputRateio1Forma.disabled = false;
+            inputRateio1Parcelas.disabled = false;
             inputRateio1Venc.disabled = false;
+            inputRateio1DataVenc.disabled = false;
+
+            const d2 = getVencimentoBoletoD2();
+            const f0 = rateioSelectForma0.value;
+            const f1 = rateioSelectForma1.value;
 
             // Sincroniza inputs hidden para envio ao backend
             inputResponsavelId.value = resp0.responsavel_financeiro_id;
             inputRateio0Id.value = resp0.responsavel_financeiro_id;
             inputRateio0Pct.value = p0.toFixed(2);
-            inputRateio0Forma.value = rateioSelectForma0.value;
-            inputRateio0Venc.value = rateioSelectVenc0.value;
+            inputRateio0Forma.value = f0;
+            inputRateio0Parcelas.value = ['carne', 'cartao_credito'].includes(f0) ? (rateioSelectParcelas0 ? rateioSelectParcelas0.value : 12) : 1;
+            inputRateio0Venc.value = (f0 === 'boleto') ? d2.dia : rateioSelectVenc0.value;
+            inputRateio0DataVenc.value = (f0 === 'boleto') ? d2.dataSql : '';
 
             inputRateio1Id.value = resp1.responsavel_financeiro_id;
             inputRateio1Pct.value = p1.toFixed(2);
-            inputRateio1Forma.value = rateioSelectForma1.value;
-            inputRateio1Venc.value = rateioSelectVenc1.value;
+            inputRateio1Forma.value = f1;
+            inputRateio1Parcelas.value = ['carne', 'cartao_credito'].includes(f1) ? (rateioSelectParcelas1 ? rateioSelectParcelas1.value : 12) : 1;
+            inputRateio1Venc.value = (f1 === 'boleto') ? d2.dia : rateioSelectVenc1.value;
+            inputRateio1DataVenc.value = (f1 === 'boleto') ? d2.dataSql : '';
         } else {
             if (!inputResponsavelId.value) {
                 e.preventDefault();
@@ -2627,11 +2868,16 @@ document.addEventListener('DOMContentLoaded', function () {
             inputRateio0Id.disabled = true;
             inputRateio0Pct.disabled = true;
             inputRateio0Forma.disabled = true;
+            inputRateio0Parcelas.disabled = true;
             inputRateio0Venc.disabled = true;
+            inputRateio0DataVenc.disabled = true;
+
             inputRateio1Id.disabled = true;
             inputRateio1Pct.disabled = true;
             inputRateio1Forma.disabled = true;
+            inputRateio1Parcelas.disabled = true;
             inputRateio1Venc.disabled = true;
+            inputRateio1DataVenc.disabled = true;
         }
 
         const btnSubmit = document.getElementById('btn_submit_contrato');

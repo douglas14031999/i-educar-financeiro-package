@@ -105,6 +105,8 @@ class ContratoController extends Controller
             $rules['rateio_responsaveis.*.percentual'] = 'required|numeric|min:0.01|max:99.99';
             $rules['rateio_responsaveis.*.forma_pagamento'] = 'required|string|in:dinheiro,cartao_presencial,cartao_credito,pix,boleto,carne';
             $rules['rateio_responsaveis.*.dia_vencimento'] = 'nullable|integer|min:1|max:31';
+            $rules['rateio_responsaveis.*.qtd_parcelas'] = 'nullable|integer|min:1|max:12';
+            $rules['rateio_responsaveis.*.data_vencimento'] = 'nullable|string';
         } else {
             $rules['responsavel_financeiro_id'] = 'required|integer';
         }

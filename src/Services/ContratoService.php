@@ -134,11 +134,19 @@ class ContratoService
                         ]
                     );
 
+                    $qtdResp = !empty($rc['qtd_parcelas']) ? (int) $rc['qtd_parcelas'] : $qtdParcelasPadrao;
+                    if (in_array($formaResp, ['pix', 'boleto', 'dinheiro'])) {
+                        $qtdResp = 1;
+                    }
+                    $dataVencCustom = !empty($rc['data_vencimento']) ? Carbon::parse($rc['data_vencimento']) : null;
+
                     $vinculos->push((object) [
                         'responsavel_id'        => $respId,
                         'percentual_rateio'     => $pct,
                         'forma_pagamento'       => $formaResp,
                         'dia_vencimento'        => !empty($rc['dia_vencimento']) ? (int) $rc['dia_vencimento'] : $diaVencimento,
+                        'qtd_parcelas'          => $qtdResp,
+                        'data_vencimento'       => $dataVencCustom,
                         'responsavel_principal' => $isPrincipal,
                     ]);
                 }
@@ -310,8 +318,8 @@ class ContratoService
                         ),
                     ]);
                 } elseif ($formaDoResp === 'boleto') {
-                    // Boleto à Vista (1x) vence em 2 dias
-                    $dataVencBoleto = Carbon::today()->addDays(2);
+                    // Boleto à Vista (1x) vence em 2 dias após a emissão
+                    $dataVencBoleto = $vinculo->data_vencimento ?? Carbon::today()->addDays(2);
                     $titulosCriados[] = Titulo::create([
                         'contrato_id'               => $contrato->id,
                         'aluno_id'                  => $alunoId,
@@ -337,8 +345,8 @@ class ContratoService
                     ]);
                 } else {
                     // Parcelado em N vezes (Carnê Asaas, Cartão de Crédito Link, Cartão Presencial POS ou Dinheiro)
-                    $qtdParcelasResp = $qtdParcelasPadrao;
-                    if ($formaDoResp === 'dinheiro' && empty($dados['qtd_parcelas'])) {
+                    $qtdParcelasResp = $vinculo->qtd_parcelas ?? $qtdParcelasPadrao;
+                    if ($formaDoResp === 'dinheiro' && empty($dados['qtd_parcelas']) && empty($vinculo->qtd_parcelas)) {
                         $qtdParcelasResp = 1;
                     }
 
