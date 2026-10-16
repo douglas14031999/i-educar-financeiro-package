@@ -261,14 +261,29 @@
                 </span>
             </div>
 
+            @php
+                $formaContrato = strtolower(trim((string) ($contratoFiltro?->forma_pagamento ?? '')));
+                $todosTitulosPagos = $titulos->isNotEmpty() && $titulos->every(fn($t) => in_array($t->status, ['pago', 'liquidado']) || (float)$t->valor_saldo <= 0.005);
+                $contratoSemAcoesLote = $contratoFiltro && (
+                    $formaContrato === 'pix' ||
+                    $formaContrato === 'dinheiro' ||
+                    $formaContrato === 'cartao_presencial' ||
+                    in_array($contratoFiltro->status, ['quitado', 'cancelado']) ||
+                    $todosTitulosPagos
+                );
+                $temAcoesEmLote = !$contratoSemAcoesLote;
+            @endphp
+
             <!-- Tabela Responsiva -->
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs md:text-sm m-0 border-0" style="margin: 0;">
                     <thead>
                         <tr class="bg-slate-100/90 text-[11px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
-                            <th class="py-3 px-3 text-center" style="width: 40px;" scope="col">
-                                <input type="checkbox" id="check-todos-titulos" class="cursor-pointer rounded border-slate-300 text-brand-petroleum focus:ring-brand-petroleum" title="Selecionar todos os títulos da página">
-                            </th>
+                            @if($temAcoesEmLote)
+                                <th class="py-3 px-3 text-center" style="width: 40px;" scope="col">
+                                    <input type="checkbox" id="check-todos-titulos" class="cursor-pointer rounded border-slate-300 text-brand-petroleum focus:ring-brand-petroleum" title="Selecionar todos os títulos da página">
+                                </th>
+                            @endif
                             <th class="py-3 px-4" scope="col">Vencimento</th>
                             <th class="py-3 px-4 text-center" scope="col">Parcela</th>
                             <th class="py-3 px-4" scope="col">Responsável Financeiro</th>
@@ -293,9 +308,15 @@
                                 $valorSaldoNum = (float) ($titulo->valor_saldo > 0 ? $titulo->valor_saldo : $titulo->valor_nominal);
                             @endphp
                             <tr class="{{ $bgClass }} transition-colors" data-titulo-id="{{ $titulo->id }}">
-                                <td class="py-3 px-3 text-center">
-                                    <input type="checkbox" class="check-titulo-item cursor-pointer rounded border-slate-300 text-brand-petroleum focus:ring-brand-petroleum" value="{{ $titulo->id }}" data-valor="{{ $valorSaldoNum }}" data-pago="{{ $isPago ? '1' : '0' }}">
-                                </td>
+                                @if($temAcoesEmLote)
+                                    <td class="py-3 px-3 text-center">
+                                        @if(!$isPago && !$isCancelado)
+                                            <input type="checkbox" class="check-titulo-item cursor-pointer rounded border-slate-300 text-brand-petroleum focus:ring-brand-petroleum" value="{{ $titulo->id }}" data-valor="{{ $valorSaldoNum }}" data-pago="{{ $isPago ? '1' : '0' }}">
+                                        @else
+                                            <span class="text-slate-300 text-xs">—</span>
+                                        @endif
+                                    </td>
+                                @endif
                                 <td class="py-3 px-4 whitespace-nowrap font-medium {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
                                     {{ $dataVenc->format('d/m/Y') }}
                                     @if($isPago)
@@ -414,7 +435,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="py-8 text-center text-slate-500">
+                                <td colspan="{{ $temAcoesEmLote ? 8 : 7 }}" class="py-8 text-center text-slate-500">
                                     <svg class="w-10 h-10 mx-auto text-slate-300 mb-3" width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                     </svg>
@@ -437,6 +458,7 @@
             </footer>
         </section>
 
+        @if($temAcoesEmLote)
         <!-- Barra Flutuante de Ações em Lote (Sticky Bottom) -->
         <div id="barra-acoes-lote" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#1e293b] text-white px-5 py-3 rounded-lg shadow-2xl border border-slate-700 flex items-center gap-4 transition-all duration-300 transform translate-y-24 opacity-0 pointer-events-none" style="min-width: 320px; max-width: 90vw;">
             <div class="flex items-center gap-2">
@@ -474,10 +496,12 @@
                 </button>
             </div>
         </div>
+        @endif
 
     </main>
 </div>
 
+@if($temAcoesEmLote)
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const checkAll = document.getElementById('check-todos-titulos');
@@ -572,4 +596,5 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
+@endif
 @endsection
