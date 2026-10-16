@@ -73,49 +73,55 @@
 
                         <div>
                             <label for="escola_id" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                                Código da Escola (i-Educar) <span class="text-red-500">*</span>
+                                Escola Vinculada <span class="text-red-500">*</span>
                             </label>
-                            <input type="number" name="escola_id" id="escola_id" value="{{ old('escola_id', 1) }}" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+                            @if(isset($escolas) && count($escolas) > 0)
+                                <select name="escola_id" id="escola_id" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+                                    @foreach($escolas as $esc)
+                                        @php
+                                            $escId = is_object($esc) ? ($esc->id ?? $esc->cod_escola ?? 1) : (is_array($esc) ? ($esc['id'] ?? $esc['cod_escola'] ?? 1) : $loop->iteration);
+                                            $escNome = is_object($esc) ? ($esc->nome ?? 'Escola ' . $escId) : (is_array($esc) ? ($esc['nome'] ?? 'Escola ' . $escId) : $esc);
+                                        @endphp
+                                        <option value="{{ $escId }}" {{ old('escola_id', 1) == $escId ? 'selected' : '' }}>{{ $escNome }} (ID: {{ $escId }})</option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <input type="number" name="escola_id" id="escola_id" value="{{ old('escola_id', 1) }}" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+                            @endif
                         </div>
                     </div>
                 </div>
 
-                <!-- Seção 2: Valores e Parcelas -->
+                <!-- Seção 2: Valores e Condições -->
                 <div class="pt-2">
                     <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 pb-1 border-b border-slate-100 flex items-center gap-2">
                         <svg class="w-4 h-4 text-brand-petroleum" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                         </svg>
-                        2. Condições Comerciais e Parcelamento
+                        2. Condições Comerciais e Valores da Anuidade
                     </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="valor_total" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                                 Valor Total Anual (R$) <span class="text-red-500">*</span>
                             </label>
                             <input type="number" name="valor_total" id="valor_total" step="0.01" min="1" value="{{ old('valor_total') }}" placeholder="Ex: 9600.00" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm font-mono focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
-                            <p class="text-[11px] text-slate-400 mt-1">Valor integral da anuidade que será dividido nas parcelas</p>
-                        </div>
-
-                        <div>
-                            <label for="qtd_parcelas" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                                Quantidade de Parcelas <span class="text-red-500">*</span>
-                            </label>
-                            <select name="qtd_parcelas" id="qtd_parcelas" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
-                                <option value="12" {{ old('qtd_parcelas', 12) == 12 ? 'selected' : '' }}>12 parcelas (Padrão anual)</option>
-                                <option value="11" {{ old('qtd_parcelas') == 11 ? 'selected' : '' }}>11 parcelas</option>
-                                <option value="10" {{ old('qtd_parcelas') == 10 ? 'selected' : '' }}>10 parcelas</option>
-                                <option value="6" {{ old('qtd_parcelas') == 6 ? 'selected' : '' }}>6 parcelas (Semestral)</option>
-                                <option value="1" {{ old('qtd_parcelas') == 1 ? 'selected' : '' }}>1 parcela (À vista)</option>
-                            </select>
+                            <p class="text-[11px] text-slate-400 mt-1">Valor integral da anuidade escolar deste plano.</p>
                         </div>
 
                         <div>
                             <label for="dia_vencimento_padrao" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                                Dia do Vencimento Padrão <span class="text-red-500">*</span>
+                                Dia do Vencimento Padrão Sugerido <span class="text-red-500">*</span>
                             </label>
                             <input type="number" name="dia_vencimento_padrao" id="dia_vencimento_padrao" min="1" max="31" value="{{ old('dia_vencimento_padrao', 10) }}" required class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
-                            <p class="text-[11px] text-slate-400 mt-1">Dia do mês sugerido para os boletos/Pix (ex: 10)</p>
+                            <p class="text-[11px] text-slate-400 mt-1">Dia do mês sugerido para os boletos/carnês (ex: 10).</p>
+                        </div>
+
+                        <div class="md:col-span-2 p-3 bg-blue-50 border border-blue-200 text-xs text-[#47728f] rounded-sm flex items-center gap-2 font-medium">
+                            <svg class="w-4 h-4 shrink-0" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            </svg>
+                            <span>A quantidade de parcelas (de 1x até 12x) e o mês de início são escolhidos pelo responsável no momento da emissão de cada contrato.</span>
                         </div>
                     </div>
 

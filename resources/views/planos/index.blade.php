@@ -77,9 +77,9 @@
                         <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-[11px] font-semibold tracking-wider">
                             <th class="py-3 px-4">Nome do Plano</th>
                             <th class="py-3 px-4 text-center">Ano Letivo</th>
-                            <th class="py-3 px-4 text-center">Parcelas</th>
+                            <th class="py-3 px-4 text-center">Parcelamento</th>
                             <th class="py-3 px-4 text-right">Valor Anual</th>
-                            <th class="py-3 px-4 text-right">Média Mensal</th>
+                            <th class="py-3 px-4 text-right">Ref. Mensal (12x)</th>
                             <th class="py-3 px-4 text-center">Ações</th>
                         </tr>
                     </thead>
@@ -99,14 +99,16 @@
                                 <td class="py-3.5 px-4 text-center font-mono font-medium text-slate-700">
                                     {{ $plano->ano_letivo }}
                                 </td>
-                                <td class="py-3.5 px-4 text-center font-mono font-semibold text-slate-800">
-                                    {{ $plano->qtd_parcelas }}x
+                                <td class="py-3.5 px-4 text-center">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                        1x a 12x no Contrato
+                                    </span>
                                 </td>
                                 <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
                                     R$ {{ number_format($plano->valor_total, 2, ',', '.') }}
                                 </td>
                                 <td class="py-3.5 px-4 text-right font-mono text-slate-600">
-                                    R$ {{ number_format($plano->qtd_parcelas > 0 ? $plano->valor_total / $plano->qtd_parcelas : 0, 2, ',', '.') }}
+                                    R$ {{ number_format($plano->valor_total / 12, 2, ',', '.') }}
                                 </td>
                                 <td class="py-3.5 px-4 text-center">
                                     <a href="{{ route('financeiro.planos.show', $plano->id) }}" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-brand-petroleum hover:text-white text-slate-700 text-xs font-medium border border-slate-200 transition" title="Ver Parcelas e Detalhes" style="text-decoration: none;">

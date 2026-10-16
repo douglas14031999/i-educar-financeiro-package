@@ -219,6 +219,7 @@ class ContratoService
                 'dia_vencimento'            => $diaVencimento,
                 'escola_id'                 => $escolaId,
                 'status'                    => 'ativo',
+                'forma_pagamento'           => $dados['forma_pagamento'] ?? null,
                 'plano_snapshot'            => $planoSnapshot,
             ]);
 
@@ -293,27 +294,74 @@ class ContratoService
                     ]);
                 }
             } else {
-                $totalParcelas = $plano->itens->where('numero_parcela', '>', 0)->count();
+                $itemMatricula = $plano->itens->firstWhere('tipo_item', 'matricula');
+                $valorMatriculaLiquido = 0.00;
 
-                foreach ($plano->itens as $item) {
-                    // FIN-007: Se número da parcela for > 12, avança o ano letivo correspondente
-                    $anosAdicionais = ($item->numero_parcela > 0) ? intdiv($item->numero_parcela - 1, 12) : 0;
-                    $anoEfetivo     = $anoLetivo + $anosAdicionais;
-                    $mesComp        = str_pad($item->mes_competencia, 2, '0', STR_PAD_LEFT);
-                    $competencia    = "{$anoEfetivo}-{$mesComp}";
+                // Se houver taxa de matrícula integrada ao plano (parcela 0)
+                if ($itemMatricula) {
+                    $valorMatriculaBruto = (float) $itemMatricula->valor;
+                    $descontoMatricula = round($valorMatriculaBruto * $taxaDesconto, 2);
+                    $valorMatriculaLiquido = round($valorMatriculaBruto - $descontoMatricula, 2);
 
-                    // Trata vencimento em dias 29/30/31 sem overflow de mês (T20)
-                    $ultimoDiaMes   = Carbon::create($anoEfetivo, $item->mes_competencia, 1)->endOfMonth()->day;
-                    $diaEfetivo     = min($diaVencimento, $ultimoDiaMes);
-                    $dataVencimento = Carbon::create($anoEfetivo, $item->mes_competencia, $diaEfetivo);
+                    $valoresRateioMatricula = $this->distribuirComResiduo($valorMatriculaLiquido, $vinculos);
 
-                    // A01 — Valor líquido do item após desconto proporcional
-                    $valorItemBruto   = (float) $item->valor;
-                    $descontoItem     = round($valorItemBruto * $taxaDesconto, 2);
-                    $valorItemLiquido = round($valorItemBruto - $descontoItem, 2);
+                    foreach ($vinculos as $idx => $vinculo) {
+                        $valorVinculo = $valoresRateioMatricula[$idx];
+                        if ($valorVinculo <= 0) {
+                            continue;
+                        }
 
-                    // A02 — Distribui com resíduo de centavo (Largest Remainder)
-                    $valoresRateio = $this->distribuirComResiduo($valorItemLiquido, $vinculos);
+                        $titulosCriados[] = Titulo::create([
+                            'contrato_id'               => $contrato->id,
+                            'aluno_id'                  => $alunoId,
+                            'responsavel_financeiro_id' => $vinculo->responsavel_id,
+                            'escola_id'                 => $escolaId,
+                            'tipo'                      => 'matricula',
+                            'numero_parcela'            => 0,
+                            'total_parcelas'            => 1,
+                            'competencia'               => Carbon::today()->format('Y-m'),
+                            'data_vencimento'           => Carbon::today(),
+                            'valor_nominal'             => $valorVinculo,
+                            'valor_desconto'            => 0.00,
+                            'valor_multa'               => 0.00,
+                            'valor_juros'               => 0.00,
+                            'valor_pago'                => 0.00,
+                            'valor_saldo'               => $valorVinculo,
+                            'status'                    => 'aberto',
+                            'observacoes'               => sprintf(
+                                '%s - Taxa de Matrícula',
+                                $contrato->numero_contrato
+                            ),
+                        ]);
+                    }
+                }
+
+                // Mensalidades: valor líquido restante dividido na quantidade de parcelas escolhida no contrato
+                $valorMensalidadesLiquido = max(0.00, round($valorLiquido - $valorMatriculaLiquido, 2));
+                $qtdParcelas = max(1, (int) ($dados['qtd_parcelas'] ?? 12));
+                $valoresParcelas = $this->dividirValorEmParcelas($valorMensalidadesLiquido, $qtdParcelas);
+
+                // Regra de data inicial: a partir da data atual
+                // Se o dia de vencimento já passou no mês atual, começa no próximo mês
+                $hoje = Carbon::today();
+                $mesOffset = ($hoje->day > $diaVencimento) ? 1 : 0;
+                $dataPrimeira = $hoje->copy()->startOfMonth()->addMonths($mesOffset);
+
+                for ($i = 1; $i <= $qtdParcelas; $i++) {
+                    $dataRef = $dataPrimeira->copy()->addMonths($i - 1);
+                    $anoParcela = $dataRef->year;
+                    $mesParcela = $dataRef->month;
+                    $competencia = sprintf('%04d-%02d', $anoParcela, $mesParcela);
+
+                    // Trata vencimento em meses com 28, 29 ou 30 dias para não dar overflow
+                    $ultimoDiaMes = $dataRef->copy()->endOfMonth()->day;
+                    $diaEfetivo = min($diaVencimento, $ultimoDiaMes);
+                    $dataVencimento = Carbon::create($anoParcela, $mesParcela, $diaEfetivo);
+
+                    $valorParcelaLiquida = $valoresParcelas[$i - 1];
+
+                    // Distribui resíduo de centavos entre os vínculos
+                    $valoresRateio = $this->distribuirComResiduo($valorParcelaLiquida, $vinculos);
 
                     foreach ($vinculos as $idx => $vinculo) {
                         $valorVinculo = $valoresRateio[$idx];
@@ -328,9 +376,9 @@ class ContratoService
                             'aluno_id'                  => $alunoId,
                             'responsavel_financeiro_id' => $vinculo->responsavel_id,
                             'escola_id'                 => $escolaId,
-                            'tipo'                      => $item->tipo_item,
-                            'numero_parcela'            => $item->numero_parcela,
-                            'total_parcelas'            => $totalParcelas ?: 1,
+                            'tipo'                      => 'mensalidade',
+                            'numero_parcela'            => $i,
+                            'total_parcelas'            => $qtdParcelas,
                             'competencia'               => $competencia,
                             'data_vencimento'           => $dataVencimento,
                             'valor_nominal'             => $valorVinculo,
@@ -341,9 +389,10 @@ class ContratoService
                             'valor_saldo'               => $valorVinculo,
                             'status'                    => 'aberto',
                             'observacoes'               => sprintf(
-                                '%s - %s',
+                                '%s - Parcela %02d/%02d',
                                 $contrato->numero_contrato,
-                                $item->descricao
+                                $i,
+                                $qtdParcelas
                             ),
                         ]);
                     }
@@ -414,7 +463,7 @@ class ContratoService
                 ]);
                 try {
                     $gateway = app(\iEducar\Financeiro\Gateways\GatewayManager::class);
-                    $maxParcelas = (int) ($dados['cartao_parcelas'] ?? 12);
+                    $maxParcelas = (int) ($dados['qtd_parcelas'] ?? ($dados['cartao_parcelas'] ?? 12));
                     $res = $gateway->criarPaymentLink($contrato, (float) $contrato->valor_total_liquido, $maxParcelas, 5);
                     $contrato->update([
                         'payment_link_url' => $res['payment_link_url'] ?? null,
@@ -543,6 +592,34 @@ class ContratoService
         }
 
         return array_map(fn(int $centavos): float => round($centavos / 100, 2), $bases);
+    }
+
+    /**
+     * Divide um valor total em N parcelas distribuindo centavos residuais nas primeiras parcelas.
+     * Garante que a soma das parcelas seja rigorosamente igual ao total.
+     * Exemplo: R$ 100,00 ÷ 3 parcelas → [33.34, 33.33, 33.33]
+     *
+     * @param  float $total
+     * @param  int   $qtdParcelas
+     * @return array<int, float>
+     */
+    private function dividirValorEmParcelas(float $total, int $qtdParcelas): array
+    {
+        if ($qtdParcelas <= 1) {
+            return [round($total, 2)];
+        }
+
+        $totalCentavos = (int) round($total * 100);
+        $baseCentavos = intdiv($totalCentavos, $qtdParcelas);
+        $residuo = $totalCentavos % $qtdParcelas;
+
+        $parcelas = [];
+        for ($i = 0; $i < $qtdParcelas; $i++) {
+            $centavos = $baseCentavos + ($i < $residuo ? 1 : 0);
+            $parcelas[] = round($centavos / 100, 2);
+        }
+
+        return $parcelas;
     }
 
     /**

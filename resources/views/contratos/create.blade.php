@@ -1,5 +1,9 @@
 @extends('financeiro::layouts.app')
 
+@php
+    $anoAtual = $anoAtual ?? $anoLetivo ?? date('Y');
+@endphp
+
 @section('title', 'Novo Contrato Financeiro Escolar')
 @section('module-style', 'padding: 0;')
 
@@ -753,15 +757,31 @@
                                     @foreach($planos as $plano)
                                         <option value="{{ $plano->id }}" 
                                                 data-valor="{{ $plano->valor_total }}" 
-                                                data-parcelas="{{ $plano->qtd_parcelas }}" 
                                                 data-nome="{{ $plano->nome }}"
                                                 {{ old('plano_id') == $plano->id ? 'selected' : '' }}>
-                                            {{ $plano->nome }} — R$ {{ number_format($plano->valor_total, 2, ',', '.') }} ({{ $plano->qtd_parcelas }} parcelas)
+                                            {{ $plano->nome }} — R$ {{ number_format($plano->valor_total, 2, ',', '.') }}
                                         </option>
                                     @endforeach
                                 </select>
                                 <p class="text-[11px] text-slate-500 mt-1.5">
-                                    Determina o valor global da anuidade, a quantidade de títulos e os vencimentos.
+                                    Determina o valor global anual do contrato para o ano letivo.
+                                </p>
+                            </div>
+
+                            {{-- Quantidade de Prestações (Exibido para Cartão ou Carnê) --}}
+                            <div id="bloco_qtd_parcelas" class="hidden">
+                                <label for="qtd_parcelas" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Quantidade de Prestações <span class="text-rose-500">*</span>
+                                </label>
+                                <select name="qtd_parcelas" id="qtd_parcelas" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 text-slate-800 text-xs md:text-sm rounded-sm focus:outline-none focus:border-[#47728f] focus:ring-1 focus:ring-[#47728f] transition shadow-2xs font-semibold">
+                                    @for($p = 12; $p >= 1; $p--)
+                                        <option value="{{ $p }}" {{ old('qtd_parcelas', 12) == $p ? 'selected' : '' }}>
+                                            {{ $p }}x {{ $p === 1 ? '(Pagamento Integral)' : 'prestações mensais' }}
+                                        </option>
+                                    @endfor
+                                </select>
+                                <p class="text-[11px] text-slate-500 mt-1.5">
+                                    As parcelas serão geradas a partir do mês atual com vencimento no dia selecionado.
                                 </p>
                             </div>
 
@@ -1141,6 +1161,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Simulação Financeira
     const selectPlano = document.getElementById('plano_id');
+    const selectQtdParcelas = document.getElementById('qtd_parcelas');
+    const blocoQtdParcelas = document.getElementById('bloco_qtd_parcelas');
     const inputVencimento = document.getElementById('dia_vencimento');
     const inputDesconto = document.getElementById('valor_total_descontos');
     const simValorBruto = document.getElementById('sim_valor_bruto');
@@ -1175,7 +1197,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const valorBruto = parseFloat(opt.dataset.valor || 0);
-        const parcelas = parseInt(opt.dataset.parcelas || 1);
         const desconto = Math.max(0, parseFloat(inputDesconto.value || 0));
         const valorLiquido = Math.max(0, valorBruto - desconto);
         const dia = parseInt(inputVencimento.value || 10);
@@ -1187,13 +1208,36 @@ document.addEventListener('DOMContentLoaded', function () {
         const isDinheiro = formaVal === 'dinheiro';
         const isCartaoPresencial = formaVal === 'cartao_presencial';
         const isBoleto = formaVal === 'boleto';
-        const isAvista = isPix || isDinheiro || isCartaoPresencial || isBoleto;
+        const isAvista = isPix || isDinheiro || isBoleto;
+
+        let parcelas = 1;
+        if (!isAvista && selectQtdParcelas && selectQtdParcelas.value) {
+            parcelas = parseInt(selectQtdParcelas.value);
+        }
 
         const valorParcela = (parcelas > 0 && !isAvista) ? (valorLiquido / parcelas) : valorLiquido;
 
         simValorBruto.textContent = formatMoney(valorBruto);
         simValorDesconto.textContent = (desconto > 0 ? '- ' : '') + formatMoney(desconto);
         simValorLiquido.textContent = formatMoney(valorLiquido);
+
+        // Previsão das datas a partir do mês atual
+        const hoje = new Date();
+        const diaHoje = hoje.getDate();
+        let mesInicio = hoje.getMonth(); // 0-indexed
+        let anoInicio = hoje.getFullYear();
+        if (diaHoje > dia) {
+            mesInicio += 1;
+            if (mesInicio > 11) {
+                mesInicio = 0;
+                anoInicio += 1;
+            }
+        }
+        let totalMeses = mesInicio + parcelas - 1;
+        let anoFim = anoInicio + Math.floor(totalMeses / 12);
+        let mesFim = totalMeses % 12;
+        const nomeMeses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const periodoStr = `${nomeMeses[mesInicio]}/${anoInicio}` + (parcelas > 1 ? ` a ${nomeMeses[mesFim]}/${anoFim}` : '');
 
         if (isPix) {
             simGradeParcelas.textContent = `1x de ${formatMoney(valorLiquido)} (Cota Única Instantânea)`;
@@ -1202,8 +1246,8 @@ document.addEventListener('DOMContentLoaded', function () {
             simGradeParcelas.textContent = `1x de ${formatMoney(valorLiquido)} (À Vista em Dinheiro)`;
             simDiaVencimento.textContent = 'Pagamento no ato no caixa da escola (Nasce Quitado)';
         } else if (isCartaoPresencial) {
-            simGradeParcelas.textContent = `1x de ${formatMoney(valorLiquido)} (Cartão POS)`;
-            simDiaVencimento.textContent = 'Pagamento no ato na maquininha física (Nasce Quitado)';
+            simGradeParcelas.textContent = `${parcelas}x de ${formatMoney(valorParcela)} (Cartão POS)`;
+            simDiaVencimento.textContent = parcelas > 1 ? `Parcelado em ${parcelas}x na maquininha` : 'À vista na maquininha física (Nasce Quitado)';
         } else if (isBoleto) {
             const dataBoleto = new Date();
             dataBoleto.setDate(dataBoleto.getDate() + 2);
@@ -1212,13 +1256,13 @@ document.addEventListener('DOMContentLoaded', function () {
             simDiaVencimento.textContent = `Vencimento em 2 dias (${dataBoletoFormatada})`;
         } else if (formaVal === 'cartao_credito') {
             simGradeParcelas.textContent = `${parcelas}x de ${formatMoney(valorParcela)} (Link Cartão)`;
-            simDiaVencimento.textContent = `Vencimento todo dia ${dia < 10 ? '0' + dia : dia}`;
+            simDiaVencimento.textContent = `Vencimento todo dia ${dia < 10 ? '0' + dia : dia} (${periodoStr})`;
         } else if (formaVal === 'carne') {
             simGradeParcelas.textContent = `${parcelas}x de ${formatMoney(valorParcela)} (Carnê Escolar)`;
-            simDiaVencimento.textContent = `Vencimento todo dia ${dia < 10 ? '0' + dia : dia}`;
+            simDiaVencimento.textContent = `Vencimento todo dia ${dia < 10 ? '0' + dia : dia} (${periodoStr})`;
         } else {
             simGradeParcelas.textContent = `${parcelas}x de ${formatMoney(valorParcela)}`;
-            simDiaVencimento.textContent = `Vencimento todo dia ${dia < 10 ? '0' + dia : dia}`;
+            simDiaVencimento.textContent = `Vencimento todo dia ${dia < 10 ? '0' + dia : dia} (${periodoStr})`;
         }
 
         // Stepper: Se aluno, responsável e forma de pagamento já foram preenchidos, Passo 4 Concluído!
@@ -1233,6 +1277,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     selectPlano.addEventListener('change', atualizarSimulacao);
+    if (selectQtdParcelas) {
+        selectQtdParcelas.addEventListener('change', atualizarSimulacao);
+    }
     inputVencimento.addEventListener('input', function() {
         const val = parseInt(this.value);
         document.querySelectorAll('.btn-dia-preset').forEach(b => {
@@ -1914,6 +1961,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 resumoFormaBadge.textContent = formasInfo[selecionado.value].badge;
             }
 
+            // Visibilidade da Quantidade de Prestações:
+            // Exibido para: "cartão online", "carne" ou "cartão presencial"
+            const aceitaParcelamento = ['cartao_credito', 'carne', 'cartao_presencial'].includes(selecionado.value);
+            if (blocoQtdParcelas) {
+                if (aceitaParcelamento) {
+                    blocoQtdParcelas.classList.remove('hidden');
+                } else {
+                    blocoQtdParcelas.classList.add('hidden');
+                    if (selectQtdParcelas) {
+                        selectQtdParcelas.value = '1';
+                    }
+                }
+            }
+
             // Visibilidade do Campo Dia de Vencimento Mensal:
             // Só é exibido para: "cartão online", "carne" ou "boleto avista" (vencimento 2 dias posterior ao atual)
             const exigeVencimento = ['cartao_credito', 'carne', 'boleto'].includes(selecionado.value);
@@ -2000,6 +2061,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (blocoDesconto) {
                     blocoDesconto.classList.add('sm:col-span-2');
                 }
+            }
+            if (blocoQtdParcelas) {
+                blocoQtdParcelas.classList.add('hidden');
             }
         }
 

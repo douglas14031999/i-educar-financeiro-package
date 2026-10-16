@@ -37,10 +37,21 @@ class PlanoPagamentoController extends Controller
             'ano_letivo' => date('Y'),
             'qtd_parcelas' => 12,
             'valor_total' => 0.00,
+            'dia_vencimento_padrao' => 10,
             'escola_id' => 1,
         ]);
 
-        return view('financeiro::planos.create', compact('plano'));
+        try {
+            $escolas = DB::table('pmieducar.escola')
+                ->join('cadastro.pessoa', 'pmieducar.escola.ref_idpes', '=', 'cadastro.pessoa.idpes')
+                ->select('pmieducar.escola.cod_escola as id', 'cadastro.pessoa.nome')
+                ->orderBy('cadastro.pessoa.nome')
+                ->get();
+        } catch (\Throwable $e) {
+            $escolas = collect();
+        }
+
+        return view('financeiro::planos.create', compact('plano', 'escolas'));
     }
 
     /**
@@ -56,15 +67,15 @@ class PlanoPagamentoController extends Controller
             'nome' => 'required|string|max:150',
             'descricao' => 'nullable|string',
             'valor_total' => 'required|numeric|min:1',
-            'qtd_parcelas' => 'required|integer|min:1|max:24',
-            'dia_vencimento_padrao' => 'required|integer|min:1|max:31',
+            'qtd_parcelas' => 'nullable|integer|min:1|max:24',
+            'dia_vencimento_padrao' => 'nullable|integer|min:1|max:31',
             'gerar_matricula_avulsa' => 'nullable|boolean',
             'valor_matricula' => 'nullable|numeric|min:0',
         ]);
 
         return DB::transaction(function () use ($validated, $request) {
-            $diaVencimento = (int) $validated['dia_vencimento_padrao'];
-            $qtd = (int) $validated['qtd_parcelas'];
+            $diaVencimento = (int) ($validated['dia_vencimento_padrao'] ?? 10);
+            $qtd = (int) ($validated['qtd_parcelas'] ?? 12);
             $valorMensalidades = (float) $validated['valor_total'];
             $temMatricula = $request->boolean('gerar_matricula_avulsa') && (float) $request->input('valor_matricula') > 0;
             $valorMatricula = $temMatricula ? (float) $request->input('valor_matricula') : 0.00;
@@ -175,15 +186,15 @@ class PlanoPagamentoController extends Controller
             'nome' => 'required|string|max:150',
             'descricao' => 'nullable|string',
             'valor_total' => 'required|numeric|min:1',
-            'qtd_parcelas' => 'required|integer|min:1|max:24',
-            'dia_vencimento_padrao' => 'required|integer|min:1|max:31',
+            'qtd_parcelas' => 'nullable|integer|min:1|max:24',
+            'dia_vencimento_padrao' => 'nullable|integer|min:1|max:31',
             'gerar_matricula_avulsa' => 'nullable|boolean',
             'valor_matricula' => 'nullable|numeric|min:0',
         ]);
 
         return DB::transaction(function () use ($plano, $validated, $request) {
-            $diaVencimento = (int) $validated['dia_vencimento_padrao'];
-            $qtd = (int) $validated['qtd_parcelas'];
+            $diaVencimento = (int) ($validated['dia_vencimento_padrao'] ?? 10);
+            $qtd = (int) ($validated['qtd_parcelas'] ?? ($plano->qtd_parcelas ?: 12));
             $valorMensalidades = (float) $validated['valor_total'];
             $temMatricula = $request->boolean('gerar_matricula_avulsa') && (float) $request->input('valor_matricula') > 0;
             $valorMatricula = $temMatricula ? (float) $request->input('valor_matricula') : 0.00;

@@ -80,6 +80,7 @@ class ContratoController extends Controller
             'plano_id' => 'required|integer',
             'responsavel_financeiro_id' => 'nullable|integer',
             'dia_vencimento' => 'nullable|integer|min:1|max:31',
+            'qtd_parcelas' => 'nullable|integer|min:1|max:24',
             'valor_total_descontos' => 'nullable|numeric|min:0',
             'forma_pagamento' => 'nullable|string|in:dinheiro,cartao_presencial,cartao_credito,pix,boleto,carne',
             'cartao_bandeira' => 'nullable|string|max:50',
@@ -92,8 +93,14 @@ class ContratoController extends Controller
             $validated['forma_pagamento'] = strtolower(trim((string) $request->input('forma_pagamento')));
         }
 
+        $forma = $validated['forma_pagamento'] ?? '';
+        if ($request->filled('qtd_parcelas')) {
+            $validated['qtd_parcelas'] = (int) $request->input('qtd_parcelas');
+        } else {
+            $validated['qtd_parcelas'] = in_array($forma, ['pix', 'boleto', 'dinheiro']) ? 1 : 12;
+        }
+
         if (empty($validated['dia_vencimento'])) {
-            $forma = $validated['forma_pagamento'] ?? '';
             if ($forma === 'boleto') {
                 $validated['dia_vencimento'] = (int) \Carbon\Carbon::today()->addDays(2)->day;
             } else {
