@@ -539,6 +539,14 @@
                                                 </a>
                                             @endif
                                         </div>
+
+                                        {{-- Status em tempo real no rateio --}}
+                                        <div class="flex items-center gap-2 pt-2 text-xs text-slate-500">
+                                            <span class="co-pulse-ring">
+                                                <span></span><span></span>
+                                            </span>
+                                            <span class="co-realtime-text">Monitorando confirmação bancária em tempo real...</span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -660,7 +668,7 @@
 
                                     {{-- Botões Carnê --}}
                                     <div class="flex flex-col sm:flex-row gap-3 pt-1">
-                                        <a href="{{ route('financeiro.contratos.imprimir-carne', $contrato->id) }}" target="_blank"
+                                        <a href="{{ route('financeiro.contratos.imprimir-carne', ['id' => $contrato->id, 'responsavel_id' => $respObj?->id]) }}" target="_blank"
                                            class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 btn-ieducar-action btn-ieducar-green text-xs font-semibold"
                                            style="text-decoration:none;">
                                             <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1409,6 +1417,17 @@
     @php
         $temPixAtivo = ($contrato->forma_pagamento === 'pix') 
             || (($ehRateio ?? false) && ($rateioResponsaveis ?? collect())->contains(fn($r) => $r->forma_pagamento === 'pix'));
+
+        $titulosBase = $contrato->titulos;
+        $initialHash = md5($titulosBase->map(function ($t) {
+            $cg = $t->cobrancasGateway->sortByDesc('id')->first();
+            return "{$t->id}:{$t->status}:{$t->valor_pago}:" . ($cg?->status_externo ?? 'none');
+        })->join('|'));
+        $initialPagosCount = $titulosBase->filter(fn ($t) => in_array($t->status, ['pago', 'liquidado']))->count();
+        $tituloPixParaSSE = $titulosBase->first(function ($t) {
+            return $t->cobrancasGateway->contains(fn($c) => $c->tipo_cobranca === 'pix')
+                || str_contains(strtolower($t->observacoes ?? ''), 'pix');
+        }) ?? $primeiroTitulo;
     @endphp
     @if($temPixAtivo && $contrato->status !== 'quitado')
         (function () {
@@ -1450,9 +1469,9 @@
         // ── MONITORAMENTO REALTIME (SSE + POLLING FALLBACK) ───────────────────
         (function () {
             var STATUS_URL = '{{ route("financeiro.contratos.status-pagamento", $contrato->id) }}';
-            var SSE_URL = '{{ route("financeiro.api.stream", ["contrato_id" => $contrato->id, "titulo_id" => $primeiroTitulo?->id ?? 0]) }}';
-            var statusEl = document.getElementById('co-realtime-text');
-            var dotEl = document.getElementById('co-realtime-dot');
+            var SSE_URL = '{{ route("financeiro.api.stream", ["contrato_id" => $contrato->id, "titulo_id" => $tituloPixParaSSE?->id ?? 0]) }}';
+            var initialHash = '{{ $initialHash }}';
+            var initialPagos = {{ (int) $initialPagosCount }};
             var interval = null;
             var sseSource = null;
             var finalizado = false;
@@ -1463,15 +1482,26 @@
                 if (interval) clearInterval(interval);
                 if (sseSource) sseSource.close();
 
+                var statusEl = document.getElementById('co-realtime-text');
                 if (statusEl) {
                     statusEl.textContent = '✅ Pagamento confirmado via Pix! Atualizando...';
                     statusEl.style.color = '#059669';
                     statusEl.style.fontWeight = '700';
                 }
+                var dotEl = document.getElementById('co-realtime-dot');
                 if (dotEl) {
                     dotEl.style.background = '#059669';
                     dotEl.style.animation = 'none';
                 }
+
+                // Atualiza também todos os indicadores de tempo real no rateio
+                var todosStatus = document.querySelectorAll('.co-realtime-text');
+                todosStatus.forEach(function (el) {
+                    el.textContent = '✅ Pagamento identificado! Atualizando página...';
+                    el.style.color = '#059669';
+                    el.style.fontWeight = '700';
+                });
+
                 setTimeout(function () {
                     window.location.reload();
                 }, 1000);
@@ -1503,20 +1533,26 @@
                 if (attempts > MAX_ATTEMPTS) {
                     clearInterval(interval);
                     if (sseSource) sseSource.close();
-                    if (statusEl) statusEl.textContent = 'Monitoramento em pausa. Recarregue a página para verificar.';
+                    var el = document.getElementById('co-realtime-text');
+                    if (el) el.textContent = 'Monitoramento em pausa. Recarregue a página para verificar.';
                     return;
                 }
 
                 fetch(STATUS_URL, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
-                        if (data && (
-                            data.pago === true ||
-                            data.status === 'quitado' ||
-                            data.titulo_status === 'pago' ||
-                            data.titulo_status === 'liquidado'
-                        )) {
-                            confirmarPagamento();
+                        if (data) {
+                            var mudou = (data.pago === true) ||
+                                        (data.status === 'quitado') ||
+                                        (data.pix_pago === true && initialPagos === 0) ||
+                                        (data.titulos_hash && data.titulos_hash !== initialHash) ||
+                                        (typeof data.titulos_pagos !== 'undefined' && data.titulos_pagos > initialPagos) ||
+                                        (data.titulo_status === 'pago') ||
+                                        (data.titulo_status === 'liquidado');
+
+                            if (mudou) {
+                                confirmarPagamento();
+                            }
                         }
                     })
                     .catch(function () {});

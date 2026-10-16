@@ -228,18 +228,38 @@ class ContratoController extends Controller
     public function statusPagamento($id)
     {
         $contrato = Contrato::with(['titulos.cobrancasGateway'])->findOrFail($id);
-        $primeiroTitulo = $contrato->titulos->first();
-        $todosPagos = $contrato->titulos->isNotEmpty() && $contrato->titulos->every(fn ($t) => in_array($t->status, ['pago', 'liquidado']));
+        $titulos = $contrato->titulos;
+        
+        $titulosPagos = $titulos->filter(fn ($t) => in_array($t->status, ['pago', 'liquidado']))->count();
+        $totalTitulos = $titulos->count();
+        $todosPagos = $totalTitulos > 0 && ($titulosPagos === $totalTitulos);
         $pago = ($contrato->status === 'quitado') || $todosPagos;
+
+        // Hash com o estado de todos os títulos e cobranças para detectar instantaneamente qualquer alteração
+        $titulosHash = md5($titulos->map(function ($t) {
+            $cg = $t->cobrancasGateway->sortByDesc('id')->first();
+            return "{$t->id}:{$t->status}:{$t->valor_pago}:" . ($cg?->status_externo ?? 'none');
+        })->join('|'));
+
+        // Localiza título com Pix se houver
+        $tituloPix = $titulos->first(function ($t) {
+            return $t->cobrancasGateway->contains(fn($c) => $c->tipo_cobranca === 'pix')
+                || str_contains(strtolower($t->observacoes ?? ''), 'pix');
+        });
+
+        $pixPago = $tituloPix ? in_array($tituloPix->status, ['pago', 'liquidado']) : false;
 
         return response()->json([
             'contrato_id'     => (int) $contrato->id,
             'status'          => $contrato->status,
             'pago'            => $pago,
             'forma_pagamento' => $contrato->forma_pagamento,
-            'titulo_id'       => $primeiroTitulo?->id,
-            'titulo_status'   => $primeiroTitulo?->status,
-            'titulo_saldo'    => (float) ($primeiroTitulo?->status === 'pago' ? $primeiroTitulo?->valor_nominal : ($primeiroTitulo?->valor_saldo ?? 0)),
+            'total_titulos'   => $totalTitulos,
+            'titulos_pagos'   => $titulosPagos,
+            'titulos_hash'    => $titulosHash,
+            'pix_pago'        => $pixPago,
+            'titulo_id'       => $tituloPix?->id ?? $titulos->first()?->id,
+            'titulo_status'   => $tituloPix?->status ?? $titulos->first()?->status,
             'quitado_em'      => $contrato->quitado_em?->toIso8601String(),
         ]);
     }
@@ -313,34 +333,55 @@ class ContratoController extends Controller
             'titulos.responsavel',
         ])->findOrFail($id);
 
-        $titulos = $contrato->titulos()
+        $responsavelId = request('responsavel_id');
+
+        // Se for contrato com rateio ou houver mais de 1 responsável vinculado
+        $ehRateio = ($contrato->forma_pagamento === 'rateio')
+                 || ($contrato->titulos->pluck('responsavel_financeiro_id')->filter()->unique()->count() > 1);
+
+        // Se o contrato possuir modalidade titular único diferente de 'carne', redireciona
+        if (!$ehRateio && !empty($contrato->forma_pagamento) && $contrato->forma_pagamento !== 'carne') {
+            return redirect()->route('financeiro.contratos.checkout', $contrato->id)
+                ->with('aviso', 'Este contrato possui modalidade ' . ucfirst(str_replace('_', ' ', $contrato->forma_pagamento)) . ' e não possui emissão de Carnê.');
+        }
+
+        // Busca os títulos do contrato (ou do responsável específico caso rateio)
+        $queryTitulos = $contrato->titulos();
+        if ($responsavelId) {
+            $queryTitulos->where('responsavel_financeiro_id', $responsavelId);
+        }
+
+        $titulos = (clone $queryTitulos)
             ->whereIn('status', ['aberto', 'parcial', 'vencido'])
             ->orderBy('data_vencimento')
             ->get();
 
         if ($titulos->isEmpty()) {
-            $titulos = $contrato->titulos()->orderBy('data_vencimento')->get();
+            $titulos = (clone $queryTitulos)->orderBy('data_vencimento')->get();
         }
 
-        // Se o contrato possuir modalidade diferente de 'carne', redireciona para as opções adequadas
-        if (!empty($contrato->forma_pagamento) && $contrato->forma_pagamento !== 'carne') {
-            return redirect()->route('financeiro.contratos.checkout', $contrato->id)
-                ->with('aviso', 'Este contrato possui modalidade ' . ucfirst(str_replace('_', ' ', $contrato->forma_pagamento)) . ' e não possui emissão de Carnê.');
+        // 1. Verifica se já existe um carnê (installment) ativo no Asaas para este contrato/responsável
+        $titulosIds = $titulos->pluck('id');
+        $cobrancaExistente = \iEducar\Financeiro\Models\CobrancaGateway::where('contrato_id', $contrato->id)
+            ->whereNotNull('installment_id')
+            ->when($titulosIds->isNotEmpty(), fn($q) => $q->whereIn('titulo_id', $titulosIds))
+            ->first();
+
+        if (!$cobrancaExistente) {
+            $cobrancaExistente = \iEducar\Financeiro\Models\CobrancaGateway::where('contrato_id', $contrato->id)
+                ->whereNotNull('installment_id')
+                ->first();
         }
 
-        // 1. Verifica se já existe um carnê (installment) ativo no Asaas para este contrato
         $carne = \iEducar\Financeiro\Models\CarneGateway::where('contrato_id', $contrato->id)
+            ->when($responsavelId, fn($q) => $q->where('responsavel_financeiro_id', $responsavelId))
             ->where('status', 'ativo')
             ->first();
 
-        $cobrancaExistente = \iEducar\Financeiro\Models\CobrancaGateway::where('contrato_id', $contrato->id)
-            ->whereNotNull('installment_id')
-            ->first();
+        $installmentId = $cobrancaExistente?->installment_id ?? $carne?->installment_id;
 
-        $installmentId = $carne?->installment_id ?? $cobrancaExistente?->installment_id;
-
-        // 2. Se ainda não há installment registrado no Asaas, gera sob demanda apenas se a modalidade for carnê
-        if (empty($installmentId) && ($contrato->forma_pagamento === 'carne' || (empty($contrato->forma_pagamento) && count($titulos) >= 2))) {
+        // 2. Se ainda não há installment registrado no Asaas, gera sob demanda
+        if (empty($installmentId) && count($titulos) >= 2) {
             try {
                 /** @var \iEducar\Financeiro\Services\CarneService $carneService */
                 $carneService = app(\iEducar\Financeiro\Services\CarneService::class);
@@ -365,7 +406,7 @@ class ContratoController extends Controller
                 $pdfContent = $gateway->baixarCarnePdf($installmentId);
 
                 if (!empty($pdfContent)) {
-                    $filename = 'carne-asaas-' . $contrato->numero_contrato . '.pdf';
+                    $filename = 'carne-asaas-' . $contrato->numero_contrato . ($responsavelId ? '-resp-' . $responsavelId : '') . '.pdf';
                     return response($pdfContent, 200, [
                         'Content-Type'        => 'application/pdf',
                         'Content-Disposition' => "inline; filename=\"{$filename}\"",
