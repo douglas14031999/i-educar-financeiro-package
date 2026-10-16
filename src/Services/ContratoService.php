@@ -258,6 +258,40 @@ class ContratoService
                         ),
                     ]);
                 }
+            } elseif ($formaNormalizada === 'boleto') {
+                // Boleto à Vista (1x): vence 2 dias posterior ao atual
+                $dataVencBoleto = Carbon::today()->addDays(2);
+                $valoresRateio = $this->distribuirComResiduo($valorLiquido, $vinculos);
+
+                foreach ($vinculos as $idx => $vinculo) {
+                    $valorVinculo = $valoresRateio[$idx];
+                    if ($valorVinculo <= 0) {
+                        continue;
+                    }
+
+                    $titulosCriados[] = Titulo::create([
+                        'contrato_id'               => $contrato->id,
+                        'aluno_id'                  => $alunoId,
+                        'responsavel_financeiro_id' => $vinculo->responsavel_id,
+                        'escola_id'                 => $escolaId,
+                        'tipo'                      => 'mensalidade',
+                        'numero_parcela'            => 1,
+                        'total_parcelas'            => 1,
+                        'competencia'               => Carbon::today()->format('Y-m'),
+                        'data_vencimento'           => $dataVencBoleto,
+                        'valor_nominal'             => $valorVinculo,
+                        'valor_desconto'            => 0.00,
+                        'valor_multa'               => 0.00,
+                        'valor_juros'               => 0.00,
+                        'valor_pago'                => 0.00,
+                        'valor_saldo'               => $valorVinculo,
+                        'status'                    => 'aberto',
+                        'observacoes'               => sprintf(
+                            '%s - Boleto Bancário à Vista',
+                            $contrato->numero_contrato
+                        ),
+                    ]);
+                }
             } else {
                 $totalParcelas = $plano->itens->where('numero_parcela', '>', 0)->count();
 

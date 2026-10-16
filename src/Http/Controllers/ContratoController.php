@@ -79,7 +79,7 @@ class ContratoController extends Controller
             'ano_letivo' => 'required|integer',
             'plano_id' => 'required|integer',
             'responsavel_financeiro_id' => 'nullable|integer',
-            'dia_vencimento' => 'required|integer|min:1|max:31',
+            'dia_vencimento' => 'nullable|integer|min:1|max:31',
             'valor_total_descontos' => 'nullable|numeric|min:0',
             'forma_pagamento' => 'nullable|string|in:dinheiro,cartao_presencial,cartao_credito,pix,boleto,carne',
             'cartao_bandeira' => 'nullable|string|max:50',
@@ -90,6 +90,15 @@ class ContratoController extends Controller
 
         if ($request->filled('forma_pagamento')) {
             $validated['forma_pagamento'] = strtolower(trim((string) $request->input('forma_pagamento')));
+        }
+
+        if (empty($validated['dia_vencimento'])) {
+            $forma = $validated['forma_pagamento'] ?? '';
+            if ($forma === 'boleto') {
+                $validated['dia_vencimento'] = (int) \Carbon\Carbon::today()->addDays(2)->day;
+            } else {
+                $validated['dia_vencimento'] = (int) \Carbon\Carbon::today()->day;
+            }
         }
 
         try {

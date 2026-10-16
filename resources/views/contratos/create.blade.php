@@ -282,7 +282,7 @@
                     </div>
                     <div class="min-w-0 flex-1">
                         <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Passo 3</span>
-                        <span id="step_label_3" class="block text-xs font-semibold text-slate-600 truncate">Plano & Parcelas</span>
+                        <span id="step_label_3" class="block text-xs font-semibold text-slate-600 truncate">Forma de Pagamento</span>
                     </div>
                 </div>
 
@@ -293,7 +293,7 @@
                     </div>
                     <div class="min-w-0 flex-1">
                         <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Passo 4</span>
-                        <span id="step_label_4" class="block text-xs font-semibold text-slate-600 truncate">Forma de Pagamento</span>
+                        <span id="step_label_4" class="block text-xs font-semibold text-slate-600 truncate">Plano & Parcelas</span>
                     </div>
                 </div>
 
@@ -508,106 +508,12 @@
                     </div>
 
                     {{-- ========================================================================= --}}
-                    {{-- ETAPA 3: PLANO DE COBRANÇA E CONDIÇÕES COMERCIAIS                         --}}
+                    {{-- ETAPA 3: FORMA DE PAGAMENTO E CHECKOUT DA MATRÍCULA                       --}}
                     {{-- ========================================================================= --}}
                     <div class="bg-white border border-slate-200 shadow-xs rounded-sm overflow-hidden">
                         <div class="bg-[#47728f] px-5 py-3 text-white flex items-center justify-between">
                             <div class="flex items-center gap-2.5">
                                 <span class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">3</span>
-                                <h2 class="text-sm font-bold tracking-wide" style="margin: 0; color: white;">
-                                    Plano de Cobrança e Condições Comerciais
-                                </h2>
-                            </div>
-                            <span class="text-xs text-slate-200">Anuidade & Mensalidades</span>
-                        </div>
-
-                        <div class="p-5 md:p-6 space-y-4">
-                            <div>
-                                <label for="plano_id" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                                    Plano de Pagamento / Anuidade <span class="text-rose-500">*</span>
-                                </label>
-                                <select name="plano_id" id="plano_id" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 text-slate-800 text-xs md:text-sm rounded-sm focus:outline-none focus:border-[#47728f] focus:ring-1 focus:ring-[#47728f] transition shadow-2xs font-semibold">
-                                    <option value="">Selecione o plano configurado...</option>
-                                    @foreach($planos as $plano)
-                                        <option value="{{ $plano->id }}" 
-                                                data-valor="{{ $plano->valor_total }}" 
-                                                data-parcelas="{{ $plano->qtd_parcelas }}" 
-                                                data-nome="{{ $plano->nome }}"
-                                                {{ old('plano_id') == $plano->id ? 'selected' : '' }}>
-                                            {{ $plano->nome }} — R$ {{ number_format($plano->valor_total, 2, ',', '.') }} ({{ $plano->qtd_parcelas }} parcelas)
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <p class="text-[11px] text-slate-500 mt-1.5">
-                                    Determina o valor global da anuidade, a quantidade de títulos e os vencimentos.
-                                </p>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                                {{-- Dia de Vencimento com Segmented Control e Input --}}
-                                <div>
-                                    <label for="dia_vencimento" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                                        Dia de Vencimento Mensal <span class="text-rose-500">*</span>
-                                    </label>
-                                    
-                                    <div class="financeiro-input-group">
-                                        <div class="financeiro-input-addon" style="font-size: 11px;">
-                                            Dia
-                                        </div>
-                                        <input type="number" 
-                                               name="dia_vencimento" 
-                                               id="dia_vencimento" 
-                                               min="1" 
-                                               max="31" 
-                                               value="{{ old('dia_vencimento', 10) }}" 
-                                               required 
-                                               class="financeiro-input-field font-bold">
-                                    </div>
-                                    
-                                    {{-- Botões de Atalho Estilizados como Pills --}}
-                                    <div class="flex items-center gap-1.5 mt-2 flex-wrap">
-                                        <span class="text-[11px] text-slate-400 mr-1">Atalhos:</span>
-                                        <button type="button" class="btn-dia-preset" data-dia="5">Dia 05</button>
-                                        <button type="button" class="btn-dia-preset active" data-dia="10">Dia 10</button>
-                                        <button type="button" class="btn-dia-preset" data-dia="15">Dia 15</button>
-                                        <button type="button" class="btn-dia-preset" data-dia="20">Dia 20</button>
-                                    </div>
-                                </div>
-
-                                {{-- Desconto Total Concedido (Blindado com Prepend R$) --}}
-                                <div>
-                                    <label for="valor_total_descontos" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                                        Desconto Total Concedido (R$)
-                                    </label>
-                                    
-                                    <div class="financeiro-input-group">
-                                        <div class="financeiro-input-addon" style="background-color: #f1f5f9; color: #475569;">
-                                            R$
-                                        </div>
-                                        <input type="number" 
-                                               name="valor_total_descontos" 
-                                               id="valor_total_descontos" 
-                                               step="0.01" 
-                                               min="0" 
-                                               value="{{ old('valor_total_descontos', '0.00') }}" 
-                                               class="financeiro-input-field font-semibold text-slate-900">
-                                    </div>
-                                    
-                                    <p class="text-[11px] text-slate-500 mt-2">
-                                        Bolsa de estudos, convênio empresarial ou desconto comercial direto.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- ========================================================================= --}}
-                    {{-- ETAPA 4: FORMA DE PAGAMENTO E CHECKOUT DA MATRÍCULA                       --}}
-                    {{-- ========================================================================= --}}
-                    <div class="bg-white border border-slate-200 shadow-xs rounded-sm overflow-hidden">
-                        <div class="bg-[#47728f] px-5 py-3 text-white flex items-center justify-between">
-                            <div class="flex items-center gap-2.5">
-                                <span class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">4</span>
                                 <h2 class="text-sm font-bold tracking-wide" style="margin: 0; color: white;">
                                     Condição de Pagamento e Checkout da Matrícula
                                 </h2>
@@ -818,6 +724,103 @@
                                     <div class="flex items-center text-xs text-slate-500 pt-5">
                                         <span>* Link gerado com validade de 5 dias úteis e repasse automático de taxas.</span>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ========================================================================= --}}
+                    {{-- ETAPA 4: PLANO DE COBRANÇA E CONDIÇÕES COMERCIAIS                         --}}
+                    {{-- ========================================================================= --}}
+                    <div class="bg-white border border-slate-200 shadow-xs rounded-sm overflow-hidden">
+                        <div class="bg-[#47728f] px-5 py-3 text-white flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-xs">4</span>
+                                <h2 class="text-sm font-bold tracking-wide" style="margin: 0; color: white;">
+                                    Plano de Cobrança e Condições Comerciais
+                                </h2>
+                            </div>
+                            <span class="text-xs text-slate-200">Anuidade & Mensalidades</span>
+                        </div>
+
+                        <div class="p-5 md:p-6 space-y-4">
+                            <div>
+                                <label for="plano_id" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                    Plano de Pagamento / Anuidade <span class="text-rose-500">*</span>
+                                </label>
+                                <select name="plano_id" id="plano_id" required class="w-full px-3.5 py-2.5 bg-white border border-slate-300 text-slate-800 text-xs md:text-sm rounded-sm focus:outline-none focus:border-[#47728f] focus:ring-1 focus:ring-[#47728f] transition shadow-2xs font-semibold">
+                                    <option value="">Selecione o plano configurado...</option>
+                                    @foreach($planos as $plano)
+                                        <option value="{{ $plano->id }}" 
+                                                data-valor="{{ $plano->valor_total }}" 
+                                                data-parcelas="{{ $plano->qtd_parcelas }}" 
+                                                data-nome="{{ $plano->nome }}"
+                                                {{ old('plano_id') == $plano->id ? 'selected' : '' }}>
+                                            {{ $plano->nome }} — R$ {{ number_format($plano->valor_total, 2, ',', '.') }} ({{ $plano->qtd_parcelas }} parcelas)
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="text-[11px] text-slate-500 mt-1.5">
+                                    Determina o valor global da anuidade, a quantidade de títulos e os vencimentos.
+                                </p>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1" id="grid_vencimento_desconto">
+                                {{-- Dia de Vencimento com Segmented Control e Input (Exibido apenas para Cartão Online, Carnê ou Boleto) --}}
+                                <div id="bloco_dia_vencimento" class="hidden">
+                                    <label for="dia_vencimento" id="label_dia_vencimento" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                        Dia de Vencimento Mensal <span class="text-rose-500">*</span>
+                                    </label>
+                                    
+                                    <div class="financeiro-input-group">
+                                        <div class="financeiro-input-addon" style="font-size: 11px;">
+                                            Dia
+                                        </div>
+                                        <input type="number" 
+                                               name="dia_vencimento" 
+                                               id="dia_vencimento" 
+                                               min="1" 
+                                               max="31" 
+                                               value="{{ old('dia_vencimento', 10) }}" 
+                                               class="financeiro-input-field font-bold">
+                                    </div>
+                                    
+                                    {{-- Botões de Atalho Estilizados como Pills --}}
+                                    <div id="atalhos_dia_vencimento" class="flex items-center gap-1.5 mt-2 flex-wrap">
+                                        <span class="text-[11px] text-slate-400 mr-1">Atalhos:</span>
+                                        <button type="button" class="btn-dia-preset" data-dia="5">Dia 05</button>
+                                        <button type="button" class="btn-dia-preset active" data-dia="10">Dia 10</button>
+                                        <button type="button" class="btn-dia-preset" data-dia="15">Dia 15</button>
+                                        <button type="button" class="btn-dia-preset" data-dia="20">Dia 20</button>
+                                    </div>
+
+                                    <p id="hint_boleto_vencimento" class="text-[11px] text-amber-600 font-semibold mt-1.5 hidden">
+                                        * Vencimento do boleto calculado para 2 dias após a data atual.
+                                    </p>
+                                </div>
+
+                                {{-- Desconto Total Concedido (Blindado com Prepend R$) --}}
+                                <div id="bloco_desconto" class="sm:col-span-2">
+                                    <label for="valor_total_descontos" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                        Desconto Total Concedido (R$)
+                                    </label>
+                                    
+                                    <div class="financeiro-input-group">
+                                        <div class="financeiro-input-addon" style="background-color: #f1f5f9; color: #475569;">
+                                            R$
+                                        </div>
+                                        <input type="number" 
+                                               name="valor_total_descontos" 
+                                               id="valor_total_descontos" 
+                                               step="0.01" 
+                                               min="0" 
+                                               value="{{ old('valor_total_descontos', '0.00') }}" 
+                                               class="financeiro-input-field font-semibold text-slate-900">
+                                    </div>
+                                    
+                                    <p class="text-[11px] text-slate-500 mt-2">
+                                        Bolsa de estudos, convênio empresarial ou desconto comercial direto.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -1178,8 +1181,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const dia = parseInt(inputVencimento.value || 10);
 
         const formaSel = document.querySelector('input[name="forma_pagamento"]:checked');
-        const isPix = formaSel && formaSel.value === 'pix';
-        const valorParcela = (parcelas > 0 && !isPix) ? (valorLiquido / parcelas) : valorLiquido;
+        const formaVal = formaSel ? formaSel.value : '';
+
+        const isPix = formaVal === 'pix';
+        const isDinheiro = formaVal === 'dinheiro';
+        const isCartaoPresencial = formaVal === 'cartao_presencial';
+        const isBoleto = formaVal === 'boleto';
+        const isAvista = isPix || isDinheiro || isCartaoPresencial || isBoleto;
+
+        const valorParcela = (parcelas > 0 && !isAvista) ? (valorLiquido / parcelas) : valorLiquido;
 
         simValorBruto.textContent = formatMoney(valorBruto);
         simValorDesconto.textContent = (desconto > 0 ? '- ' : '') + formatMoney(desconto);
@@ -1188,21 +1198,37 @@ document.addEventListener('DOMContentLoaded', function () {
         if (isPix) {
             simGradeParcelas.textContent = `1x de ${formatMoney(valorLiquido)} (Cota Única Instantânea)`;
             simDiaVencimento.textContent = 'Pagamento instantâneo no ato via Pix';
+        } else if (isDinheiro) {
+            simGradeParcelas.textContent = `1x de ${formatMoney(valorLiquido)} (À Vista em Dinheiro)`;
+            simDiaVencimento.textContent = 'Pagamento no ato no caixa da escola (Nasce Quitado)';
+        } else if (isCartaoPresencial) {
+            simGradeParcelas.textContent = `1x de ${formatMoney(valorLiquido)} (Cartão POS)`;
+            simDiaVencimento.textContent = 'Pagamento no ato na maquininha física (Nasce Quitado)';
+        } else if (isBoleto) {
+            const dataBoleto = new Date();
+            dataBoleto.setDate(dataBoleto.getDate() + 2);
+            const dataBoletoFormatada = `${String(dataBoleto.getDate()).padStart(2, '0')}/${String(dataBoleto.getMonth() + 1).padStart(2, '0')}/${dataBoleto.getFullYear()}`;
+            simGradeParcelas.textContent = `1x de ${formatMoney(valorLiquido)} (Boleto Único)`;
+            simDiaVencimento.textContent = `Vencimento em 2 dias (${dataBoletoFormatada})`;
+        } else if (formaVal === 'cartao_credito') {
+            simGradeParcelas.textContent = `${parcelas}x de ${formatMoney(valorParcela)} (Link Cartão)`;
+            simDiaVencimento.textContent = `Vencimento todo dia ${dia < 10 ? '0' + dia : dia}`;
+        } else if (formaVal === 'carne') {
+            simGradeParcelas.textContent = `${parcelas}x de ${formatMoney(valorParcela)} (Carnê Escolar)`;
+            simDiaVencimento.textContent = `Vencimento todo dia ${dia < 10 ? '0' + dia : dia}`;
         } else {
             simGradeParcelas.textContent = `${parcelas}x de ${formatMoney(valorParcela)}`;
             simDiaVencimento.textContent = `Vencimento todo dia ${dia < 10 ? '0' + dia : dia}`;
         }
 
-        // Se aluno e responsável já foram definidos, marca o Passo 3 como completo
-        if (inputAlunoId.value && inputResponsavelId.value) {
-            stepInd3.className = 'step-item completed';
-            stepCircle3.className = 'step-circle done';
-            stepCircle3.innerHTML = '✓';
-            stepLabel3.textContent = isPix ? `1x de ${formatMoney(valorLiquido)} (Pix)` : `${parcelas}x de ${formatMoney(valorParcela)}`;
-
-            // Libera Passo 4 como Ativo
-            stepInd4.className = 'step-item active';
-            stepCircle4.className = 'step-circle current';
+        // Stepper: Se aluno, responsável e forma de pagamento já foram preenchidos, Passo 4 Concluído!
+        if (inputAlunoId.value && inputResponsavelId.value && formaSel) {
+            stepInd4.className = 'step-item completed';
+            stepCircle4.className = 'step-circle done';
+            stepCircle4.innerHTML = '✓';
+            stepLabel4.textContent = isAvista ? `1x de ${formatMoney(valorLiquido)}` : `${parcelas}x de ${formatMoney(valorParcela)}`;
+        } else if (inputAlunoId.value && inputResponsavelId.value) {
+            stepLabel4.textContent = `${parcelas} parcelas`;
         }
     }
 
@@ -1590,8 +1616,25 @@ document.addEventListener('DOMContentLoaded', function () {
             stepCircle2.innerHTML = '✓';
             stepLabel2.textContent = data.responsavel.nome;
 
-            stepInd3.className = 'step-item active';
-            stepCircle3.className = 'step-circle current';
+            const formaSel = document.querySelector('input[name="forma_pagamento"]:checked');
+            if (formaSel) {
+                stepInd3.className = 'step-item completed';
+                stepCircle3.className = 'step-circle done';
+                stepCircle3.innerHTML = '✓';
+                stepLabel3.textContent = formasInfo[formaSel.value] ? formasInfo[formaSel.value].label : 'Forma Escolhida';
+
+                if (selectPlano && selectPlano.value) {
+                    stepInd4.className = 'step-item completed';
+                    stepCircle4.className = 'step-circle done';
+                    stepCircle4.innerHTML = '✓';
+                } else {
+                    stepInd4.className = 'step-item active';
+                    stepCircle4.className = 'step-circle current';
+                }
+            } else {
+                stepInd3.className = 'step-item active';
+                stepCircle3.className = 'step-circle current';
+            }
 
             renderizarTabelaResponsaveis();
             atualizarSimulacao();
@@ -1832,6 +1875,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const paymentCards = document.querySelectorAll('.payment-radio-card');
     const blocoCartaoPresencial = document.getElementById('bloco_cartao_presencial_detalhes');
     const blocoCartaoCredito = document.getElementById('bloco_cartao_credito_detalhes');
+    const blocoDiaVencimento = document.getElementById('bloco_dia_vencimento');
+    const labelDiaVencimento = document.getElementById('label_dia_vencimento');
+    const atalhosDiaVencimento = document.getElementById('atalhos_dia_vencimento');
+    const hintBoletoVencimento = document.getElementById('hint_boleto_vencimento');
+    const blocoDesconto = document.getElementById('bloco_desconto');
 
     const formasInfo = {
         'dinheiro': { label: 'Dinheiro (À Vista)', badge: 'Nasce Quitado' },
@@ -1866,14 +1914,92 @@ document.addEventListener('DOMContentLoaded', function () {
                 resumoFormaBadge.textContent = formasInfo[selecionado.value].badge;
             }
 
-            // O Passo 4 só fica com check verde se os passos 1, 2 e 3 estiverem preenchidos!
-            if (inputAlunoId.value && inputResponsavelId.value && selectPlano.value) {
-                stepInd4.className = 'step-item completed';
-                stepCircle4.className = 'step-circle done';
-                stepCircle4.innerHTML = '✓';
-                stepLabel4.textContent = formasInfo[selecionado.value] ? formasInfo[selecionado.value].label : 'Forma Escolhida';
+            // Visibilidade do Campo Dia de Vencimento Mensal:
+            // Só é exibido para: "cartão online", "carne" ou "boleto avista" (vencimento 2 dias posterior ao atual)
+            const exigeVencimento = ['cartao_credito', 'carne', 'boleto'].includes(selecionado.value);
+
+            if (blocoDiaVencimento) {
+                if (exigeVencimento) {
+                    blocoDiaVencimento.classList.remove('hidden');
+                    if (blocoDesconto) {
+                        blocoDesconto.classList.remove('sm:col-span-2');
+                    }
+
+                    if (selecionado.value === 'boleto') {
+                        // Boleto à vista: 2 dias posterior ao atual para vencimento
+                        const dataBoleto = new Date();
+                        dataBoleto.setDate(dataBoleto.getDate() + 2);
+                        const diaBoleto = dataBoleto.getDate();
+                        const mesBoleto = String(dataBoleto.getMonth() + 1).padStart(2, '0');
+                        const anoBoleto = dataBoleto.getFullYear();
+
+                        if (labelDiaVencimento) {
+                            labelDiaVencimento.innerHTML = 'Dia de Vencimento do Boleto <span class="text-rose-500">*</span>';
+                        }
+                        if (hintBoletoVencimento) {
+                            hintBoletoVencimento.innerHTML = `* Vencimento do boleto calculado para 2 dias após a data atual (${String(diaBoleto).padStart(2, '0')}/${mesBoleto}/${anoBoleto}).`;
+                            hintBoletoVencimento.classList.remove('hidden');
+                        }
+                        if (atalhosDiaVencimento) {
+                            atalhosDiaVencimento.classList.add('hidden');
+                        }
+                        inputVencimento.value = diaBoleto;
+                    } else {
+                        // Cartão Online ou Carnê
+                        if (labelDiaVencimento) {
+                            labelDiaVencimento.innerHTML = 'Dia de Vencimento Mensal <span class="text-rose-500">*</span>';
+                        }
+                        if (hintBoletoVencimento) {
+                            hintBoletoVencimento.classList.add('hidden');
+                        }
+                        if (atalhosDiaVencimento) {
+                            atalhosDiaVencimento.classList.remove('hidden');
+                        }
+                        if (!inputVencimento.value || inputVencimento.value > 31) {
+                            inputVencimento.value = 10;
+                        }
+                    }
+                } else {
+                    // Dinheiro, Cartão Presencial, Pix: pagamento no ato, não exibe
+                    blocoDiaVencimento.classList.add('hidden');
+                    if (blocoDesconto) {
+                        blocoDesconto.classList.add('sm:col-span-2');
+                    }
+                    if (hintBoletoVencimento) {
+                        hintBoletoVencimento.classList.add('hidden');
+                    }
+                    if (!inputVencimento.value) {
+                        inputVencimento.value = 10;
+                    }
+                }
+            }
+
+            // Stepper: Passo 3 (Forma de Pagamento)
+            if (inputAlunoId.value && inputResponsavelId.value) {
+                stepInd3.className = 'step-item completed';
+                stepCircle3.className = 'step-circle done';
+                stepCircle3.innerHTML = '✓';
+                stepLabel3.textContent = formasInfo[selecionado.value] ? formasInfo[selecionado.value].label : 'Forma Escolhida';
+
+                if (selectPlano && selectPlano.value) {
+                    stepInd4.className = 'step-item completed';
+                    stepCircle4.className = 'step-circle done';
+                    stepCircle4.innerHTML = '✓';
+                } else {
+                    stepInd4.className = 'step-item active';
+                    stepCircle4.className = 'step-circle current';
+                    stepCircle4.textContent = '4';
+                }
             } else {
-                stepLabel4.textContent = formasInfo[selecionado.value] ? formasInfo[selecionado.value].label : 'Forma de Pagamento';
+                stepLabel3.textContent = formasInfo[selecionado.value] ? formasInfo[selecionado.value].label : 'Forma de Pagamento';
+            }
+        } else {
+            // Nenhuma opção selecionada inicialmente
+            if (blocoDiaVencimento) {
+                blocoDiaVencimento.classList.add('hidden');
+                if (blocoDesconto) {
+                    blocoDesconto.classList.add('sm:col-span-2');
+                }
             }
         }
 
