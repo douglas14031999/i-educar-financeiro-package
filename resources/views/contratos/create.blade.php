@@ -925,9 +925,17 @@
                                         </div>
 
                                         {{-- Container para Balcão / Presencial --}}
-                                        <div id="rateio_info_balcao_0" class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-xs text-slate-700 hidden">
-                                            <span class="font-bold block text-slate-800">Quitação Presencial (Balcão / POS)</span>
-                                            <span class="text-[10px] text-slate-500">Baixa manual registrada no caixa da escola no ato da emissão.</span>
+                                        <div id="rateio_info_balcao_0" class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-sm text-xs text-emerald-900 hidden space-y-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-bold flex items-center gap-1.5 text-emerald-900">
+                                                    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                                    Dinheiro (Balcão / Caixa Escolar)
+                                                </span>
+                                                <span class="px-2 py-0.5 bg-emerald-200 text-emerald-900 rounded font-bold text-[10px] uppercase">✓ Nasce Quitado</span>
+                                            </div>
+                                            <p class="text-[11px] text-emerald-700 m-0">
+                                                Pagamento recebido no ato. O título é gerado com status Pago e recibo disponível imediatamente.
+                                            </p>
                                         </div>
 
                                         <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-center">
@@ -1064,9 +1072,17 @@
                                         </div>
 
                                         {{-- Container para Balcão / Presencial --}}
-                                        <div id="rateio_info_balcao_1" class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-xs text-slate-700 hidden">
-                                            <span class="font-bold block text-slate-800">Quitação Presencial (Balcão / POS)</span>
-                                            <span class="text-[10px] text-slate-500">Baixa manual registrada no caixa da escola no ato da emissão.</span>
+                                        <div id="rateio_info_balcao_1" class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-sm text-xs text-emerald-900 hidden space-y-1">
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-bold flex items-center gap-1.5 text-emerald-900">
+                                                    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                                    Dinheiro (Balcão / Caixa Escolar)
+                                                </span>
+                                                <span class="px-2 py-0.5 bg-emerald-200 text-emerald-900 rounded font-bold text-[10px] uppercase">✓ Nasce Quitado</span>
+                                            </div>
+                                            <p class="text-[11px] text-emerald-700 m-0">
+                                                Pagamento recebido no ato. O título é gerado com status Pago e recibo disponível imediatamente.
+                                            </p>
                                         </div>
 
                                         <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-sm text-center">
@@ -1962,8 +1978,10 @@ document.addEventListener('DOMContentLoaded', function () {
             rateioParcelasDisplay0.textContent = `1x de ${formatMoney(v0)} (Boleto com venc. em ${d2.dataBr})`;
         } else if (forma0 === 'pix') {
             rateioParcelasDisplay0.textContent = `1x de ${formatMoney(v0)} (À vista - PIX 24h)`;
+        } else if (forma0 === 'dinheiro') {
+            rateioParcelasDisplay0.textContent = `1x de ${formatMoney(v0)} (Pago no Ato - Quitado)`;
         } else {
-            rateioParcelasDisplay0.textContent = `1x de ${formatMoney(v0)} (À vista - Balcão)`;
+            rateioParcelasDisplay0.textContent = `1x de ${formatMoney(v0)} (À vista - Balcão POS)`;
         }
 
         // Repasse de taxas Resp 0
@@ -2006,8 +2024,10 @@ document.addEventListener('DOMContentLoaded', function () {
             rateioParcelasDisplay1.textContent = `1x de ${formatMoney(v1)} (Boleto com venc. em ${d2.dataBr})`;
         } else if (forma1 === 'pix') {
             rateioParcelasDisplay1.textContent = `1x de ${formatMoney(v1)} (À vista - PIX 24h)`;
+        } else if (forma1 === 'dinheiro') {
+            rateioParcelasDisplay1.textContent = `1x de ${formatMoney(v1)} (Pago no Ato - Quitado)`;
         } else {
-            rateioParcelasDisplay1.textContent = `1x de ${formatMoney(v1)} (À vista - Balcão)`;
+            rateioParcelasDisplay1.textContent = `1x de ${formatMoney(v1)} (À vista - Balcão POS)`;
         }
 
         // Repasse de taxas Resp 1

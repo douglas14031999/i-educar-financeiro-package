@@ -9,7 +9,9 @@ use iEducar\Financeiro\Models\CobrancaGateway;
 use iEducar\Financeiro\Models\Contrato;
 use iEducar\Financeiro\Models\PlanoPagamento;
 use iEducar\Financeiro\Models\Titulo;
+use iEducar\Financeiro\Models\Pagamento;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class ContratoService
@@ -304,7 +306,61 @@ class ContratoService
                 $formaDoResp = strtolower(trim((string) ($vinculo->forma_pagamento ?: 'carne')));
                 $diaDoResp   = (int) ($vinculo->dia_vencimento ?: $diaVencimento);
 
-                if ($formaDoResp === 'pix') {
+                if ($formaDoResp === 'dinheiro') {
+                    // Pagamento no ato em dinheiro: nasce como PAGO (1x à vista)
+                    $tituloDinheiro = Titulo::create([
+                        'contrato_id'               => $contrato->id,
+                        'aluno_id'                  => $alunoId,
+                        'responsavel_financeiro_id' => $vinculo->responsavel_id,
+                        'escola_id'                 => $escolaId,
+                        'tipo'                      => 'mensalidade',
+                        'numero_parcela'            => 1,
+                        'total_parcelas'            => 1,
+                        'competencia'               => Carbon::today()->format('Y-m'),
+                        'data_vencimento'           => Carbon::today(),
+                        'valor_nominal'             => $valorVinculoTotal,
+                        'valor_desconto'            => 0.00,
+                        'valor_multa'               => 0.00,
+                        'valor_juros'               => 0.00,
+                        'valor_pago'                => $valorVinculoTotal,
+                        'valor_saldo'               => 0.00,
+                        'status'                    => 'pago',
+                        'observacoes'               => sprintf(
+                            '%s - Quitação no Balcão em Dinheiro (%s%%)',
+                            $contrato->numero_contrato,
+                            number_format($vinculo->percentual_rateio, 1)
+                        ),
+                    ]);
+
+                    // Registra o pagamento para permitir a emissão do Recibo Oficial e histórico contábil
+                    $comprovanteHash = strtoupper(substr(hash('sha256', sprintf(
+                        '%d|%s|%.2f|dinheiro|%s',
+                        $tituloDinheiro->id,
+                        Carbon::today()->format('Y-m-d'),
+                        $valorVinculoTotal,
+                        Str::random(10)
+                    )), 0, 32));
+
+                    Pagamento::create([
+                        'titulo_id'                => $tituloDinheiro->id,
+                        'forma_pagamento'          => 'dinheiro',
+                        'data_pagamento'           => Carbon::today(),
+                        'data_compensacao'         => Carbon::today(),
+                        'valor_pago'               => $valorVinculoTotal,
+                        'valor_amortizado'         => $valorVinculoTotal,
+                        'valor_juros'              => 0.00,
+                        'valor_multa'              => 0.00,
+                        'valor_desconto_concedido' => 0.00,
+                        'valor_credito_gerado'     => 0.00,
+                        'troco'                    => 0.00,
+                        'origem_baixa'             => 'balcao',
+                        'usuario_id'               => auth()->id() ?? null,
+                        'comprovante_hash'         => $comprovanteHash,
+                        'estornado'                => false,
+                    ]);
+
+                    $titulosCriados[] = $tituloDinheiro;
+                } elseif ($formaDoResp === 'pix') {
                     // Parcela única instantânea via Pix
                     $titulosCriados[] = Titulo::create([
                         'contrato_id'               => $contrato->id,
@@ -460,15 +516,18 @@ class ContratoService
 
         switch ($formaPagamento) {
             case 'dinheiro':
-                $baixaService = app(BaixaTituloService::class);
+                // Títulos em dinheiro já nascem quitados e com pagamento registrado na criação
                 foreach ($titulos as $titulo) {
-                    $baixaService->realizarBaixa($titulo, [
-                        'valor_pago'      => (float) $titulo->valor_saldo,
-                        'forma_pagamento' => 'dinheiro',
-                        'data_pagamento'  => Carbon::today(),
-                        'origem_baixa'    => 'balcao',
-                        'usuario_id'      => auth()->id() ?? null,
-                    ]);
+                    if ($titulo->status !== 'pago') {
+                        $baixaService = app(BaixaTituloService::class);
+                        $baixaService->realizarBaixa($titulo, [
+                            'valor_pago'      => (float) $titulo->valor_saldo,
+                            'forma_pagamento' => 'dinheiro',
+                            'data_pagamento'  => Carbon::today(),
+                            'origem_baixa'    => 'balcao',
+                            'usuario_id'      => auth()->id() ?? null,
+                        ]);
+                    }
                 }
                 break;
 
