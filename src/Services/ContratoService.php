@@ -323,7 +323,7 @@ class ContratoService
                         'valor_multa'               => 0.00,
                         'valor_juros'               => 0.00,
                         'valor_pago'                => $valorVinculoTotal,
-                        'valor_saldo'               => 0.00,
+                        'valor_saldo'               => $valorVinculoTotal,
                         'status'                    => 'pago',
                         'observacoes'               => sprintf(
                             '%s - Quitação no Balcão em Dinheiro (%s%%)',
