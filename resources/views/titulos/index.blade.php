@@ -150,7 +150,7 @@
                         Buscar:
                     </label>
                     <div class="relative">
-                        <input type="text" id="filtro-busca" name="busca" value="{{ $busca }}" placeholder="Buscar por Responsável, CPF ou Observação..." class="w-full pl-3 pr-9 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition" autocomplete="off">
+                        <input type="text" id="filtro-busca" name="busca" value="{{ $busca }}" placeholder="Buscar por Aluno, Responsável, CPF ou Contrato..." class="w-full pl-3 pr-9 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition" autocomplete="off">
                         <!-- Spinner sutil durante digitação / requisição AJAX -->
                         <div id="filtro-spinner-busca" class="absolute right-2.5 top-1/2 -translate-y-1/2 hidden text-[#47728f]">
                             <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

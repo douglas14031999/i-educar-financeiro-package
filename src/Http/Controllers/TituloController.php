@@ -81,15 +81,58 @@ class TituloController extends Controller
         }
 
         if ($busca) {
-            $query->where(function ($q) use ($busca) {
-                $cpfLimpo = preg_replace('/\D/', '', $busca);
+            $termoDigitos = preg_replace('/\D/', '', $busca);
+            $alunoIds = [];
 
-                $q->whereHas('responsavel', function ($rq) use ($busca, $cpfLimpo) {
-                    $rq->where('nome', 'ilike', "%{$busca}%");
-                    if (!empty($cpfLimpo)) {
-                        $rq->orWhere('cpf_cnpj', 'like', "%{$cpfLimpo}%");
+            // 1. Busca alunos por Nome ou CPF no schema pmieducar/cadastro do i-Educar
+            if (\Illuminate\Support\Facades\Schema::hasTable('pmieducar.aluno') && \Illuminate\Support\Facades\Schema::hasTable('cadastro.pessoa')) {
+                try {
+                    $alunoQuery = \Illuminate\Support\Facades\DB::table('pmieducar.aluno as a')
+                        ->join('cadastro.pessoa as p', 'p.idpes', '=', 'a.ref_idpes');
+
+                    if (\Illuminate\Support\Facades\Schema::hasTable('cadastro.fisica')) {
+                        $alunoQuery->leftJoin('cadastro.fisica as f', 'f.idpes', '=', 'a.ref_idpes');
                     }
-                })->orWhere('observacoes', 'ilike', "%{$busca}%");
+
+                    $alunoQuery->where(function ($aq) use ($busca, $termoDigitos) {
+                        $aq->where('p.nome', 'ilike', "%{$busca}%");
+                        if (!empty($termoDigitos) && strlen($termoDigitos) >= 3) {
+                            if ((float)$termoDigitos <= 2147483647) {
+                                $aq->orWhere('a.cod_aluno', (int) $termoDigitos);
+                            }
+                            if (\Illuminate\Support\Facades\Schema::hasTable('cadastro.fisica')) {
+                                $aq->orWhereRaw('CAST(f.cpf AS TEXT) LIKE ?', ["%{$termoDigitos}%"]);
+                            }
+                        }
+                    });
+
+                    $alunoIds = $alunoQuery->pluck('a.cod_aluno')->toArray();
+                } catch (\Throwable $e) {
+                    // Degradação elegante caso o schema do i-Educar não esteja acessível
+                }
+            }
+
+            // 2. Aplica filtro em Título: Aluno (Nome/CPF), Responsável (Nome/CPF), Contrato e Observações
+            $query->where(function ($q) use ($busca, $termoDigitos, $alunoIds) {
+                if (!empty($alunoIds)) {
+                    $q->whereIn('aluno_id', $alunoIds)
+                      ->orWhereHas('contrato', function ($cq) use ($alunoIds) {
+                          $cq->whereIn('aluno_id', $alunoIds);
+                      });
+                }
+
+                $q->orWhereHas('responsavel', function ($rq) use ($busca, $termoDigitos) {
+                    $rq->where('nome', 'ilike', "%{$busca}%");
+                    if (!empty($termoDigitos) && strlen($termoDigitos) >= 3) {
+                        $rq->orWhere('cpf_cnpj', 'like', "%{$termoDigitos}%");
+                    }
+                });
+
+                $q->orWhereHas('contrato', function ($cq) use ($busca) {
+                    $cq->where('numero_contrato', 'ilike', "%{$busca}%");
+                });
+
+                $q->orWhere('observacoes', 'ilike', "%{$busca}%");
             });
         }
 
