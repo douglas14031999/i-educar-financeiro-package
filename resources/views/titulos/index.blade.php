@@ -134,8 +134,7 @@
 
         <!-- Barra de Filtros e Busca -->
         <section class="bg-white shadow-xs border border-slate-200 p-4" data-purpose="filter-section">
-            <form id="form-filtros-titulos" method="get" action="{{ route('financeiro.titulos.index') }}" class="flex flex-wrap items-end gap-3">
-                <input type="hidden" name="modo" id="filtro-modo" value="{{ $modo ?? 'contrato' }}">
+            <form id="form-filtros-titulos" method="get" action="{{ route('financeiro.titulos.index') }}" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px;">
                 @if($responsavelId)
                     <input type="hidden" name="responsavel_id" value="{{ $responsavelId }}">
                 @endif
@@ -146,7 +145,7 @@
                     <input type="hidden" name="aluno_id" value="{{ $alunoId }}">
                 @endif
 
-                <div class="flex-1 min-w-[260px] relative">
+                <div class="flex-1 relative" style="min-width: 260px;">
                     <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                         Buscar:
                     </label>
@@ -162,7 +161,7 @@
                     </div>
                 </div>
 
-                <div class="w-full sm:w-48">
+                <div style="min-width: 250px;">
                     <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                         Status:
                     </label>
@@ -178,15 +177,14 @@
                     </select>
                 </div>
 
-
-                <div class="w-full sm:w-28">
+                <div style="width: 110px;">
                     <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                         Ano Letivo:
                     </label>
                     <input type="number" id="filtro-ano" name="ano" value="{{ $ano }}" placeholder="{{ date('Y') }}" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
                 </div>
 
-                <div class="flex items-center gap-2 pt-1 sm:pt-0">
+                <div style="display: flex; align-items: center; gap: 8px;">
                     <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 btn-ieducar-action btn-ieducar-blue">
                         <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>

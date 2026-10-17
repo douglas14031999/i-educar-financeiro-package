@@ -93,93 +93,11 @@ class TituloController extends Controller
             });
         }
 
-        // Modo Contrato (Agrupado por Aluno/Contrato com acordeão retrátil)
-        $contratosPaginados = null;
-        if ($modo === 'contrato') {
-            $contratosQuery = \iEducar\Financeiro\Models\Contrato::with([
-                'responsavel',
-                'titulos' => function ($tq) use ($status) {
-                    $tq->with('cobrancaGateway')->orderBy('numero_parcela')->orderBy('data_vencimento');
-                    if ($status && $status !== 'todos') {
-                        if ($status === 'vencido') {
-                            $tq->vencidos();
-                        } elseif ($status === 'pago') {
-                            $tq->where(function ($q) {
-                                $q->where('status', 'pago')->orWhere('valor_saldo', '<=', 0.005);
-                            })->whereNotIn('status', ['cancelado', 'renegociado']);
-                        } elseif ($status === 'renegociado') {
-                            $tq->where('status', 'renegociado');
-                        } else {
-                            $tq->where('status', $status);
-                        }
-                    } elseif ($status !== 'todos') {
-                        $tq->where('status', '!=', 'renegociado');
-                    }
-                }
-            ]);
-
-            if ($responsavelId) {
-                $contratosQuery->where('responsavel_financeiro_id', $responsavelId);
-            }
-            if ($contratoId) {
-                $contratosQuery->where('id', $contratoId);
-            }
-            if ($alunoId) {
-                $contratosQuery->where('aluno_id', $alunoId);
-            }
-            if ($ano) {
-                $contratosQuery->where('ano_letivo', (int) $ano);
-            }
-            if ($busca) {
-                $cpfLimpo = preg_replace('/\D/', '', $busca);
-                $contratosQuery->where(function ($q) use ($busca, $cpfLimpo) {
-                    $q->where('numero_contrato', 'ilike', "%{$busca}%")
-                      ->orWhereHas('responsavel', function ($rq) use ($busca, $cpfLimpo) {
-                          $rq->where('nome', 'ilike', "%{$busca}%");
-                          if (!empty($cpfLimpo)) {
-                              $rq->orWhere('cpf_cnpj', 'like', "%{$cpfLimpo}%");
-                          }
-                      });
-                });
-            }
-
-            // Exibir apenas contratos que possuam títulos correspondentes aos filtros
-            $contratosQuery->whereHas('titulos', function ($tq) use ($status) {
-                if ($status && $status !== 'todos') {
-                    if ($status === 'vencido') {
-                        $tq->vencidos();
-                    } elseif ($status === 'pago') {
-                        $tq->where(function ($q) {
-                            $q->where('status', 'pago')->orWhere('valor_saldo', '<=', 0.005);
-                        })->whereNotIn('status', ['cancelado', 'renegociado']);
-                    } elseif ($status === 'renegociado') {
-                        $tq->where('status', 'renegociado');
-                    } else {
-                        $tq->where('status', $status);
-                    }
-                } elseif ($status !== 'todos') {
-                    $tq->where('status', '!=', 'renegociado');
-                }
-            });
-
-            $contratosPaginados = $contratosQuery->orderBy('id', 'desc')->paginate(15)->withQueryString();
-
-            // Carrega lookup de nomes de alunos para os contratos
-            $alunosIds = [];
-            foreach ($contratosPaginados as $c) {
-                $alunoDoContrato = $c->aluno_id ?? $c->titulos->first()?->aluno_id;
-                if ($alunoDoContrato) {
-                    $alunosIds[] = $alunoDoContrato;
-                }
-                foreach ($c->titulos as $t) {
-                    if ($t->aluno_id) $alunosIds[] = $t->aluno_id;
-                }
-            }
-            \iEducar\Financeiro\Support\AlunoLookup::nomes(array_unique($alunosIds));
-            \iEducar\Financeiro\Support\AlunoLookup::turmas(array_unique($alunosIds), $ano ? (int) $ano : null);
-        }
-
-        $titulos = $query->orderBy('data_vencimento')->paginate(20)->withQueryString();
+        $titulos = $query->orderBy('contrato_id', 'desc')
+            ->orderBy('numero_parcela', 'asc')
+            ->orderBy('data_vencimento', 'asc')
+            ->paginate(30)
+            ->withQueryString();
         \iEducar\Financeiro\Support\AlunoLookup::carregarParaTitulos($titulos, $ano ? (int) $ano : null);
 
         $responsavelFiltro = $responsavelId ? \iEducar\Financeiro\Models\ResponsavelFinanceiro::find($responsavelId) : null;
@@ -199,8 +117,6 @@ class TituloController extends Controller
         if ($request->ajax() || $request->header('X-Partial') || $request->query('ajax')) {
             return view('financeiro::titulos.partials.tabela-container', compact(
                 'titulos',
-                'contratosPaginados',
-                'modo',
                 'status',
                 'competencia',
                 'busca',
@@ -217,8 +133,6 @@ class TituloController extends Controller
 
         return view('financeiro::titulos.index', compact(
             'titulos',
-            'contratosPaginados',
-            'modo',
             'status',
             'competencia',
             'busca',
