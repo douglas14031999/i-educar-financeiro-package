@@ -240,70 +240,13 @@
             @endif
         </section>
 
-        <!-- Formulário Oculto de Ações em Lote -->
-        <form id="form-lote-acoes" method="post" action="{{ route('financeiro.titulos.emitir-lote-asaas') }}">
-            @csrf
-            <input type="hidden" name="titulo_ids" id="lote-titulo-ids" value="">
-        </form>
-
         <!-- Tabela de Listagem -->
         <section id="container-tabela-titulos" class="bg-white shadow-xs border border-slate-200 overflow-hidden relative" data-purpose="table-container">
-            <!-- Loading Overlay -->
-            <div id="tabela-loading-overlay" class="absolute inset-0 bg-white/70 backdrop-blur-[1px] z-20 flex items-center justify-center transition-opacity duration-200 opacity-0 pointer-events-none">
-                <div class="flex items-center gap-2.5 px-4 py-2.5 bg-white/95 border border-slate-200 shadow-lg rounded-md text-slate-700 text-xs font-semibold">
-                    <svg class="animate-spin h-4 w-4 text-[#47728f]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                    </svg>
-                    <span>Atualizando resultados...</span>
-                </div>
-            </div>
-
             <!-- Conteúdo Dinâmico (Tabela + Paginação) -->
             <div id="tabela-conteudo-dinamico">
                 @include('financeiro::titulos.partials.tabela-container')
             </div>
         </section>
-
-        @if($temAcoesEmLote ?? true)
-        <!-- Barra Flutuante de Ações em Lote (Sticky Bottom) -->
-        <div id="barra-acoes-lote" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#1e293b] text-white px-5 py-3 rounded-lg shadow-2xl border border-slate-700 flex items-center gap-4 transition-all duration-300 transform translate-y-24 opacity-0 pointer-events-none" style="min-width: 320px; max-width: 90vw;">
-            <div class="flex items-center gap-2">
-                <span id="contador-selecionados" class="bg-cyan-500 text-slate-900 font-extrabold text-xs px-2 py-0.5 rounded-full">0</span>
-                <span class="text-xs font-semibold text-slate-200">parcelas</span>
-                <span id="total-selecionados" class="text-xs font-bold text-emerald-400 border-l border-slate-600 pl-2">R$ 0,00</span>
-            </div>
-
-            <div class="flex items-center gap-2 ml-auto">
-                @if(!$contratoFiltro || $contratoFiltro->forma_pagamento === 'carne')
-                <button type="button" id="btn-imprimir-carne-lote" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded cursor-pointer transition">
-                    <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                    </svg>
-                    Imprimir Carnê
-                </button>
-                @endif
-
-                <button type="button" id="btn-emitir-asaas-lote" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded cursor-pointer transition">
-                    <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                    </svg>
-                    Emitir no Asaas
-                </button>
-
-                <button type="button" id="btn-sincronizar-asaas-lote" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded cursor-pointer transition">
-                    <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                    </svg>
-                    Sincronizar Asaas
-                </button>
-
-                <button type="button" id="btn-desmarcar-todos" class="text-xs text-slate-400 hover:text-white px-2 py-1 underline transition cursor-pointer">
-                    Desmarcar
-                </button>
-            </div>
-        </div>
-        @endif
 
     </main>
 </div>
@@ -317,120 +260,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const inputAno = document.getElementById('filtro-ano');
     const btnLimpar = document.getElementById('btn-limpar-filtros');
     const spinnerBusca = document.getElementById('filtro-spinner-busca');
-    const loadingOverlay = document.getElementById('tabela-loading-overlay');
     const tabelaDinamica = document.getElementById('tabela-conteudo-dinamico');
     const containerTabela = document.getElementById('container-tabela-titulos');
 
-    // Referências de Ações em Lote
-    const barraLote = document.getElementById('barra-acoes-lote');
-    const contadorSpan = document.getElementById('contador-selecionados');
-    const totalSpan = document.getElementById('total-selecionados');
-    const btnImprimir = document.getElementById('btn-imprimir-carne-lote');
-    const btnEmitirAsaas = document.getElementById('btn-emitir-asaas-lote');
-    const btnSincronizarAsaas = document.getElementById('btn-sincronizar-asaas-lote');
-    const btnDesmarcar = document.getElementById('btn-desmarcar-todos');
-    const inputLoteIds = document.getElementById('lote-titulo-ids');
-    const formLote = document.getElementById('form-lote-acoes');
-
     let abortController = null;
     let debounceTimer = null;
-
-    // --- GERENCIAMENTO DE SELEÇÃO EM LOTE ---
-    function inicializarAcoesLote() {
-        const checkAll = document.getElementById('check-todos-titulos');
-        const itemChecks = document.querySelectorAll('.check-titulo-item');
-
-        function atualizarEstadoLote() {
-            const checksAtuais = document.querySelectorAll('.check-titulo-item');
-            const selecionados = Array.from(checksAtuais).filter(cb => cb.checked);
-            const count = selecionados.length;
-
-            if (barraLote && contadorSpan && totalSpan && inputLoteIds) {
-                if (count > 0) {
-                    let total = 0;
-                    const ids = [];
-                    selecionados.forEach(cb => {
-                        ids.push(cb.value);
-                        total += parseFloat(cb.getAttribute('data-valor') || 0);
-                    });
-
-                    contadorSpan.textContent = count;
-                    totalSpan.textContent = 'R$ ' + total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                    inputLoteIds.value = ids.join(',');
-
-                    barraLote.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
-                    barraLote.classList.add('translate-y-0', 'opacity-100');
-                } else {
-                    barraLote.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
-                    barraLote.classList.remove('translate-y-0', 'opacity-100');
-                    inputLoteIds.value = '';
-                }
-            }
-
-            if (checkAll) {
-                checkAll.checked = (count === checksAtuais.length && count > 0);
-            }
-        }
-
-        if (checkAll) {
-            checkAll.onchange = function () {
-                const checksAtuais = document.querySelectorAll('.check-titulo-item');
-                checksAtuais.forEach(cb => cb.checked = checkAll.checked);
-                atualizarEstadoLote();
-            };
-        }
-
-        itemChecks.forEach(cb => {
-            cb.onchange = atualizarEstadoLote;
-        });
-
-        atualizarEstadoLote();
-    }
-
-    // Eventos estáticos da barra de lote
-    if (btnDesmarcar) {
-        btnDesmarcar.addEventListener('click', function () {
-            const checkAll = document.getElementById('check-todos-titulos');
-            if (checkAll) checkAll.checked = false;
-            document.querySelectorAll('.check-titulo-item').forEach(cb => cb.checked = false);
-            if (barraLote) {
-                barraLote.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
-                barraLote.classList.remove('translate-y-0', 'opacity-100');
-            }
-            if (inputLoteIds) inputLoteIds.value = '';
-        });
-    }
-
-    if (btnImprimir) {
-        btnImprimir.addEventListener('click', function () {
-            const ids = inputLoteIds ? inputLoteIds.value : '';
-            if (!ids) return;
-            const url = "{{ route('financeiro.titulos.imprimir-carne') }}?titulo_ids=" + encodeURIComponent(ids);
-            window.open(url, '_blank');
-        });
-    }
-
-    if (btnEmitirAsaas) {
-        btnEmitirAsaas.addEventListener('click', function () {
-            const ids = inputLoteIds ? inputLoteIds.value : '';
-            if (!ids) return;
-            if (confirm('Deseja emitir no Asaas as ' + (contadorSpan ? contadorSpan.textContent : '') + ' cobranças selecionadas?')) {
-                formLote.action = "{{ route('financeiro.titulos.emitir-lote-asaas') }}";
-                formLote.submit();
-            }
-        });
-    }
-
-    if (btnSincronizarAsaas) {
-        btnSincronizarAsaas.addEventListener('click', function () {
-            const ids = inputLoteIds ? inputLoteIds.value : '';
-            if (!ids) return;
-            if (confirm('Deseja consultar e sincronizar no Asaas as ' + (contadorSpan ? contadorSpan.textContent : '') + ' cobranças selecionadas?')) {
-                formLote.action = "{{ route('financeiro.titulos.sincronizar-lote-asaas') }}";
-                formLote.submit();
-            }
-        });
-    }
 
     // --- REQUISIÇÃO AJAX REATIVA ---
     function aplicarFiltroAjax(urlDestino) {
@@ -455,12 +289,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Adiciona header/param de requisição AJAX
         urlObj.searchParams.set('ajax', '1');
 
-        // Exibe loading visual
+        // Exibe spinner discreto no campo de busca
         if (spinnerBusca) spinnerBusca.classList.remove('hidden');
-        if (loadingOverlay) {
-            loadingOverlay.classList.remove('opacity-0', 'pointer-events-none');
-            loadingOverlay.classList.add('opacity-100');
-        }
 
         fetch(urlObj.toString(), {
             headers: {
@@ -492,9 +322,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     btnLimpar.classList.add('hidden');
                 }
             }
-
-            // Re-conecta listeners dos checkboxes e paginação
-            inicializarAcoesLote();
         })
         .catch(err => {
             if (err.name !== 'AbortError') {
@@ -503,10 +330,6 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .finally(() => {
             if (spinnerBusca) spinnerBusca.classList.add('hidden');
-            if (loadingOverlay) {
-                loadingOverlay.classList.add('opacity-0', 'pointer-events-none');
-                loadingOverlay.classList.remove('opacity-100');
-            }
         });
     }
 
@@ -563,9 +386,6 @@ document.addEventListener('DOMContentLoaded', function () {
             aplicarFiltroAjax("{{ route('financeiro.titulos.index') }}");
         });
     }
-
-    // Inicialização da primeira carga
-    inicializarAcoesLote();
 });
 </script>
 @endsection

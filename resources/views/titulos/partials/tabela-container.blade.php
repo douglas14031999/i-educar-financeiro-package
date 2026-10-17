@@ -1,14 +1,6 @@
 @php
     $formaContrato = strtolower(trim((string) ($contratoFiltro?->forma_pagamento ?? '')));
-    $todosTitulosPagos = $titulos->isNotEmpty() && $titulos->every(fn($t) => in_array($t->status, ['pago', 'liquidado']) || (float)$t->valor_saldo <= 0.005);
-    $contratoSemAcoesLote = $contratoFiltro && (
-        $formaContrato === 'pix' ||
-        $formaContrato === 'dinheiro' ||
-        $formaContrato === 'cartao_presencial' ||
-        in_array($contratoFiltro->status, ['quitado', 'cancelado']) ||
-        $todosTitulosPagos
-    );
-    $temAcoesEmLote = !$contratoSemAcoesLote;
+    $temAcoesEmLote = false;
 @endphp
 
 <!-- Cabeçalho com Gradiente Petróleo -->
