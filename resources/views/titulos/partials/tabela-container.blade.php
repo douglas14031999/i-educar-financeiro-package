@@ -67,7 +67,7 @@
                             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                     <span style="font-weight: 700; color: #1e293b; font-size: 13px;">
-                                        🎓 Aluno: <strong>{{ $alunoNome }}</strong>
+                                        Aluno: <strong>{{ $alunoNome }}</strong>
                                     </span>
                                     @if($turmaNome)
                                         <span style="background-color: #ffffff; color: #475569; font-size: 10px; font-weight: 600; padding: 2px 6px; border: 1px solid #cbd5e1; border-radius: 4px;">
