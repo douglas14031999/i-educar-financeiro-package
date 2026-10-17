@@ -1665,6 +1665,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Atualiza Simulação Financeira em Tempo Real
     function atualizarSimulacao() {
+        if (inputAplicarRateio && inputAplicarRateio.value === '1') {
+            if (blocoQtdParcelas) blocoQtdParcelas.classList.add('hidden');
+            if (blocoDiaVencimento) blocoDiaVencimento.classList.add('hidden');
+            if (blocoDesconto) blocoDesconto.classList.add('sm:col-span-2');
+            atualizarSimulacaoRateio();
+            return;
+        }
+
         const opt = selectPlano.selectedOptions[0];
         if (!opt || !opt.value) {
             simValorBruto.textContent = 'R$ 0,00';
@@ -2180,6 +2188,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (alertaRespSelecionado) alertaRespSelecionado.classList.add('hidden');
                 if (alertaRateioStep3) alertaRateioStep3.classList.remove('hidden');
                 if (textoInstrucaoPagamentoGlobal) textoInstrucaoPagamentoGlobal.classList.add('hidden');
+
+                // Oculta completamente campos globais de parcelamento, repasse de juros e vencimento no modo rateio
+                if (blocoQtdParcelas) blocoQtdParcelas.classList.add('hidden');
+                if (blocoDiaVencimento) blocoDiaVencimento.classList.add('hidden');
+                if (blocoDesconto) blocoDesconto.classList.add('sm:col-span-2');
+
                 atualizarCardsRateioInfo();
                 verificarStatusCadastralRateio();
                 atualizarSimulacaoRateio();
@@ -2193,6 +2207,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 if (alertaRateioStep3) alertaRateioStep3.classList.add('hidden');
                 if (textoInstrucaoPagamentoGlobal) textoInstrucaoPagamentoGlobal.classList.remove('hidden');
+
+                atualizarOpcoesPagamento();
                 atualizarSimulacao();
             }
         });
@@ -3037,7 +3053,15 @@ document.addEventListener('DOMContentLoaded', function () {
             inputRateio1DataVenc.value = (f1 === 'boleto') ? d2.dataSql : '';
             inputRateio1RepassarJuros.value = (rateioCheckRepasse1 && rateioCheckRepasse1.checked) ? '1' : '0';
             inputRateio1ValorTaxaRepasse.value = (rateioCheckRepasse1 && rateioCheckRepasse1.checked) ? taxaRepasseRateio1.toFixed(2) : '0.00';
+
+            // Desabilita inputs individuais do plano global
+            if (checkRepassarJurosUnico) checkRepassarJurosUnico.disabled = true;
+            if (inputVencimento) inputVencimento.disabled = true;
+            if (selectQtdParcelas) selectQtdParcelas.disabled = true;
         } else {
+            if (checkRepassarJurosUnico) checkRepassarJurosUnico.disabled = false;
+            if (inputVencimento) inputVencimento.disabled = false;
+            if (selectQtdParcelas) selectQtdParcelas.disabled = false;
             if (!inputResponsavelId.value) {
                 e.preventDefault();
                 alert('Selecione o responsável financeiro titular da cobrança no Passo 2.');
@@ -3101,10 +3125,20 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     function atualizarOpcoesPagamento() {
+        const isRateioAtivo = inputAplicarRateio && inputAplicarRateio.value === '1';
+
         paymentCards.forEach(card => card.classList.remove('selected'));
 
         if (blocoCartaoPresencial) blocoCartaoPresencial.classList.add('hidden');
         if (blocoCartaoCredito) blocoCartaoCredito.classList.add('hidden');
+
+        // Se o modo Rateio estiver ativo, não deve exibir os blocos globais de parcelamento, repasse único ou vencimento
+        if (isRateioAtivo) {
+            if (blocoQtdParcelas) blocoQtdParcelas.classList.add('hidden');
+            if (blocoDiaVencimento) blocoDiaVencimento.classList.add('hidden');
+            if (blocoDesconto) blocoDesconto.classList.add('sm:col-span-2');
+            return;
+        }
 
         const selecionado = document.querySelector('input[name="forma_pagamento"]:checked');
         if (selecionado) {
