@@ -135,6 +135,7 @@
         <!-- Barra de Filtros e Busca -->
         <section class="bg-white shadow-xs border border-slate-200 p-4" data-purpose="filter-section">
             <form id="form-filtros-titulos" method="get" action="{{ route('financeiro.titulos.index') }}" class="flex flex-wrap items-end gap-3">
+                <input type="hidden" name="modo" id="filtro-modo" value="{{ $modo ?? 'contrato' }}">
                 @if($responsavelId)
                     <input type="hidden" name="responsavel_id" value="{{ $responsavelId }}">
                 @endif
@@ -161,16 +162,18 @@
                     </div>
                 </div>
 
-                <div class="w-full sm:w-44">
+                <div class="w-full sm:w-48">
                     <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                         Status:
                     </label>
                     <select id="filtro-status" name="status" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
-                        <option value="">Todos os Status</option>
-                        <option value="aberto" {{ $status === 'aberto' ? 'selected' : '' }}>Abertos</option>
-                        <option value="parcial" {{ $status === 'parcial' ? 'selected' : '' }}>Parciais</option>
+                        <option value="">Todos os Ativos (Abertos, Atrasados e Pagos)</option>
+                        <option value="aberto" {{ $status === 'aberto' ? 'selected' : '' }}>Abertos / A Vencer</option>
+                        <option value="vencido" {{ $status === 'vencido' ? 'selected' : '' }}>Em Atraso (Inadimplentes)</option>
                         <option value="pago" {{ $status === 'pago' ? 'selected' : '' }}>Pagos / Liquidados</option>
-                        <option value="vencido" {{ $status === 'vencido' ? 'selected' : '' }}>Vencidos (Em Atraso)</option>
+                        <option value="parcial" {{ $status === 'parcial' ? 'selected' : '' }}>Parciais</option>
+                        <option value="renegociado" {{ $status === 'renegociado' ? 'selected' : '' }}>Histórico de Renegociados</option>
+                        <option value="todos" {{ $status === 'todos' ? 'selected' : '' }}>Todos (Inclusive Renegociados)</option>
                         <option value="cancelado" {{ $status === 'cancelado' ? 'selected' : '' }}>Cancelados</option>
                     </select>
                 </div>
