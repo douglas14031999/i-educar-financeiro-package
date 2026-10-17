@@ -270,7 +270,7 @@
             </div>
         </section>
 
-        @if($temAcoesEmLote)
+        @if($temAcoesEmLote ?? true)
         <!-- Barra Flutuante de Ações em Lote (Sticky Bottom) -->
         <div id="barra-acoes-lote" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#1e293b] text-white px-5 py-3 rounded-lg shadow-2xl border border-slate-700 flex items-center gap-4 transition-all duration-300 transform translate-y-24 opacity-0 pointer-events-none" style="min-width: 320px; max-width: 90vw;">
             <div class="flex items-center gap-2">

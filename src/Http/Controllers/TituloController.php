@@ -94,6 +94,17 @@ class TituloController extends Controller
         $responsavelFiltro = $responsavelId ? \iEducar\Financeiro\Models\ResponsavelFinanceiro::find($responsavelId) : null;
         $contratoFiltro = $contratoId ? \iEducar\Financeiro\Models\Contrato::with(['titulos.cobrancaGateway'])->find($contratoId) : null;
 
+        $formaContrato = strtolower(trim((string) ($contratoFiltro?->forma_pagamento ?? '')));
+        $todosTitulosPagos = $titulos->isNotEmpty() && $titulos->every(fn($t) => in_array($t->status, ['pago', 'liquidado']) || (float)$t->valor_saldo <= 0.005);
+        $contratoSemAcoesLote = $contratoFiltro && (
+            $formaContrato === 'pix' ||
+            $formaContrato === 'dinheiro' ||
+            $formaContrato === 'cartao_presencial' ||
+            in_array($contratoFiltro->status, ['quitado', 'cancelado']) ||
+            $todosTitulosPagos
+        );
+        $temAcoesEmLote = !$contratoSemAcoesLote;
+
         if ($request->ajax() || $request->header('X-Partial') || $request->query('ajax')) {
             return view('financeiro::titulos.partials.tabela-container', compact(
                 'titulos',
@@ -106,7 +117,8 @@ class TituloController extends Controller
                 'ano',
                 'turmaId',
                 'responsavelFiltro',
-                'contratoFiltro'
+                'contratoFiltro',
+                'temAcoesEmLote'
             ));
         }
 
@@ -121,7 +133,8 @@ class TituloController extends Controller
             'ano',
             'turmaId',
             'responsavelFiltro',
-            'contratoFiltro'
+            'contratoFiltro',
+            'temAcoesEmLote'
         ));
     }
 
