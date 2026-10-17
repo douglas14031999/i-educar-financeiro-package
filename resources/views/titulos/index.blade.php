@@ -128,7 +128,7 @@
 
         <!-- Barra de Filtros e Busca -->
         <section class="bg-white shadow-xs border border-slate-200 p-4" data-purpose="filter-section">
-            <form method="get" action="{{ route('financeiro.titulos.index') }}" class="flex flex-wrap items-end gap-3">
+            <form id="form-filtros-titulos" method="get" action="{{ route('financeiro.titulos.index') }}" class="flex flex-wrap items-end gap-3">
                 @if($responsavelId)
                     <input type="hidden" name="responsavel_id" value="{{ $responsavelId }}">
                 @endif
@@ -139,18 +139,27 @@
                     <input type="hidden" name="aluno_id" value="{{ $alunoId }}">
                 @endif
 
-                <div class="flex-1 min-w-[260px]">
+                <div class="flex-1 min-w-[260px] relative">
                     <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                         Buscar:
                     </label>
-                    <input type="text" name="busca" value="{{ $busca }}" placeholder="Buscar por Responsável, CPF ou Observação..." class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+                    <div class="relative">
+                        <input type="text" id="filtro-busca" name="busca" value="{{ $busca }}" placeholder="Buscar por Responsável, CPF ou Observação..." class="w-full pl-3 pr-9 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition" autocomplete="off">
+                        <!-- Spinner sutil durante digitação / requisição AJAX -->
+                        <div id="filtro-spinner-busca" class="absolute right-2.5 top-1/2 -translate-y-1/2 hidden text-[#47728f]">
+                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="w-full sm:w-44">
                     <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                         Status:
                     </label>
-                    <select name="status" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+                    <select id="filtro-status" name="status" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
                         <option value="">Todos os Status</option>
                         <option value="aberto" {{ $status === 'aberto' ? 'selected' : '' }}>Abertos</option>
                         <option value="parcial" {{ $status === 'parcial' ? 'selected' : '' }}>Parciais</option>
@@ -164,14 +173,14 @@
                     <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                         Competência:
                     </label>
-                    <input type="text" name="competencia" value="{{ $competencia }}" placeholder="AAAA-MM" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+                    <input type="text" id="filtro-competencia" name="competencia" value="{{ $competencia }}" placeholder="AAAA-MM" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
                 </div>
 
                 <div class="w-full sm:w-28">
                     <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                         Ano Letivo:
                     </label>
-                    <input type="number" name="ano" value="{{ $ano }}" placeholder="{{ date('Y') }}" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
+                    <input type="number" id="filtro-ano" name="ano" value="{{ $ano }}" placeholder="{{ date('Y') }}" class="w-full px-3 py-2 bg-white border border-slate-300 text-slate-800 text-sm focus:outline-none focus:border-brand-petroleum focus:ring-1 focus:ring-brand-petroleum transition">
                 </div>
 
                 <div class="flex items-center gap-2 pt-1 sm:pt-0">
@@ -181,11 +190,9 @@
                         </svg>
                         Filtrar
                     </button>
-                    @if($busca || $status || $competencia || $ano || $responsavelId || $contratoId || $alunoId)
-                        <a href="{{ route('financeiro.titulos.index') }}" class="px-3 py-2 btn-ieducar-action btn-ieducar-outline" style="text-decoration: none;">
-                            Limpar Filtros
-                        </a>
-                    @endif
+                    <a href="{{ route('financeiro.titulos.index') }}" id="btn-limpar-filtros" class="px-3 py-2 btn-ieducar-action btn-ieducar-outline {{ (!$busca && !$status && !$competencia && !$ano && !$responsavelId && !$contratoId && !$alunoId) ? 'hidden' : '' }}" style="text-decoration: none;">
+                        Limpar Filtros
+                    </a>
                 </div>
             </form>
 
@@ -245,217 +252,22 @@
         </form>
 
         <!-- Tabela de Listagem -->
-        <section class="bg-white shadow-xs border border-slate-200 overflow-hidden relative" data-purpose="table-container">
-            <!-- Cabeçalho com Gradiente Petróleo -->
-            <div class="bg-[#47728f] px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
-                <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5 text-cyan-200" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+        <section id="container-tabela-titulos" class="bg-white shadow-xs border border-slate-200 overflow-hidden relative" data-purpose="table-container">
+            <!-- Loading Overlay -->
+            <div id="tabela-loading-overlay" class="absolute inset-0 bg-white/70 backdrop-blur-[1px] z-20 flex items-center justify-center transition-opacity duration-200 opacity-0 pointer-events-none">
+                <div class="flex items-center gap-2.5 px-4 py-2.5 bg-white/95 border border-slate-200 shadow-lg rounded-md text-slate-700 text-xs font-semibold">
+                    <svg class="animate-spin h-4 w-4 text-[#47728f]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                     </svg>
-                    <h2 class="text-sm font-semibold tracking-wide" style="margin: 0; color: white;">
-                        Mensalidades e Cobranças Registradas ({{ $titulos->total() }})
-                    </h2>
+                    <span>Atualizando resultados...</span>
                 </div>
-                <span class="text-xs font-medium text-cyan-100">
-                    Total de registros: {{ $titulos->total() }}
-                </span>
             </div>
 
-            @php
-                $formaContrato = strtolower(trim((string) ($contratoFiltro?->forma_pagamento ?? '')));
-                $todosTitulosPagos = $titulos->isNotEmpty() && $titulos->every(fn($t) => in_array($t->status, ['pago', 'liquidado']) || (float)$t->valor_saldo <= 0.005);
-                $contratoSemAcoesLote = $contratoFiltro && (
-                    $formaContrato === 'pix' ||
-                    $formaContrato === 'dinheiro' ||
-                    $formaContrato === 'cartao_presencial' ||
-                    in_array($contratoFiltro->status, ['quitado', 'cancelado']) ||
-                    $todosTitulosPagos
-                );
-                $temAcoesEmLote = !$contratoSemAcoesLote;
-            @endphp
-
-            <!-- Tabela Responsiva -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs md:text-sm m-0 border-0" style="margin: 0;">
-                    <thead>
-                        <tr class="bg-slate-100/90 text-[11px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
-                            @if($temAcoesEmLote)
-                                <th class="py-3 px-3 text-center" style="width: 40px;" scope="col">
-                                    <input type="checkbox" id="check-todos-titulos" class="cursor-pointer rounded border-slate-300 text-brand-petroleum focus:ring-brand-petroleum" title="Selecionar todos os títulos da página">
-                                </th>
-                            @endif
-                            <th class="py-3 px-4" scope="col">Vencimento</th>
-                            <th class="py-3 px-4 text-center" scope="col">Parcela</th>
-                            <th class="py-3 px-4" scope="col">Responsável Financeiro</th>
-                            <th class="py-3 px-4" scope="col">Descrição / Contrato</th>
-                            <th class="py-3 px-4 text-right" scope="col">Saldo Atual</th>
-                            <th class="py-3 px-4 text-center" scope="col">Status</th>
-                            <th class="py-3 px-4 text-center" scope="col">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-200 text-slate-700">
-                        @forelse($titulos as $titulo)
-                            @php
-                                $hoje = \Carbon\Carbon::today();
-                                $dataVenc = \Carbon\Carbon::parse($titulo->data_vencimento)->startOfDay();
-                                $diasDiff = (int) $hoje->diffInDays($dataVenc, false);
-
-                                $isPago = $titulo->isLiquidado() || $titulo->status === 'pago';
-                                $isRenegociado = $titulo->status === 'renegociado';
-                                $isCancelado = $titulo->status === 'cancelado';
-                                $isAtrasado = !$isPago && !$isRenegociado && !$isCancelado && ($titulo->status === 'vencido' || $titulo->isVencido() || ($diasDiff < 0 && (float)$titulo->valor_saldo > 0.005));
-                                $bgClass = $isAtrasado ? 'hover:bg-rose-50/40 bg-rose-50/20' : ($isPago ? 'hover:bg-slate-50/80 bg-emerald-50/10' : 'hover:bg-slate-50/80');
-                                $valorSaldoNum = (float) ($titulo->valor_saldo > 0 ? $titulo->valor_saldo : $titulo->valor_nominal);
-                            @endphp
-                            <tr class="{{ $bgClass }} transition-colors" data-titulo-id="{{ $titulo->id }}">
-                                @if($temAcoesEmLote)
-                                    <td class="py-3 px-3 text-center">
-                                        @if(!$isPago && !$isCancelado)
-                                            <input type="checkbox" class="check-titulo-item cursor-pointer rounded border-slate-300 text-brand-petroleum focus:ring-brand-petroleum" value="{{ $titulo->id }}" data-valor="{{ $valorSaldoNum }}" data-pago="{{ $isPago ? '1' : '0' }}">
-                                        @else
-                                            <span class="text-slate-300 text-xs">—</span>
-                                        @endif
-                                    </td>
-                                @endif
-                                <td class="py-3 px-4 whitespace-nowrap font-medium {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
-                                    {{ $dataVenc->format('d/m/Y') }}
-                                    @if($isPago)
-                                        <span class="block text-[10px] text-emerald-600 font-semibold">Liquidado</span>
-                                    @elseif($isRenegociado)
-                                        <span class="block text-[10px] text-cyan-600 font-medium">Acordo Formalizado</span>
-                                    @elseif($isAtrasado)
-                                        <span class="block text-[10px] text-rose-500 font-semibold">{{ abs($diasDiff) == 1 ? '1 dia atrasado' : abs($diasDiff) . ' dias atrasado' }}</span>
-                                    @elseif($diasDiff === 0)
-                                        <span class="block text-[10px] text-amber-600 font-bold">Vence Hoje</span>
-                                    @elseif($diasDiff === 1)
-                                        <span class="block text-[10px] text-amber-600 font-medium">Vence amanhã</span>
-                                    @else
-                                        <span class="block text-[10px] text-slate-400">Em {{ $diasDiff }} dias</span>
-                                    @endif
-                                </td>
-                                <td class="py-3 px-4 text-center whitespace-nowrap font-bold {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
-                                    {{ $titulo->numero_parcela == 0 ? 'Matr.' : sprintf('%02d/%02d', $titulo->numero_parcela, $titulo->total_parcelas) }}
-                                </td>
-                                <td class="py-3 px-4">
-                                    <a href="{{ route('financeiro.responsaveis.show', $titulo->responsavel_financeiro_id) }}" class="font-semibold text-slate-900 hover:text-brand-petroleum hover:underline" style="text-decoration: none;">
-                                        {{ $titulo->responsavel->nome ?? '-' }}
-                                    </a>
-                                </td>
-                                <td class="py-3 px-4 text-slate-600">
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 mr-1.5">
-                                        {{ \iEducar\Financeiro\Support\AlunoLookup::nomeComCpf($titulo->aluno_id) }}
-                                    </span>
-                                    {{ $titulo->observacoes ?? ucfirst($titulo->tipo) }}
-                                </td>
-                                <td class="py-3 px-4 text-right font-bold col-saldo {{ $isAtrasado ? 'text-rose-700' : 'text-slate-900' }}">
-                                    R$ {{ number_format($isPago ? $titulo->valor_nominal : $titulo->valor_saldo, 2, ',', '.') }}
-                                    @if($isPago)
-                                        <span class="block text-[10px] font-normal text-emerald-700">Quitado</span>
-                                    @elseif($titulo->status === 'parcial')
-                                        <span class="block text-[10px] font-normal text-cyan-700">Nominal: R$ {{ number_format($titulo->valor_nominal, 2, ',', '.') }}</span>
-                                    @endif
-                                </td>
-                                <td class="py-3 px-4 text-center whitespace-nowrap col-status">
-                                    @if($isPago)
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Liquidado</span>
-                                    @elseif($titulo->status === 'parcial')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-50 text-cyan-800 border border-cyan-200">Parcial</span>
-                                    @elseif($isAtrasado)
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">Em Atraso</span>
-                                    @elseif($isRenegociado)
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-300">Renegociado</span>
-                                    @elseif($isCancelado)
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Cancelado</span>
-                                    @else
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/70">Pendente</span>
-                                    @endif
-                                </td>
-                                <td class="py-3 px-4 text-center whitespace-nowrap">
-                                    <div class="flex items-center justify-center gap-1.5">
-                                        <a href="{{ route('financeiro.titulos.show', $titulo->id) }}" class="inline-flex items-center justify-center p-1.5 text-slate-500 hover:text-brand-petroleum hover:bg-slate-100 rounded transition" title="Ver Detalhes do Título">
-                                            <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                                <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                            </svg>
-                                        </a>
-
-                                        @if($titulo->status === 'aberto' || $titulo->status === 'parcial' || $titulo->status === 'vencido')
-                                            @if($titulo->contrato && $titulo->contrato->forma_pagamento === 'carne')
-                                                <a href="{{ route('financeiro.contratos.imprimir-carne', $titulo->contrato_id) }}" target="_blank" class="inline-flex items-center justify-center p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition" title="Imprimir Carnê Oficial Asaas">
-                                                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                                    </svg>
-                                                </a>
-                                            @elseif($titulo->contrato && $titulo->contrato->forma_pagamento === 'pix')
-                                                <a href="{{ route('financeiro.contratos.checkout', $titulo->contrato_id) }}" class="inline-flex items-center justify-center p-1.5 text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded transition" title="Ver Cobrança / QR Code Pix">
-                                                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                                    </svg>
-                                                </a>
-                                            @elseif($titulo->contrato && $titulo->contrato->forma_pagamento === 'boleto')
-                                                @if($titulo->cobrancaGateway && $titulo->cobrancaGateway->link_boleto_pdf)
-                                                    <a href="{{ $titulo->cobrancaGateway->link_boleto_pdf }}" target="_blank" class="inline-flex items-center justify-center p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition" title="Baixar Boleto Bancário (PDF)">
-                                                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                                        </svg>
-                                                    </a>
-                                                @else
-                                                    <a href="{{ route('financeiro.contratos.checkout', $titulo->contrato_id) }}" class="inline-flex items-center justify-center p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition" title="Ver Cobrança / Boleto Bancário">
-                                                        <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                                        </svg>
-                                                    </a>
-                                                @endif
-                                            @elseif($titulo->contrato_id)
-                                                <a href="{{ route('financeiro.contratos.checkout', $titulo->contrato_id) }}" class="inline-flex items-center justify-center p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded transition" title="Ver Checkout do Contrato">
-                                                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                                    </svg>
-                                                </a>
-                                            @endif
-                                            <a href="{{ route('financeiro.titulos.notificar-whatsapp', $titulo->id) }}" target="_blank" class="inline-flex items-center justify-center p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition" title="Enviar Cobrança / Link por WhatsApp">
-                                                <svg class="w-4 h-4" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.073.043.419-.101.824z"/>
-                                                </svg>
-                                            </a>
-                                            <a href="{{ route('financeiro.baixas.create', ['titulo_id' => $titulo->id]) }}" class="inline-flex items-center justify-center p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded transition" title="Baixa Presencial no Caixa">
-                                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                                </svg>
-                                            </a>
-                                        @elseif($titulo->status === 'pago')
-                                            <a href="{{ route('financeiro.titulos.recibo-pdf', $titulo->id) }}" class="inline-flex items-center justify-center p-1.5 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded transition" title="Imprimir Recibo de Pagamento" target="_blank">
-                                                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                                </svg>
-                                            </a>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="{{ $temAcoesEmLote ? 8 : 7 }}" class="py-8 text-center text-slate-500">
-                                    <svg class="w-10 h-10 mx-auto text-slate-300 mb-3" width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                    </svg>
-                                    Nenhuma mensalidade encontrada para os filtros selecionados.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <!-- Conteúdo Dinâmico (Tabela + Paginação) -->
+            <div id="tabela-conteudo-dinamico">
+                @include('financeiro::titulos.partials.tabela-container')
             </div>
-
-            <!-- Rodapé com Paginação -->
-            <footer class="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-600 gap-3">
-                <span>
-                    Mostrando <strong>{{ $titulos->firstItem() ?? 0 }}</strong> a <strong>{{ $titulos->lastItem() ?? 0 }}</strong> de <strong>{{ $titulos->total() }}</strong> cobranças
-                </span>
-                <div class="pagination-wrapper">
-                    {{ $titulos->appends(['busca' => $busca, 'status' => $status, 'competencia' => $competencia])->links() }}
-                </div>
-            </footer>
         </section>
 
         @if($temAcoesEmLote)
@@ -501,11 +313,21 @@
     </main>
 </div>
 
-@if($temAcoesEmLote)
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const checkAll = document.getElementById('check-todos-titulos');
-    const itemChecks = document.querySelectorAll('.check-titulo-item');
+    // Referências do Formulário e Filtros
+    const formFiltros = document.getElementById('form-filtros-titulos');
+    const inputBusca = document.getElementById('filtro-busca');
+    const selectStatus = document.getElementById('filtro-status');
+    const inputCompetencia = document.getElementById('filtro-competencia');
+    const inputAno = document.getElementById('filtro-ano');
+    const btnLimpar = document.getElementById('btn-limpar-filtros');
+    const spinnerBusca = document.getElementById('filtro-spinner-busca');
+    const loadingOverlay = document.getElementById('tabela-loading-overlay');
+    const tabelaDinamica = document.getElementById('tabela-conteudo-dinamico');
+    const containerTabela = document.getElementById('container-tabela-titulos');
+
+    // Referências de Ações em Lote
     const barraLote = document.getElementById('barra-acoes-lote');
     const contadorSpan = document.getElementById('contador-selecionados');
     const totalSpan = document.getElementById('total-selecionados');
@@ -516,57 +338,78 @@ document.addEventListener('DOMContentLoaded', function () {
     const inputLoteIds = document.getElementById('lote-titulo-ids');
     const formLote = document.getElementById('form-lote-acoes');
 
-    function atualizarEstadoLote() {
-        const selecionados = Array.from(itemChecks).filter(cb => cb.checked);
-        const count = selecionados.length;
+    let abortController = null;
+    let debounceTimer = null;
 
-        if (count > 0) {
-            let total = 0;
-            const ids = [];
-            selecionados.forEach(cb => {
-                ids.push(cb.value);
-                total += parseFloat(cb.getAttribute('data-valor') || 0);
-            });
+    // --- GERENCIAMENTO DE SELEÇÃO EM LOTE ---
+    function inicializarAcoesLote() {
+        const checkAll = document.getElementById('check-todos-titulos');
+        const itemChecks = document.querySelectorAll('.check-titulo-item');
 
-            contadorSpan.textContent = count;
-            totalSpan.textContent = 'R$ ' + total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            inputLoteIds.value = ids.join(',');
+        function atualizarEstadoLote() {
+            const checksAtuais = document.querySelectorAll('.check-titulo-item');
+            const selecionados = Array.from(checksAtuais).filter(cb => cb.checked);
+            const count = selecionados.length;
 
-            barraLote.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
-            barraLote.classList.add('translate-y-0', 'opacity-100');
-        } else {
-            barraLote.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
-            barraLote.classList.remove('translate-y-0', 'opacity-100');
-            inputLoteIds.value = '';
+            if (barraLote && contadorSpan && totalSpan && inputLoteIds) {
+                if (count > 0) {
+                    let total = 0;
+                    const ids = [];
+                    selecionados.forEach(cb => {
+                        ids.push(cb.value);
+                        total += parseFloat(cb.getAttribute('data-valor') || 0);
+                    });
+
+                    contadorSpan.textContent = count;
+                    totalSpan.textContent = 'R$ ' + total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    inputLoteIds.value = ids.join(',');
+
+                    barraLote.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+                    barraLote.classList.add('translate-y-0', 'opacity-100');
+                } else {
+                    barraLote.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+                    barraLote.classList.remove('translate-y-0', 'opacity-100');
+                    inputLoteIds.value = '';
+                }
+            }
+
+            if (checkAll) {
+                checkAll.checked = (count === checksAtuais.length && count > 0);
+            }
         }
 
         if (checkAll) {
-            checkAll.checked = (count === itemChecks.length && count > 0);
+            checkAll.onchange = function () {
+                const checksAtuais = document.querySelectorAll('.check-titulo-item');
+                checksAtuais.forEach(cb => cb.checked = checkAll.checked);
+                atualizarEstadoLote();
+            };
         }
-    }
 
-    if (checkAll) {
-        checkAll.addEventListener('change', function () {
-            itemChecks.forEach(cb => cb.checked = checkAll.checked);
-            atualizarEstadoLote();
+        itemChecks.forEach(cb => {
+            cb.onchange = atualizarEstadoLote;
         });
+
+        atualizarEstadoLote();
     }
 
-    itemChecks.forEach(cb => {
-        cb.addEventListener('change', atualizarEstadoLote);
-    });
-
+    // Eventos estáticos da barra de lote
     if (btnDesmarcar) {
         btnDesmarcar.addEventListener('click', function () {
+            const checkAll = document.getElementById('check-todos-titulos');
             if (checkAll) checkAll.checked = false;
-            itemChecks.forEach(cb => cb.checked = false);
-            atualizarEstadoLote();
+            document.querySelectorAll('.check-titulo-item').forEach(cb => cb.checked = false);
+            if (barraLote) {
+                barraLote.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+                barraLote.classList.remove('translate-y-0', 'opacity-100');
+            }
+            if (inputLoteIds) inputLoteIds.value = '';
         });
     }
 
     if (btnImprimir) {
         btnImprimir.addEventListener('click', function () {
-            const ids = inputLoteIds.value;
+            const ids = inputLoteIds ? inputLoteIds.value : '';
             if (!ids) return;
             const url = "{{ route('financeiro.titulos.imprimir-carne') }}?titulo_ids=" + encodeURIComponent(ids);
             window.open(url, '_blank');
@@ -575,9 +418,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (btnEmitirAsaas) {
         btnEmitirAsaas.addEventListener('click', function () {
-            const ids = inputLoteIds.value;
+            const ids = inputLoteIds ? inputLoteIds.value : '';
             if (!ids) return;
-            if (confirm('Deseja emitir no Asaas as ' + contadorSpan.textContent + ' cobranças selecionadas?')) {
+            if (confirm('Deseja emitir no Asaas as ' + (contadorSpan ? contadorSpan.textContent : '') + ' cobranças selecionadas?')) {
                 formLote.action = "{{ route('financeiro.titulos.emitir-lote-asaas') }}";
                 formLote.submit();
             }
@@ -586,15 +429,159 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (btnSincronizarAsaas) {
         btnSincronizarAsaas.addEventListener('click', function () {
-            const ids = inputLoteIds.value;
+            const ids = inputLoteIds ? inputLoteIds.value : '';
             if (!ids) return;
-            if (confirm('Deseja consultar e sincronizar no Asaas as ' + contadorSpan.textContent + ' cobranças selecionadas?')) {
+            if (confirm('Deseja consultar e sincronizar no Asaas as ' + (contadorSpan ? contadorSpan.textContent : '') + ' cobranças selecionadas?')) {
                 formLote.action = "{{ route('financeiro.titulos.sincronizar-lote-asaas') }}";
                 formLote.submit();
             }
         });
     }
+
+    // --- REQUISIÇÃO AJAX REATIVA ---
+    function aplicarFiltroAjax(urlDestino) {
+        if (abortController) {
+            abortController.abort();
+        }
+        abortController = new AbortController();
+
+        let urlObj;
+        if (urlDestino) {
+            urlObj = new URL(urlDestino, window.location.origin);
+        } else {
+            urlObj = new URL("{{ route('financeiro.titulos.index') }}", window.location.origin);
+            const formData = new FormData(formFiltros);
+            for (const [key, value] of formData.entries()) {
+                if (value !== '') {
+                    urlObj.searchParams.set(key, value);
+                }
+            }
+        }
+
+        // Adiciona header/param de requisição AJAX
+        urlObj.searchParams.set('ajax', '1');
+
+        // Exibe loading visual
+        if (spinnerBusca) spinnerBusca.classList.remove('hidden');
+        if (loadingOverlay) {
+            loadingOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            loadingOverlay.classList.add('opacity-100');
+        }
+
+        fetch(urlObj.toString(), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-Partial': '1',
+                'Accept': 'text/html, application/xhtml+xml'
+            },
+            signal: abortController.signal
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Erro na resposta do servidor (' + response.status + ')');
+            return response.text();
+        })
+        .then(html => {
+            tabelaDinamica.innerHTML = html;
+
+            // Atualiza URL no navegador para refletir filtros atuais sem reload
+            urlObj.searchParams.delete('ajax');
+            window.history.replaceState({}, '', urlObj.toString());
+
+            // Alterna visibilidade do botão Limpar Filtros
+            const temFiltroAtivo = (inputBusca && inputBusca.value.trim() !== '') || 
+                                   (selectStatus && selectStatus.value !== '') || 
+                                   (inputCompetencia && inputCompetencia.value.trim() !== '') || 
+                                   (inputAno && inputAno.value.trim() !== '');
+            if (btnLimpar) {
+                if (temFiltroAtivo) {
+                    btnLimpar.classList.remove('hidden');
+                } else {
+                    btnLimpar.classList.add('hidden');
+                }
+            }
+
+            // Re-conecta listeners dos checkboxes e paginação
+            inicializarAcoesLote();
+        })
+        .catch(err => {
+            if (err.name !== 'AbortError') {
+                console.error('Erro ao filtrar títulos:', err);
+            }
+        })
+        .finally(() => {
+            if (spinnerBusca) spinnerBusca.classList.add('hidden');
+            if (loadingOverlay) {
+                loadingOverlay.classList.add('opacity-0', 'pointer-events-none');
+                loadingOverlay.classList.remove('opacity-100');
+            }
+        });
+    }
+
+    // Interceptar Paginação via AJAX
+    if (containerTabela) {
+        containerTabela.addEventListener('click', function (e) {
+            const linkPaginacao = e.target.closest('.pagination a');
+            if (linkPaginacao && linkPaginacao.href) {
+                e.preventDefault();
+                aplicarFiltroAjax(linkPaginacao.href);
+            }
+        });
+    }
+
+    // Filtro instantâneo com debounce ao digitar na busca
+    if (inputBusca) {
+        inputBusca.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                aplicarFiltroAjax();
+            }, 280);
+        });
+    }
+
+    // Filtro instantâneo em selects e outros inputs
+    if (selectStatus) {
+        selectStatus.addEventListener('change', () => aplicarFiltroAjax());
+    }
+    if (inputCompetencia) {
+        inputCompetencia.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                aplicarFiltroAjax();
+            }, 350);
+        });
+    }
+    if (inputAno) {
+        inputAno.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                aplicarFiltroAjax();
+            }, 350);
+        });
+    }
+
+    // Evita reload tradicional ao submeter formulário
+    if (formFiltros) {
+        formFiltros.addEventListener('submit', function (e) {
+            e.preventDefault();
+            clearTimeout(debounceTimer);
+            aplicarFiltroAjax();
+        });
+    }
+
+    // Botão Limpar Filtros com AJAX
+    if (btnLimpar) {
+        btnLimpar.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (inputBusca) inputBusca.value = '';
+            if (selectStatus) selectStatus.value = '';
+            if (inputCompetencia) inputCompetencia.value = '';
+            if (inputAno) inputAno.value = '';
+            aplicarFiltroAjax("{{ route('financeiro.titulos.index') }}");
+        });
+    }
+
+    // Inicialização da primeira carga
+    inicializarAcoesLote();
 });
 </script>
-@endif
 @endsection

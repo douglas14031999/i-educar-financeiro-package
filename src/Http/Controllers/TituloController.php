@@ -94,6 +94,22 @@ class TituloController extends Controller
         $responsavelFiltro = $responsavelId ? \iEducar\Financeiro\Models\ResponsavelFinanceiro::find($responsavelId) : null;
         $contratoFiltro = $contratoId ? \iEducar\Financeiro\Models\Contrato::with(['titulos.cobrancaGateway'])->find($contratoId) : null;
 
+        if ($request->ajax() || $request->header('X-Partial') || $request->query('ajax')) {
+            return view('financeiro::titulos.partials.tabela-container', compact(
+                'titulos',
+                'status',
+                'competencia',
+                'busca',
+                'responsavelId',
+                'contratoId',
+                'alunoId',
+                'ano',
+                'turmaId',
+                'responsavelFiltro',
+                'contratoFiltro'
+            ));
+        }
+
         return view('financeiro::titulos.index', compact(
             'titulos',
             'status',
