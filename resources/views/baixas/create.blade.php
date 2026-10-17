@@ -238,6 +238,21 @@
                             </span>
                         </div>
                     </div>
+
+                    @if((($calculo['multa'] ?? 0) > 0 || ($calculo['juros'] ?? 0) > 0 || $titulo->isVencido()) && $titulo->responsavel_financeiro_id)
+                        <div class="mx-5 mb-5 p-3.5 bg-amber-50 border border-amber-200 rounded-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-900">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                </svg>
+                                <span><strong>Parcela com encargos por atraso.</strong> Se o responsável não puder quitar o valor integral agora, você pode formalizar um acordo e parcelar o débito.</span>
+                            </div>
+                            <a href="{{ route('financeiro.renegociacao.index', ['responsavel_id' => $titulo->responsavel_financeiro_id]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded shadow-xs shrink-0" style="text-decoration: none;">
+                                Renegociar Débito
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                            </a>
+                        </div>
+                    @endif
                 </section>
 
                 <!-- Card 2: Formulário de Recebimento no Caixa -->

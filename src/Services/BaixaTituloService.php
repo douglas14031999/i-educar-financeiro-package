@@ -145,6 +145,20 @@ class BaixaTituloService
                 $this->verificarEAtualizarQuitacaoContrato((int) $tituloLocked->contrato_id);
             }
 
+            // Se o título tinha cobrança ativa no Asaas e foi liquidado no balcão da escola,
+            // cancela a cobrança aberta no Asaas para evitar pagamento duplo em banco/lotérica
+            if ($titulo_pago && $origem === 'manual' && $tituloLocked->cobrancaGateway && !empty($tituloLocked->cobrancaGateway->gateway_charge_id)) {
+                try {
+                    \iEducar\Financeiro\Jobs\CancelarCobrancaGatewayJob::dispatch(
+                        $tituloLocked->cobrancaGateway->id,
+                        "Liquidado presencialmente no caixa da escola (pagamento em {$forma})"
+                    );
+                    \Illuminate\Support\Facades\Log::info("Baixa de balcão no título #{$tituloLocked->id}: disparado cancelamento da cobrança Asaas #{$tituloLocked->cobrancaGateway->gateway_charge_id}");
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Erro ao despachar cancelamento Asaas para título baixado #{$tituloLocked->id}: " . $e->getMessage());
+                }
+            }
+
             event(new \iEducar\Financeiro\Events\TituloPago($tituloLocked, $pagamento));
 
             // Dispara notificacao SSE em tempo real para as telas ativas
